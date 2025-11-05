@@ -1,0 +1,181 @@
+import type { University } from "./types";
+
+export const UNIVERSITIES: University[] = [
+  {
+    id: "1",
+    slug: "mit",
+    name: "Massachusetts Institute of Technology",
+    country: "United States",
+    region: "North America",
+    rank: 1,
+    trustScore: 92,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 95,
+      auditability: 90,
+      dataPrivacy: 93,
+      policyMaturity: 90,
+    },
+  },
+  {
+    id: "2",
+    slug: "stanford",
+    name: "Stanford University",
+    country: "United States",
+    region: "North America",
+    rank: 2,
+    trustScore: 90,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 92,
+      auditability: 88,
+      dataPrivacy: 90,
+      policyMaturity: 90,
+    },
+  },
+  {
+    id: "3",
+    slug: "oxford",
+    name: "University of Oxford",
+    country: "United Kingdom",
+    region: "Europe",
+    rank: 3,
+    trustScore: 88,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 89,
+      auditability: 86,
+      dataPrivacy: 90,
+      policyMaturity: 87,
+    },
+  },
+  {
+    id: "4",
+    slug: "nus",
+    name: "National University of Singapore",
+    country: "Singapore",
+    region: "Asia",
+    rank: 4,
+    trustScore: 85,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 84,
+      auditability: 82,
+      dataPrivacy: 88,
+      policyMaturity: 86,
+    },
+  },
+  {
+    id: "5",
+    slug: "melbourne",
+    name: "University of Melbourne",
+    country: "Australia",
+    region: "Oceania",
+    rank: 5,
+    trustScore: 83,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 82,
+      auditability: 80,
+      dataPrivacy: 85,
+      policyMaturity: 84,
+    },
+  },
+  {
+    id: "6",
+    slug: "tokyo",
+    name: "The University of Tokyo",
+    country: "Japan",
+    region: "Asia",
+    rank: 6,
+    trustScore: 82,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 81,
+      auditability: 80,
+      dataPrivacy: 83,
+      policyMaturity: 82,
+    },
+  },
+  {
+    id: "7",
+    slug: "toronto",
+    name: "University of Toronto",
+    country: "Canada",
+    region: "North America",
+    rank: 7,
+    trustScore: 81,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 82,
+      auditability: 79,
+      dataPrivacy: 82,
+      policyMaturity: 80,
+    },
+  },
+  {
+    id: "8",
+    slug: "eth-zurich",
+    name: "ETH Zurich",
+    country: "Switzerland",
+    region: "Europe",
+    rank: 8,
+    trustScore: 80,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 80,
+      auditability: 78,
+      dataPrivacy: 82,
+      policyMaturity: 80,
+    },
+  },
+  {
+    id: "9",
+    slug: "kth",
+    name: "KTH Royal Institute of Technology",
+    country: "Sweden",
+    region: "Europe",
+    rank: 9,
+    trustScore: 78,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 78,
+      auditability: 76,
+      dataPrivacy: 80,
+      policyMaturity: 78,
+    },
+  },
+  {
+    id: "10",
+    slug: "ui",
+    name: "Universitas Indonesia",
+    country: "Indonesia",
+    region: "Asia",
+    rank: 10,
+    trustScore: 74,
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      transparency: 74,
+      auditability: 70,
+      dataPrivacy: 76,
+      policyMaturity: 75,
+    },
+  },
+];
+
+export const REGIONS = Array.from(new Set(UNIVERSITIES.map((u) => u.region))).sort();
+export const COUNTRIES = Array.from(new Set(UNIVERSITIES.map((u) => u.country))).sort();
+
+import { Submission, User } from "./types";
+
+export const mockSubmissions: Submission[] = [
+  { id: "sub1", name: "Universitas Gadjah Mada" },
+  { id: "sub2", name: "Institut Teknologi Bandung" },
+  { id: "sub3", name: "Universitas Sebelas Maret" },
+];
+
+export const mockUsers: User[] = [
+  { id: "user1", name: "John Doe", email: "john@example.com", role: "user" },
+  { id: "user2", name: "Jane Smith", email: "jane@example.com", role: "university" },
+  { id: "user3", name: "Admin User", email: "admin@example.com", role: "admin" },
+];

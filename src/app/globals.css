@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  /* RAI-inspired color scheme */
+  --background: #FAF9F6; /* cream/off-white background */
+  --foreground: #3D1F1F; /* dark brown text */
+  --primary: #6B2C2C; /* maroon/brown primary */
+  --accent: #C84B4B; /* red accent for buttons */
+  --muted: #F5F1ED; /* light beige for cards */
+  --border: #E5DDD5; /* subtle border */
+  --footer-bg: #4A1F1F; /* dark brown footer */
+}
+
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Utilities */
+.accent-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, #A83A3A 100%);
+}
+
+.card {
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.container-px {
+  padding-left: 1rem; /* 16px */
+  padding-right: 1rem;
+}
+@media (min-width: 640px) { /* sm */
+  .container-px { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+@media (min-width: 1024px) { /* lg */
+  .container-px { padding-left: 2rem; padding-right: 2rem; }
+}
+
+/* Table styles */
+.table-base {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem; /* text-sm */
+}
+@media (min-width: 768px) { /* md */
+  .table-base { font-size: 1rem; /* text-base */ }
+}
+.table-base th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+.table-base td {
+  border-bottom: 1px solid var(--border);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  vertical-align: middle;
+  color: var(--foreground);
+}
+
+/* Inputs */
+.input-base {
+  width: 100%;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+}
+.input-base::placeholder { color: rgba(61, 31, 31, 0.5); }
+.input-base:focus { outline: none; box-shadow: 0 0 0 2px var(--accent); }
+
+
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: transform 150ms ease, opacity 150ms ease;
+  cursor: pointer;
+}
+.btn:active { transform: scale(0.98); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn[disabled], .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Primary brand button (maroon) */
+.btn-primary {
+  color: #ffffff;
+  background-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(107, 44, 44, 0.25);
+}
+.btn-primary:hover { opacity: 0.95; }
+
+/* Accent button using site gradient */
+.btn-accent {
+  color: #ffffff;
+  background-image: linear-gradient(135deg, var(--accent) 0%, #A83A3A 100%);
+  box-shadow: 0 2px 10px rgba(200, 75, 75, 0.28);
+}
+.btn-accent:hover { opacity: 0.95; }
+
+/* Outline button aligned with brand colors */
+.btn-outline {
+  border: 1px solid var(--primary);
+  background-color: transparent;
+  color: var(--primary);
+}
+.btn-outline:hover { background-color: var(--muted); }
