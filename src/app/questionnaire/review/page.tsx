@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "../../components/Navbar";
+import Navbar from "@/components/navigation/Navbar";
 
 interface SectionStatus {
   id: number;
@@ -107,7 +107,7 @@ export default function ReviewPage() {
                 >
                   {section.completed ? (
                     <svg
-                      className="w-5 h-5 text-green-600 flex-shrink-0"
+                      className="w-5 h-5 text-green-600 shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -119,7 +119,7 @@ export default function ReviewPage() {
                     </svg>
                   ) : (
                     <svg
-                      className="w-5 h-5 text-red-600 flex-shrink-0"
+                      className="w-5 h-5 text-red-600 shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >

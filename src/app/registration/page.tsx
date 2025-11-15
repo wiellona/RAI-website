@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Header from "../component/header";
-import Footer from "../component/footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 interface FormData {
   universityName: string;

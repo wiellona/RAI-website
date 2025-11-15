@@ -12,16 +12,16 @@ app/
 │
 ├── questionnaire/                   # Questionnaire flow
 │   ├── general-info/
-│   │   └── page.tsx                 # General info form - /questionnaire/general-info
+│   │   \\__ page.tsx                 # General info form - /questionnaire/general-info
 │   ├── criteria/
-│   │   └── page.tsx                 # 8 Criteria questions - /questionnaire/criteria
+│   │   \\__ page.tsx                 # 8 Criteria questions - /questionnaire/criteria
 │   ├── review/
-│   │   └── page.tsx                 # Review & validation - /questionnaire/review
+│   │   \\__ page.tsx                 # Review & validation - /questionnaire/review
 │   └── submission/
-│       └── page.tsx                 # Success page - /questionnaire/submission
+│       \\__ page.tsx                 # Success page - /questionnaire/submission
 │
 ├── components/
-│   └── Navbar.tsx                   # Shared navigation component
+│   \\__ Navbar.tsx                   # Shared navigation component
 │
 ├── page.tsx                         # Landing page - /
 ├── layout.tsx                       # Root layout

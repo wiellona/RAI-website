@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "../../components/Navbar";
+import Navbar from "@/components/navigation/Navbar";
 
 export default function GeneralInfoPage() {
   const router = useRouter();
@@ -233,7 +233,7 @@ export default function GeneralInfoPage() {
               <div>
                 <label
                   htmlFor="aiOpenSource"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text sm font-medium text-[#5C2E2E] mb-2"
                 >
                   Number of AI open-source assets (models, datasets, or tools)
                   released *
