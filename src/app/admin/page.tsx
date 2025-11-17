@@ -5,7 +5,7 @@ import Container from "@/components/Container";
 import UniversitySubmissions from "@/components/admin/UniversitySubmissions";
 import UserManagement from "@/components/admin/UserManagement";
 import ManageRankings from "@/components/admin/ManageRankings";
-import ProcessScores from "@/components/admin/ProcessScores";
+import AIAnalysis from "@/components/admin/AIAnalysis";
 import { Submission, User, University, UserRole } from "@/lib/types";
 import * as api from "@/lib/api";
 import AdminGuard from "@/components/auth/AdminGuard";
@@ -61,10 +61,6 @@ function AdminDashboard() {
     api.setLocalUniversityOverrides(id, { metrics: m });
   };
 
-  const handleProcessScores = async () => {
-    return api.startScoreProcessing();
-  };
-
   if (isLoading) {
     return (
       <Container>
@@ -85,12 +81,11 @@ function AdminDashboard() {
           onReject={handleRejectSubmission}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ProcessScores onProcess={handleProcessScores} />
-          <UserManagement users={users} onUpdateRole={handleUpdateUserRole} />
-        </div>
+        <AIAnalysis rankings={rankings} />
 
-  <ManageRankings rankings={rankings} onUpdateScore={handleUpdateRankingScore} onUpdateMetrics={handleUpdateUniversityMetrics} />
+        <UserManagement users={users} onUpdateRole={handleUpdateUserRole} />
+
+        <ManageRankings rankings={rankings} onUpdateScore={handleUpdateRankingScore} onUpdateMetrics={handleUpdateUniversityMetrics} />
       </div>
     </Container>
   );
