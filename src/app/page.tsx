@@ -11,73 +11,127 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <main className="pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#5C2E2E] mb-6 leading-tight">
-              Setting the Global Standard for Responsible AI in Academia.
-            </h1>
-            <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl">
-              An independent framework to assess, benchmark, and guide
-              universities in the ethical implementation of artificial
-              intelligence.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center bg-[#A84032] hover:bg-[#8B3528] text-white px-8 py-3 rounded-md transition-colors font-medium"
-              >
-                Explore the 2025 Ranking →
-              </Link>
-              <a
-                href="#participate"
-                className="inline-flex items-center justify-center bg-white border border-[#A84032] text-[#A84032] hover:bg-[#A84032]/5 px-8 py-3 rounded-md transition-colors font-medium"
-              >
-                Participate
-              </a>
+        <div className="relative overflow-hidden">
+          {/* Background Decorative Elements */}
+          <div className="absolute inset-0 -z-10">
+            {/* Gradient blobs */}
+            <div className="absolute top-20 right-10 w-96 h-96 bg-[#c5372c]/5 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 left-10 w-80 h-80 bg-[#511715]/5 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#c5372c]/3 rounded-full blur-3xl"></div>
+
+            {/* Subtle grid pattern */}
+            <div
+              className="absolute inset-0 opacity-[0.02]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(#511715 1px, transparent 1px), linear-gradient(90deg, #511715 1px, transparent 1px)",
+                backgroundSize: "100px 100px",
+              }}
+            ></div>
+
+            {/* Decorative shapes */}
+            <div className="absolute top-40 left-20 w-2 h-2 bg-[#c5372c]/20 rounded-full"></div>
+            <div className="absolute top-60 right-40 w-3 h-3 bg-[#511715]/15 rounded-full"></div>
+            <div className="absolute bottom-40 right-20 w-2 h-2 bg-[#c5372c]/20 rounded-full"></div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-40">
+            <div className="max-w-3xl">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#511715] mb-8 leading-tight">
+                Setting the Global Standard for{" "}
+                <span className="text-[#c5372c]">Responsible AI</span> in
+                Academia.
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl leading-relaxed">
+                An independent framework to assess, benchmark, and guide
+                universities in the ethical implementation of artificial
+                intelligence.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/ranking"
+                  className="inline-flex items-center justify-center bg-[#c5372c] hover:bg-[#a42e24] text-white px-8 py-4 rounded-lg transition-all font-medium shadow-lg shadow-[#c5372c]/20 hover:shadow-xl hover:shadow-[#c5372c]/30 hover:-translate-y-0.5"
+                >
+                  Explore the 2025 Ranking →
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center bg-white border-2 border-[#c5372c] text-[#c5372c] hover:bg-[#c5372c] hover:text-white px-8 py-4 rounded-lg transition-all font-medium"
+                >
+                  Participate
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mission Section */}
-        <section id="about" className="py-20 bg-gray-50">
+        <section
+          id="about"
+          className="py-28 bg-gradient-to-b from-white to-gray-50 relative"
+        >
+          {/* Decorative Line */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-16 bg-gradient-to-b from-transparent via-[#c5372c]/30 to-transparent"></div>
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#5C2E2E] mb-6">
+                <div className="inline-block px-4 py-1 bg-[#511715]/10 rounded-full mb-4">
+                  <span className="text-sm font-semibold text-[#511715]">
+                    WHO WE ARE
+                  </span>
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold text-[#511715] mb-6 leading-tight">
                   Our Mission
                 </h2>
-                <p className="text-gray-700 mb-4">
+                <p className="text-lg text-gray-700 mb-4 leading-relaxed">
                   RAI (Responsible AI Global University Ranking) provides an
                   authoritative, transparent, and rigorous assessment of how
                   universities develop and deploy AI benchmarks and actionable
                   insights.
                 </p>
-                <p className="text-gray-700">
+                <p className="text-lg text-gray-700 leading-relaxed">
                   We empower institutions, students, researchers, and the public
                   with objective benchmarks and actionable insights.
                 </p>
               </div>
-              <div className="bg-[#FFF5F5] border border-[#FFE5E5] rounded-lg p-8">
-                <p className="text-lg font-semibold text-[#5C2E2E] mb-6">
-                  "What gets measured, gets improved. RAI sets the standard for
-                  ethics in academic AI."
-                </p>
-                <div className="grid grid-cols-3 gap-6 text-center">
-                  <div>
-                    <div className="text-3xl font-bold text-[#A84032]">
-                      150+
+              <div className="relative">
+                {/* Card Shadow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#c5372c]/10 to-[#511715]/10 rounded-2xl blur-xl translate-y-2"></div>
+
+                <div className="relative bg-white border-2 border-[#c5372c]/20 rounded-2xl p-10 shadow-xl">
+                  <div className="absolute -top-4 -left-4 w-8 h-8 bg-[#c5372c] rounded-full"></div>
+                  <div className="absolute -bottom-4 -right-4 w-6 h-6 bg-[#511715] rounded-full"></div>
+
+                  <p className="text-xl font-semibold text-[#511715] mb-8 italic leading-relaxed">
+                    "What gets measured, gets improved. RAI sets the standard
+                    for ethics in academic AI."
+                  </p>
+                  <div className="grid grid-cols-3 gap-8 text-center">
+                    <div>
+                      <div className="text-4xl font-bold bg-gradient-to-br from-[#c5372c] to-[#511715] bg-clip-text text-transparent mb-1">
+                        150+
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">
+                        Institutions
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">Institutions</div>
-                  </div>
-                  <div>
-                    <div className="text-3xl font-bold text-[#A84032]">30</div>
-                    <div className="text-sm text-gray-600">Countries</div>
-                  </div>
-                  <div>
-                    <div className="text-3xl font-bold text-[#A84032]">
-                      2025
+                    <div>
+                      <div className="text-4xl font-bold bg-gradient-to-br from-[#c5372c] to-[#511715] bg-clip-text text-transparent mb-1">
+                        30
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">
+                        Countries
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">Latest Edition</div>
+                    <div>
+                      <div className="text-4xl font-bold bg-gradient-to-br from-[#c5372c] to-[#511715] bg-clip-text text-transparent mb-1">
+                        2025
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">
+                        Latest Edition
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -86,17 +140,48 @@ export default function LandingPage() {
         </section>
 
         {/* How It Works Section */}
-        <section id="participate" className="py-20 bg-white">
+        <section
+          id="participate"
+          className="py-28 bg-white relative overflow-hidden"
+        >
+          {/* Background Pattern */}
+          <div className="absolute inset-0 -z-10 opacity-5">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle, #511715 1px, transparent 1px)",
+                backgroundSize: "32px 32px",
+              }}
+            ></div>
+          </div>
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-[#5C2E2E] mb-12">
-              How It Works
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center mb-16">
+              <div className="inline-block px-4 py-1 bg-[#511715]/10 rounded-full mb-4">
+                <span className="text-sm font-semibold text-[#511715]">
+                  GETTING STARTED
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-[#511715] mb-4">
+                How It Works
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Join leading universities in establishing responsible AI
+                practices
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {/* Connecting Lines */}
+              <div className="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-[#c5372c]/20 via-[#c5372c] to-[#c5372c]/20"></div>
               {/* Step 1 */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-[#FFF5F5] rounded-lg flex items-center justify-center mb-4">
+              <div className="relative bg-white border-2 border-gray-100 rounded-2xl p-8 hover:border-[#c5372c]/30 hover:shadow-xl transition-all group">
+                <div className="absolute -top-4 -right-4 w-10 h-10 bg-[#c5372c] rounded-full flex items-center justify-center text-white font-bold shadow-lg z-10">
+                  1
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-[#c5372c]/10 to-[#511715]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <svg
-                    className="w-6 h-6 text-[#A84032]"
+                    className="w-8 h-8 text-[#c5372c]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -109,20 +194,23 @@ export default function LandingPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-[#5C2E2E] mb-3">
-                  1. Submit Data
+                <h3 className="text-2xl font-bold text-[#511715] mb-4">
+                  Submit Data
                 </h3>
-                <p className="text-gray-700">
+                <p className="text-gray-600 leading-relaxed">
                   Universities provide standardized information and evidence
                   across key domains.
                 </p>
               </div>
 
               {/* Step 2 */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-[#FFF5F5] rounded-lg flex items-center justify-center mb-4">
+              <div className="relative bg-white border-2 border-gray-100 rounded-2xl p-8 hover:border-[#c5372c]/30 hover:shadow-xl transition-all group">
+                <div className="absolute -top-4 -right-4 w-10 h-10 bg-[#c5372c] rounded-full flex items-center justify-center text-white font-bold shadow-lg z-10">
+                  2
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-[#c5372c]/10 to-[#511715]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <svg
-                    className="w-6 h-6 text-[#A84032]"
+                    className="w-8 h-8 text-[#c5372c]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -135,20 +223,23 @@ export default function LandingPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-[#5C2E2E] mb-3">
-                  2. Independent Assessment
+                <h3 className="text-2xl font-bold text-[#511715] mb-4">
+                  Independent Assessment
                 </h3>
-                <p className="text-gray-700">
+                <p className="text-gray-600 leading-relaxed">
                   Our methodology evaluates governance, infrastructure,
                   curriculum, research, and impact.
                 </p>
               </div>
 
               {/* Step 3 */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-[#FFF5F5] rounded-lg flex items-center justify-center mb-4">
+              <div className="relative bg-white border-2 border-gray-100 rounded-2xl p-8 hover:border-[#c5372c]/30 hover:shadow-xl transition-all group">
+                <div className="absolute -top-4 -right-4 w-10 h-10 bg-[#c5372c] rounded-full flex items-center justify-center text-white font-bold shadow-lg z-10">
+                  3
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-[#c5372c]/10 to-[#511715]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <svg
-                    className="w-6 h-6 text-[#A84032]"
+                    className="w-8 h-8 text-[#c5372c]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -161,10 +252,10 @@ export default function LandingPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-[#5C2E2E] mb-3">
-                  3. Receive Your Score & Insights
+                <h3 className="text-2xl font-bold text-[#511715] mb-4">
+                  Receive Score & Insights
                 </h3>
-                <p className="text-gray-700">
+                <p className="text-gray-600 leading-relaxed">
                   Access detailed feedback, benchmarking, and guidance to
                   improve responsible AI practice.
                 </p>
@@ -175,31 +266,49 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#5C2E2E] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
+      <footer className="bg-gradient-to-br from-[#511715] to-[#3a0f0f] text-white py-16 relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#c5372c]/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-8 md:space-y-0">
             {/* Logo and Description */}
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white/20 rounded"></div>
-                <span className="text-xl font-bold">RAI</span>
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-white/30 to-white/10 rounded-lg backdrop-blur-sm flex items-center justify-center">
+                  <div className="w-6 h-6 bg-white rounded"></div>
+                </div>
+                <span className="text-2xl font-bold">RAI</span>
               </div>
-              <p className="text-sm text-white/80">
+              <p className="text-sm text-white/70 max-w-xs leading-relaxed">
                 Responsible AI Global University Ranking
               </p>
             </div>
 
             {/* Contact and Social Links */}
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">Contact: info@rai-ranking.org</p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-white/80 transition-colors">
+            <div className="flex flex-col space-y-4">
+              <p className="text-sm font-medium">
+                Contact:{" "}
+                <span className="text-white/80">info@rai-ranking.org</span>
+              </p>
+              <div className="flex space-x-6 text-sm">
+                <a
+                  href="#"
+                  className="hover:text-white/90 transition-all hover:-translate-y-0.5"
+                >
                   Twitter/X
                 </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
+                <a
+                  href="#"
+                  className="hover:text-white/90 transition-all hover:-translate-y-0.5"
+                >
                   LinkedIn
                 </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
+                <a
+                  href="#"
+                  className="hover:text-white/90 transition-all hover:-translate-y-0.5"
+                >
                   GitHub
                 </a>
               </div>
@@ -207,8 +316,8 @@ export default function LandingPage() {
           </div>
 
           {/* Copyright */}
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-sm text-white/60 text-center md:text-left">
+          <div className="mt-12 pt-8 border-t border-white/10">
+            <p className="text-sm text-white/50 text-center md:text-left">
               © 2025 RAI. All rights reserved.
             </p>
           </div>

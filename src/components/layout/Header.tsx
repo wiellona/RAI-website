@@ -43,7 +43,7 @@ export default function Navbar() {
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
-              href="/about"
+              href="/#about"
               className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
             >
               About
@@ -55,7 +55,7 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
-              href="/register"
+              href="/login"
               className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
             >
               Participate
@@ -107,7 +107,7 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 space-y-3 border-t border-gray-200">
             <Link
-              href="/about"
+              href="/#about"
               className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -121,7 +121,7 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
-              href="/register"
+              href="/login"
               className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
