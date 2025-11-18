@@ -26,10 +26,18 @@ export async function getCriteriaData(): Promise<UICriteria[]> {
     });
 
     if (!response.ok) {
+      let errorDetails: unknown;
+      try {
+        errorDetails = await response.json();
+      } catch (jsonError) {
+        errorDetails = undefined;
+      }
+
       console.error(
         "Failed to load questionnaire data via /api/questionnaires",
         response.status,
-        response.statusText
+        response.statusText,
+        errorDetails
       );
       return [];
     }
