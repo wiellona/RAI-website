@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/navigation/Navbar";
+import Navbar from "@/components/layout/Header";
 import { getCriteriaData, type UICriteria } from "@/lib/api/questionnaire";
 
 interface Answer {
