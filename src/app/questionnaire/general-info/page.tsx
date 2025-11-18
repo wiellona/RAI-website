@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/navigation/Navbar";
+import Navbar from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 export default function GeneralInfoPage() {
   const router = useRouter();
@@ -18,19 +19,24 @@ export default function GeneralInfoPage() {
     emailAddress: "",
     aiPublications: "",
     aiOpenSource: "",
+    aiPublicationsFile: null,
+    aiOpenSourceFile: null,
+  });
+
+  // State untuk menampilkan nama file yang diupload
+  const [fileNames, setFileNames] = useState({
+    aiPublicationsFileName: "",
+    aiOpenSourceFileName: "",
   });
 
   useEffect(() => {
-    // Get current user email
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
-      // If no user logged in, redirect to login
       router.push("/login");
       return;
     }
     setCurrentUserEmail(userEmail);
 
-    // Load general info for this user if exists
     const generalInfoKey = `generalInfo_${userEmail}`;
     const savedInfo = localStorage.getItem(generalInfoKey);
     if (savedInfo) {
@@ -45,9 +51,25 @@ export default function GeneralInfoPage() {
     });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    setFormData({
+      ...formData,
+      [fieldName]: file,
+    });
+
+    // Update state dengan nama file yang diupload
+    if (file) {
+      if (fieldName === "aiPublicationsFile") {
+        setFileNames((prev) => ({ ...prev, aiPublicationsFileName: file.name }));
+      } else if (fieldName === "aiOpenSourceFile") {
+        setFileNames((prev) => ({ ...prev, aiOpenSourceFileName: file.name }));
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Save with user-specific key
     const generalInfoKey = `generalInfo_${currentUserEmail}`;
     localStorage.setItem(generalInfoKey, JSON.stringify(formData));
     window.location.href = "/questionnaire/criteria";
@@ -209,43 +231,98 @@ export default function GeneralInfoPage() {
                 />
               </div>
 
-              {/* Number of AI Publications */}
+              {/* AI Publications File */}
               <div>
-                <label
-                  htmlFor="aiPublications"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
-                >
-                  Number of AI publications in the last 3 years *
+                <label className="block text-sm font-medium text-[#5C2E2E] mb-2">
+                  Upload AI Publications File Statement
                 </label>
+                  <p className="mb-2 text-sm">
+                    <a
+                      href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Open%20Source%20Statement%20Letter/Open%20Source%20Statement%20Letter.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200"
+                    >
+                      For template example, click here
+                    </a>
+                  </p>
+                {fileNames.aiPublicationsFileName && (
+                  <p className="text-sm text-gray-600">
+                    Uploaded File: {fileNames.aiPublicationsFileName}
+                  </p>
+                )}
+                <div
+                  className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-[#CD5C5C] focus-within:border-[#CD5C5C]"
+                  onClick={() => {
+                    const fileInput = document.getElementById("aiPublicationsFile") as HTMLInputElement;
+                    fileInput?.click();
+                  }}
+                >
+                  <div className="space-y-1 text-center">
+                    {/* SVG icon */}
+                    <div className="flex text-sm text-gray-600 justify-center">
+                      <span>Upload a file</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PDF, DOC, DOCX up to 10MB
+                    </p>
+                  </div>
+                </div>
                 <input
-                  type="number"
-                  id="aiPublications"
-                  name="aiPublications"
-                  value={formData.aiPublications}
-                  onChange={handleChange}
-                  min="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  id="aiPublicationsFile"
+                  name="aiPublicationsFile"
+                  type="file"
+                  className="sr-only"
+                  onChange={(e) => handleFileChange(e, "aiPublicationsFile")}
+                  accept=".pdf,.doc,.docx"
                   required
                 />
               </div>
 
-              {/* Number of AI Open-Source Assets */}
+              {/* AI Open Source File */}
               <div>
-                <label
-                  htmlFor="aiOpenSource"
-                  className="block text sm font-medium text-[#5C2E2E] mb-2"
-                >
-                  Number of AI open-source assets (models, datasets, or tools)
-                  released *
+                <label className="block text-sm font-medium text-[#5C2E2E] mb-2">
+                  Upload AI Open-Source Assets File Statement
                 </label>
+                  <p className="mb-2 text-sm">
+                    <a
+                      href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Open%20Source%20Statement%20Letter/Open%20Source%20Statement%20Letter.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200"
+                    >
+                      For template example, click here
+                    </a>
+                  </p>
+                {fileNames.aiOpenSourceFileName && (
+                  <p className="text-sm text-gray-600">
+                    Uploaded File: {fileNames.aiOpenSourceFileName}
+                  </p>
+                )}
+                <div
+                  className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-[#CD5C5C] focus-within:border-[#CD5C5C]"
+                  onClick={() => {
+                    const fileInput = document.getElementById("aiOpenSourceFile") as HTMLInputElement;
+                    fileInput?.click();
+                  }}
+                >
+                  <div className="space-y-1 text-center">
+                    {/* SVG icon */}
+                    <div className="flex text-sm text-gray-600 justify-center">
+                      <span>Upload a file</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PDF, DOC, DOCX up to 10MB
+                    </p>
+                  </div>
+                </div>
                 <input
-                  type="number"
-                  id="aiOpenSource"
-                  name="aiOpenSource"
-                  value={formData.aiOpenSource}
-                  onChange={handleChange}
-                  min="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  id="aiOpenSourceFile"
+                  name="aiOpenSourceFile"
+                  type="file"
+                  className="sr-only"
+                  onChange={(e) => handleFileChange(e, "aiOpenSourceFile")}
+                  accept=".pdf,.doc,.docx"
                   required
                 />
               </div>
@@ -264,41 +341,7 @@ export default function GeneralInfoPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#5C2E2E] text-white py-12 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white/20 rounded"></div>
-                <span className="text-xl font-bold">RAI</span>
-              </div>
-              <p className="text-sm text-white/80">
-                Responsible AI Global University Ranking
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">Contact: info@rai-ranking.org</p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  Twitter/X
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  LinkedIn
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-sm text-white/60 text-center md:text-left">
-              © 2025 RAI. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
