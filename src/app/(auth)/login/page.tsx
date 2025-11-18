@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/navigation/Navbar";
+import Navbar from "@/components/layout/Header";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

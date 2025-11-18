@@ -1,83 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import Header from "@/components/layout/Header";
 
 export default function LandingPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    // Check login status from localStorage
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loggedIn);
-  }, []);
-
-  const handleLogout = () => {
-    const userEmail = localStorage.getItem("userEmail");
-
-    // Remove user-specific data
-    if (userEmail) {
-      localStorage.removeItem(`generalInfo_${userEmail}`);
-      localStorage.removeItem(`questionnaireAnswers_${userEmail}`);
-    }
-
-    // Remove auth data
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("universityName");
-
-    window.location.href = "/";
-  };
-
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-sm bg-white/80 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#5C2E2E] rounded"></div>
-            <span className="font-bold text-xl text-[#5C2E2E]">RAI</span>
-          </Link>
-
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            <a
-              href="#about"
-              className="text-sm text-gray-700 hover:text-[#5C2E2E] transition-colors"
-            >
-              About
-            </a>
-            <a
-              href="#ranking"
-              className="text-sm text-gray-700 hover:text-[#5C2E2E] transition-colors"
-            >
-              The Ranking
-            </a>
-            <a
-              href="#participate"
-              className="text-sm text-gray-700 hover:text-[#5C2E2E] transition-colors"
-            >
-              Participate
-            </a>
-            {!isLoggedIn ? (
-              <Link
-                href="/login"
-                className="bg-[#A84032] hover:bg-[#8B3528] text-white text-sm px-6 py-2 rounded-md transition-colors"
-              >
-                Login
-              </Link>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="bg-[#A84032] hover:bg-[#8B3528] text-white text-sm px-6 py-2 rounded-md transition-colors"
-              >
-                Logout
-              </button>
-            )}
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <main className="pt-16">
@@ -98,12 +28,12 @@ export default function LandingPage() {
               >
                 Explore the 2025 Ranking →
               </Link>
-              <Link
+              <a
                 href="#participate"
                 className="inline-flex items-center justify-center bg-white border border-[#A84032] text-[#A84032] hover:bg-[#A84032]/5 px-8 py-3 rounded-md transition-colors font-medium"
               >
                 Participate
-              </Link>
+              </a>
             </div>
           </div>
         </div>

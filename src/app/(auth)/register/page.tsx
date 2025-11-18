@@ -2,61 +2,171 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/navigation/Navbar";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { createClient } from '@supabase/supabase-js'
+import Select from "react-select";
 
-export default function RegisterPage() {
-  const [formData, setFormData] = useState({
+const countries = [
+  { label: "Afghanistan", value: "AF" },
+  { label: "Albania", value: "AL" },
+  { label: "Algeria", value: "DZ" },
+  { label: "Andorra", value: "AD" },
+  { label: "Angola", value: "AO" },
+  { label: "Argentina", value: "AR" },
+  { label: "Armenia", value: "AM" },
+  { label: "Australia", value: "AU" },
+  { label: "Austria", value: "AT" },
+  { label: "Azerbaijan", value: "AZ" },
+  // Add more countries as needed...
+];
+
+interface FormData {
+  universityName: string;
+  country: string | null;
+  directorName: string;
+  address: string;
+  contactPerson: string;
+  contactEmail: string;
+  statusRelation: string;
+  officialLetter: File | null;
+}
+
+export default function RegistrationPage() {
+  const [formData, setFormData] = useState<FormData>({
     universityName: "",
-    country: "",
-    contactName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    country: null,
+    directorName: "",
+    address: "",
+    contactPerson: "",
+    contactEmail: "",
+    statusRelation: "",
+    officialLetter: null,
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    const target = e.target as HTMLInputElement;
+    const files = target.files;
+
+    if (name === "officialLetter" && files) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCountryChange = (selectedOption: any) => {
+      setFormData((prev) => ({
+        ...prev,
+        country: selectedOption ? selectedOption.value : null,
+      }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Dummy register - save data and redirect to login
-    localStorage.setItem("userEmail", formData.email);
-    localStorage.setItem("universityName", formData.universityName);
-    window.location.href = "/login";
+    // Create FormData for file upload
+    const submitData = new FormData();
+    (Object.keys(formData) as Array<keyof FormData>).forEach((key) => {
+      const value = formData[key];
+      if (value) {
+        submitData.append(
+          key,
+          value instanceof File ? value : value.toString()
+        );
+      }
+    });
+
+    try {
+      // ENDPOINT ENDPOINT ENDPOINT ENDPOINT
+      const response = await fetch("/api/register", {
+        method: "POST",
+        body: submitData,
+      });
+
+      if (response.ok) {
+        console.log("Form submitted successfully:", formData);
+        alert("Registration submitted successfully!");
+        // Reset form after successful submission
+        setFormData({
+          universityName: "",
+          country: null,
+          directorName: "",
+          address: "",
+          contactPerson: "",
+          contactEmail: "",
+          statusRelation: "",
+          officialLetter: null,
+        });
+      } else {
+        throw new Error("Submission failed");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Registration failed. Please try again.");
+    }
+  };
+
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (
+        file.type === "application/pdf" ||
+        file.type === "application/msword" ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        setFormData((prev) => ({
+          ...prev,
+          officialLetter: file,
+        }));
+      } else {
+        alert("Please upload only PDF, DOC, or DOCX files.");
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header/Navbar */}
-      <Navbar />
+    <div className="bg-white min-h-screen">
+      <Header />
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12 bg-white">
-        <div className="w-full max-w-2xl">
-          {/* RAI Title */}
-          <h1 className="text-4xl md:text-5xl font-bold text-center text-[#5C2E2E] mb-12">
-            RAI
-          </h1>
+      {/* Registration Section */}
+      <section className="pt-[65px] min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-4xl w-full mx-auto px-4 py-12">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div className="bg-[#511715] text-white p-6">
+              <h1 className="text-2xl font-bold">
+                RAI University Registration
+              </h1>
+              <p className="text-white/80 mt-2">
+                Register your university for the Responsible AI Global
+                University Ranking
+              </p>
+            </div>
 
-          {/* Registration Form Card */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
-            <h2 className="text-2xl font-semibold text-[#5C2E2E] mb-6">
-              Register your University
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid md:grid-cols-2 gap-5">
+            <form onSubmit={handleSubmit} className="p-6 md:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* University Name */}
                 <div className="md:col-span-2">
                   <label
                     htmlFor="universityName"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    className="block text-sm font-medium text-gray-900 mb-1"
                   >
                     University Name
                   </label>
@@ -66,178 +176,239 @@ export default function RegisterPage() {
                     name="universityName"
                     value={formData.universityName}
                     onChange={handleChange}
-                    placeholder="Enter university name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
                     required
                   />
                 </div>
 
-                {/* Country */}
+                {/* Country Dropdown */}
                 <div className="md:col-span-2">
                   <label
                     htmlFor="country"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    className="block text-sm font-medium text-gray-900 mb-1"
                   >
                     Country
                   </label>
-                  <select
+                  <Select
                     id="country"
                     name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent transition-all"
-                    required
-                  >
-                    <option value="">Select country</option>
-                    <option value="Indonesia">Indonesia</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Singapore">Singapore</option>
-                  </select>
+                    className="block text-sm font-medium text-black mb-1"
+                    options={countries}
+                    value={
+                      countries.find(
+                        (option) => option.value === formData.country
+                      ) || null
+                    }
+                    onChange={handleCountryChange}
+                    placeholder="Select a country"
+                  />
                 </div>
 
-                {/* Contact Name */}
-                <div>
+                {/* Director Name */}
+                <div className="md:col-span-2">
                   <label
-                    htmlFor="contactName"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    htmlFor="directorName"
+                    className="block text-sm font-medium text-gray-900 mb-1"
                   >
-                    Contact Person Name
+                    Dean Name
                   </label>
                   <input
                     type="text"
-                    id="contactName"
-                    name="contactName"
-                    value={formData.contactName}
+                    id="directorName"
+                    name="directorName"
+                    value={formData.directorName}
                     onChange={handleChange}
-                    placeholder="Full name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
                     required
                   />
                 </div>
 
-                {/* Email */}
+                {/* Address */}
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="address"
+                    className="block text-sm font-medium text-gray-900 mb-1"
+                  >
+                    Address
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    required
+                  ></textarea>
+                </div>
+
+                {/* Contact Person */}
                 <div>
                   <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    htmlFor="contactPerson"
+                    className="block text-sm font-medium text-gray-900 mb-1"
                   >
-                    Email Address
+                    Contact Person
+                  </label>
+                  <input
+                    type="text"
+                    id="contactPerson"
+                    name="contactPerson"
+                    value={formData.contactPerson}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    required
+                  />
+                </div>
+
+                {/* Contact Person's Email */}
+                <div>
+                  <label
+                    htmlFor="contactEmail"
+                    className="block text-sm font-medium text-gray-900 mb-1"
+                  >
+                    Contact Person's Email
                   </label>
                   <input
                     type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
+                    id="contactEmail"
+                    name="contactEmail"
+                    value={formData.contactEmail}
                     onChange={handleChange}
-                    placeholder="contact@university.edu"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
                     required
                   />
                 </div>
 
-                {/* Password */}
-                <div>
+                {/* Status/Relation */}
+                <div className="md:col-span-2">
                   <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    htmlFor="statusRelation"
+                    className="block text-sm font-medium text-gray-900 mb-1"
                   >
-                    Password
+                    Status/Relation
                   </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
+                  <select
+                    id="statusRelation"
+                    name="statusRelation"
+                    value={formData.statusRelation}
                     onChange={handleChange}
-                    placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
                     required
-                  />
+                  >
+                    <option value="">Select your status/relation</option>
+                    <option value="Dean">Dean</option>
+                    <option value="Department Head">Department Head</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="Faculty Member">Faculty Member</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
-                {/* Confirm Password */}
-                <div>
+                {/* Official Letter - Enhanced File Upload */}
+                <div className="md:col-span-2">
                   <label
-                    htmlFor="confirmPassword"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    htmlFor="officialLetter"
+                    className="block text-sm font-medium text-gray-900 mb-1"
                   >
-                    Confirm Password
+                    Official letter of Request that signed by the dean
                   </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent transition-all"
-                    required
-                  />
+                    <p className="mb-2 text-sm">
+                      <a
+                        href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Official%20Request%20Letter/Official%20Request%20Letter.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200"
+                      >
+                        For template example, click here
+                      </a>
+                    </p>
+                  <div
+                    className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-[#CD5C5C] focus-within:border-[#CD5C5C]"
+                    onDrop={handleFileDrop}
+                    onDragOver={handleDragOver}
+                    onClick={() => {
+                      const fileInput = document.getElementById(
+                        "officialLetter"
+                      ) as HTMLInputElement;
+                      fileInput?.click();
+                    }}
+                  >
+                    <div className="space-y-1 text-center">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex text-sm text-gray-600 justify-center">
+                        <label
+                          htmlFor="officialLetter"
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-[#511715] hover:text-[#a42e24] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#CD5C5C]"
+                        >
+                          <span>Upload a file</span>
+                          <input
+                            id="officialLetter"
+                            name="officialLetter"
+                            type="file"
+                            className="sr-only"
+                            onChange={handleChange}
+                            accept=".pdf,.doc,.docx"
+                            required
+                          />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        PDF, DOC, DOCX up to 10MB
+                      </p>
+                    </div>
+                  </div>
+                  {formData.officialLetter && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <p className="text-sm text-green-800 font-medium">
+                        ✓ File selected: {formData.officialLetter.name}
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        Size:{" "}
+                        {(formData.officialLetter.size / 1024 / 1024).toFixed(
+                          2
+                        )}{" "}
+                        MB
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Register Button */}
-              <button
-                type="submit"
-                className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white font-medium py-3 rounded-md transition-colors mt-6"
-              >
-                Register University
-              </button>
-
-              {/* Login Link */}
-              <div className="text-center pt-2">
-                <p className="text-sm text-gray-600">
-                  Already have an account?{" "}
-                  <Link
-                    href="/login"
-                    className="text-[#A84032] hover:text-[#8B3528] transition-colors font-medium"
-                  >
-                    Login here
-                  </Link>
-                </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none"
+                >
+                  Register University
+                </button>
+                <Link
+                  href="/"
+                  className="w-full sm:w-auto text-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none"
+                >
+                  Cancel
+                </Link>
               </div>
             </form>
           </div>
         </div>
-      </main>
+      </section>
 
-      {/* Footer */}
-      <footer className="bg-[#5C2E2E] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white/20 rounded"></div>
-                <span className="text-xl font-bold">RAI</span>
-              </div>
-              <p className="text-sm text-white/80">
-                Responsible AI Global University Ranking
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">Contact: info@rai-ranking.org</p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  Twitter/X
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  LinkedIn
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-sm text-white/60 text-center md:text-left">
-              © 2025 RAI. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
