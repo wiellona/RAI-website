@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/navigation/Navbar";
+import Navbar from "@/components/layout/Header";
 
 interface SectionStatus {
   id: number;

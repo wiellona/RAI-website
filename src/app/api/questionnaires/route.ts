@@ -33,7 +33,7 @@ type RawOption = {
   created_at?: string | null;
 };
 
-type ApiQuestionOption = { label: string; value: number };
+type ApiQuestionOption = { id: string; label: string; value: number };
 
 type ApiCriteria = {
   id: number;
@@ -97,7 +97,7 @@ export async function GET() {
       | undefined;
 
     if (!activeQuestionnaire?.id) {
-      return NextResponse.json({ data: [] });
+      return NextResponse.json({ questionnaireId: null, data: [] });
     }
 
     const { data: categoryRows, error: categoryError } = await supabase
@@ -124,7 +124,10 @@ export async function GET() {
     const categories = (categoryRows ?? []) as RawCategory[];
 
     if (!categories.length) {
-      return NextResponse.json({ data: [] });
+      return NextResponse.json({
+        questionnaireId: activeQuestionnaire.id,
+        data: [],
+      });
     }
 
     const categoryIds = categories
@@ -189,6 +192,7 @@ export async function GET() {
 
         const bucket = optionsByQuestion.get(option.question_id) ?? [];
         bucket.push({
+          id: option.id,
           label: option.text ?? "Untitled option",
           value: toNumber(option.value, 0),
         });
@@ -249,7 +253,10 @@ export async function GET() {
         };
       });
 
-    return NextResponse.json({ data: payload });
+    return NextResponse.json({
+      questionnaireId: activeQuestionnaire.id,
+      data: payload,
+    });
   } catch (error) {
     console.error("[api/questionnaires]", error);
 

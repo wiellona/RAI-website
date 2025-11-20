@@ -43,9 +43,9 @@ export default function LandingPage() {
                 Academia.
               </h1>
               <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl leading-relaxed">
-                An independent framework to assess, benchmark, and guide
+                &ldquo;An independent framework to assess, benchmark, and guide
                 universities in the ethical implementation of artificial
-                intelligence.
+                intelligence.&rdquo;
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link

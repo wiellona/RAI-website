@@ -6,16 +6,22 @@ export type UICriteria = {
     id: string;
     text: string;
     type: "radio" | "likert";
-    options?: { label: string; value: number }[];
+    options?: { id: string; label: string; value: number }[];
     score: number;
   }[];
 };
 type ApiResponse = {
   data?: UICriteria[];
+  questionnaireId?: string | null;
   error?: string;
 };
 
-export async function getCriteriaData(): Promise<UICriteria[]> {
+export type QuestionnairePayload = {
+  questionnaireId: string | null;
+  criteria: UICriteria[];
+};
+
+export async function getCriteriaData(): Promise<QuestionnairePayload> {
   try {
     const response = await fetch("/api/questionnaires", {
       method: "GET",
@@ -39,16 +45,19 @@ export async function getCriteriaData(): Promise<UICriteria[]> {
         response.statusText,
         errorDetails
       );
-      return [];
+      return { questionnaireId: null, criteria: [] };
     }
 
     const payload = (await response.json()) as ApiResponse;
-    return Array.isArray(payload?.data) ? payload.data : [];
+    return {
+      questionnaireId: payload?.questionnaireId ?? null,
+      criteria: Array.isArray(payload?.data) ? payload.data : [],
+    };
   } catch (error) {
     console.error(
       "Unexpected error while requesting /api/questionnaires",
       error
     );
-    return [];
+    return { questionnaireId: null, criteria: [] };
   }
 }

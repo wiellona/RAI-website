@@ -1,303 +1,280 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { createClient } from "@supabase/supabase-js";
-import Select from "react-select";
+import Select, {
+  components as selectComponents,
+  type SingleValue,
+  type StylesConfig,
+  type DropdownIndicatorProps,
+} from "react-select";
+import countryList from "react-select-country-list";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
-const countries = [
-  { label: "Afghanistan", value: "AF" },
-  { label: "Albania", value: "AL" },
-  { label: "Algeria", value: "DZ" },
-  { label: "Andorra", value: "AD" },
-  { label: "Angola", value: "AO" },
-  { label: "Antigua and Barbuda", value: "AG" },
-  { label: "Argentina", value: "AR" },
-  { label: "Armenia", value: "AM" },
-  { label: "Australia", value: "AU" },
-  { label: "Austria", value: "AT" },
-  { label: "Azerbaijan", value: "AZ" },
-  { label: "Bahamas", value: "BS" },
-  { label: "Bahrain", value: "BH" },
-  { label: "Bangladesh", value: "BD" },
-  { label: "Barbados", value: "BB" },
-  { label: "Belarus", value: "BY" },
-  { label: "Belgium", value: "BE" },
-  { label: "Belize", value: "BZ" },
-  { label: "Benin", value: "BJ" },
-  { label: "Bhutan", value: "BT" },
-  { label: "Bolivia", value: "BO" },
-  { label: "Bosnia and Herzegovina", value: "BA" },
-  { label: "Botswana", value: "BW" },
-  { label: "Brazil", value: "BR" },
-  { label: "Brunei", value: "BN" },
-  { label: "Bulgaria", value: "BG" },
-  { label: "Burkina Faso", value: "BF" },
-  { label: "Burundi", value: "BI" },
-  { label: "Cambodia", value: "KH" },
-  { label: "Cameroon", value: "CM" },
-  { label: "Canada", value: "CA" },
-  { label: "Cape Verde", value: "CV" },
-  { label: "Central African Republic", value: "CF" },
-  { label: "Chad", value: "TD" },
-  { label: "Chile", value: "CL" },
-  { label: "China", value: "CN" },
-  { label: "Colombia", value: "CO" },
-  { label: "Comoros", value: "KM" },
-  { label: "Congo", value: "CG" },
-  { label: "Costa Rica", value: "CR" },
-  { label: "Croatia", value: "HR" },
-  { label: "Cuba", value: "CU" },
-  { label: "Cyprus", value: "CY" },
-  { label: "Czech Republic", value: "CZ" },
-  { label: "Denmark", value: "DK" },
-  { label: "Djibouti", value: "DJ" },
-  { label: "Dominica", value: "DM" },
-  { label: "Dominican Republic", value: "DO" },
-  { label: "East Timor", value: "TL" },
-  { label: "Ecuador", value: "EC" },
-  { label: "Egypt", value: "EG" },
-  { label: "El Salvador", value: "SV" },
-  { label: "Equatorial Guinea", value: "GQ" },
-  { label: "Eritrea", value: "ER" },
-  { label: "Estonia", value: "EE" },
-  { label: "Ethiopia", value: "ET" },
-  { label: "Fiji", value: "FJ" },
-  { label: "Finland", value: "FI" },
-  { label: "France", value: "FR" },
-  { label: "Gabon", value: "GA" },
-  { label: "Gambia", value: "GM" },
-  { label: "Georgia", value: "GE" },
-  { label: "Germany", value: "DE" },
-  { label: "Ghana", value: "GH" },
-  { label: "Greece", value: "GR" },
-  { label: "Grenada", value: "GD" },
-  { label: "Guatemala", value: "GT" },
-  { label: "Guinea", value: "GN" },
-  { label: "Guinea-Bissau", value: "GW" },
-  { label: "Guyana", value: "GY" },
-  { label: "Haiti", value: "HT" },
-  { label: "Honduras", value: "HN" },
-  { label: "Hungary", value: "HU" },
-  { label: "Iceland", value: "IS" },
-  { label: "India", value: "IN" },
-  { label: "Indonesia", value: "ID" },
-  { label: "Iran", value: "IR" },
-  { label: "Iraq", value: "IQ" },
-  { label: "Ireland", value: "IE" },
-  { label: "Israel", value: "IL" },
-  { label: "Italy", value: "IT" },
-  { label: "Ivory Coast", value: "CI" },
-  { label: "Jamaica", value: "JM" },
-  { label: "Japan", value: "JP" },
-  { label: "Jordan", value: "JO" },
-  { label: "Kazakhstan", value: "KZ" },
-  { label: "Kenya", value: "KE" },
-  { label: "Kiribati", value: "KI" },
-  { label: "Kuwait", value: "KW" },
-  { label: "Kyrgyzstan", value: "KG" },
-  { label: "Laos", value: "LA" },
-  { label: "Latvia", value: "LV" },
-  { label: "Lebanon", value: "LB" },
-  { label: "Lesotho", value: "LS" },
-  { label: "Liberia", value: "LR" },
-  { label: "Libya", value: "LY" },
-  { label: "Liechtenstein", value: "LI" },
-  { label: "Lithuania", value: "LT" },
-  { label: "Luxembourg", value: "LU" },
-  { label: "Madagascar", value: "MG" },
-  { label: "Malawi", value: "MW" },
-  { label: "Malaysia", value: "MY" },
-  { label: "Maldives", value: "MV" },
-  { label: "Mali", value: "ML" },
-  { label: "Malta", value: "MT" },
-  { label: "Marshall Islands", value: "MH" },
-  { label: "Mauritania", value: "MR" },
-  { label: "Mauritius", value: "MU" },
-  { label: "Mexico", value: "MX" },
-  { label: "Micronesia", value: "FM" },
-  { label: "Moldova", value: "MD" },
-  { label: "Monaco", value: "MC" },
-  { label: "Mongolia", value: "MN" },
-  { label: "Montenegro", value: "ME" },
-  { label: "Morocco", value: "MA" },
-  { label: "Mozambique", value: "MZ" },
-  { label: "Myanmar", value: "MM" },
-  { label: "Namibia", value: "NA" },
-  { label: "Nauru", value: "NR" },
-  { label: "Nepal", value: "NP" },
-  { label: "Netherlands", value: "NL" },
-  { label: "New Zealand", value: "NZ" },
-  { label: "Nicaragua", value: "NI" },
-  { label: "Niger", value: "NE" },
-  { label: "Nigeria", value: "NG" },
-  { label: "North Korea", value: "KP" },
-  { label: "North Macedonia", value: "MK" },
-  { label: "Norway", value: "NO" },
-  { label: "Oman", value: "OM" },
-  { label: "Pakistan", value: "PK" },
-  { label: "Palau", value: "PW" },
-  { label: "Palestine", value: "PS" },
-  { label: "Panama", value: "PA" },
-  { label: "Papua New Guinea", value: "PG" },
-  { label: "Paraguay", value: "PY" },
-  { label: "Peru", value: "PE" },
-  { label: "Philippines", value: "PH" },
-  { label: "Poland", value: "PL" },
-  { label: "Portugal", value: "PT" },
-  { label: "Qatar", value: "QA" },
-  { label: "Romania", value: "RO" },
-  { label: "Russia", value: "RU" },
-  { label: "Rwanda", value: "RW" },
-  { label: "Saint Kitts and Nevis", value: "KN" },
-  { label: "Saint Lucia", value: "LC" },
-  { label: "Saint Vincent and the Grenadines", value: "VC" },
-  { label: "Samoa", value: "WS" },
-  { label: "San Marino", value: "SM" },
-  { label: "Sao Tome and Principe", value: "ST" },
-  { label: "Saudi Arabia", value: "SA" },
-  { label: "Senegal", value: "SN" },
-  { label: "Serbia", value: "RS" },
-  { label: "Seychelles", value: "SC" },
-  { label: "Sierra Leone", value: "SL" },
-  { label: "Singapore", value: "SG" },
-  { label: "Slovakia", value: "SK" },
-  { label: "Slovenia", value: "SI" },
-  { label: "Solomon Islands", value: "SB" },
-  { label: "Somalia", value: "SO" },
-  { label: "South Africa", value: "ZA" },
-  { label: "South Korea", value: "KR" },
-  { label: "South Sudan", value: "SS" },
-  { label: "Spain", value: "ES" },
-  { label: "Sri Lanka", value: "LK" },
-  { label: "Sudan", value: "SD" },
-  { label: "Suriname", value: "SR" },
-  { label: "Sweden", value: "SE" },
-  { label: "Switzerland", value: "CH" },
-  { label: "Syria", value: "SY" },
-  { label: "Taiwan", value: "TW" },
-  { label: "Tajikistan", value: "TJ" },
-  { label: "Tanzania", value: "TZ" },
-  { label: "Thailand", value: "TH" },
-  { label: "Togo", value: "TG" },
-  { label: "Tonga", value: "TO" },
-  { label: "Trinidad and Tobago", value: "TT" },
-  { label: "Tunisia", value: "TN" },
-  { label: "Turkey", value: "TR" },
-  { label: "Turkmenistan", value: "TM" },
-  { label: "Tuvalu", value: "TV" },
-  { label: "Uganda", value: "UG" },
-  { label: "Ukraine", value: "UA" },
-  { label: "United Arab Emirates", value: "AE" },
-  { label: "United Kingdom", value: "GB" },
-  { label: "United States", value: "US" },
-  { label: "Uruguay", value: "UY" },
-  { label: "Uzbekistan", value: "UZ" },
-  { label: "Vanuatu", value: "VU" },
-  { label: "Vatican City", value: "VA" },
-  { label: "Venezuela", value: "VE" },
-  { label: "Vietnam", value: "VN" },
-  { label: "Yemen", value: "YE" },
-  { label: "Zambia", value: "ZM" },
-  { label: "Zimbabwe", value: "ZW" },
-];
+type Option = { label: string; value: string };
+type CountryOption = Option;
 
-interface FormData {
+type RegistrationFormData = {
   universityName: string;
   country: string | null;
   directorName: string;
   address: string;
   contactPerson: string;
   contactEmail: string;
+  username: string;
+  password: string;
   statusRelation: string;
   officialLetter: File | null;
-}
+};
+
+const EMAIL_REGEX = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+
+const createInitialFormState = (): RegistrationFormData => ({
+  universityName: "",
+  country: null,
+  directorName: "",
+  address: "",
+  contactPerson: "",
+  contactEmail: "",
+  username: "",
+  password: "",
+  statusRelation: "",
+  officialLetter: null,
+});
 
 export default function RegistrationPage() {
-  const [formData, setFormData] = useState<FormData>({
-    universityName: "",
-    country: null,
-    directorName: "",
-    address: "",
-    contactPerson: "",
-    contactEmail: "",
-    statusRelation: "",
-    officialLetter: null,
-  });
+  const supabase = getSupabaseBrowserClient();
+  const countryOptions = useMemo<CountryOption[]>(
+    () => countryList().getData(),
+    []
+  );
+  const statusOptions = useMemo<Option[]>(
+    () => [
+      { value: "Dean", label: "Dean" },
+      { value: "Department Head", label: "Department Head" },
+      { value: "Administrator", label: "Administrator" },
+      { value: "Faculty Member", label: "Faculty Member" },
+      { value: "Other", label: "Other" },
+    ],
+    []
+  );
+  const reactSelectStyles: StylesConfig<CountryOption, false> = useMemo(
+    () => ({
+      control: (provided, state) => ({
+        ...provided,
+        minHeight: 44,
+        borderColor: state.isFocused ? "#CD5C5C" : "#d1d5db",
+        boxShadow: state.isFocused ? "0 0 0 1px #CD5C5C" : provided.boxShadow,
+        "&:hover": {
+          borderColor: state.isFocused ? "#CD5C5C" : "#9ca3af",
+        },
+      }),
+      valueContainer: (provided) => ({
+        ...provided,
+        padding: "0 16px",
+      }),
+      input: (provided) => ({
+        ...provided,
+        margin: 0,
+        padding: 0,
+      }),
+      indicatorsContainer: (provided) => ({
+        ...provided,
+        height: 44,
+        color: "#374151",
+      }),
+      dropdownIndicator: (provided) => ({
+        ...provided,
+        padding: "0 12px",
+      }),
+      placeholder: (provided) => ({
+        ...provided,
+        color: "#6b7280",
+      }),
+      singleValue: (provided) => ({
+        ...provided,
+        color: "#111827",
+      }),
+      option: (provided, state) => ({
+        ...provided,
+        color: state.isDisabled ? "#9ca3af" : "#111827",
+        backgroundColor: state.isSelected
+          ? "#c5372c"
+          : state.isFocused
+          ? "rgba(197, 55, 44, 0.08)"
+          : "#fff",
+        ":active": {
+          backgroundColor: "rgba(197, 55, 44, 0.12)",
+        },
+      }),
+      menu: (provided) => ({
+        ...provided,
+        zIndex: 30,
+      }),
+    }),
+    []
+  );
+  const DropdownIndicator = (
+    props: DropdownIndicatorProps<CountryOption, false>
+  ) => (
+    <selectComponents.DropdownIndicator {...props}>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M6 9l6 6 6-6"
+          stroke="#374151"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </selectComponents.DropdownIndicator>
+  );
+  const baseInputClass =
+    "w-full h-11 px-4 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-none";
+
+  const [formData, setFormData] = useState<RegistrationFormData>(
+    createInitialFormState
+  );
+
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, value } = e.target;
-    const target = e.target as HTMLInputElement;
-    const files = target.files;
+    const { name, value, files } = event.target as HTMLInputElement;
+    if (name === "officialLetter" && files?.length) {
+      const file = files[0];
+      const MAX_SIZE = 1 * 1024 * 1024; // 1MB
+      if (file.type !== "application/pdf") {
+        alert("Please upload PDF files only.");
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        alert("File too large. Max 1MB");
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        officialLetter: file,
+      }));
+      return;
+    }
 
-    if (name === "officialLetter" && files) {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: files[0],
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus(null);
+    setIsSubmitting(true);
+
+    try {
+      if (!formData.officialLetter) {
+        throw new Error("Official letter PDF must be attached");
+      }
+
+      const normalizedEmail = formData.contactEmail.trim().toLowerCase();
+      if (!EMAIL_REGEX.test(normalizedEmail)) {
+        throw new Error("Please enter a valid email address.");
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: formData.password,
+        options: {
+          data: {
+            username: formData.username,
+            universityName: formData.universityName,
+          },
+        },
+      });
+      if (error || !data.user)
+        throw error ?? new Error("Supabase sign-up failed");
+
+      const payload = new FormData();
+      payload.append("universityName", formData.universityName.trim());
+      payload.append("directorName", formData.directorName.trim());
+      payload.append("address", formData.address.trim());
+      payload.append("contactPerson", formData.contactPerson.trim());
+      payload.append("contactEmail", normalizedEmail);
+      payload.append("username", formData.username.trim());
+      payload.append("statusRelation", formData.statusRelation);
+      payload.append("officialLetter", formData.officialLetter);
+
+      const countryCode = formData.country
+        ? formData.country.toUpperCase()
+        : null;
+      if (countryCode) payload.append("country_code", countryCode);
+      const relationMap: Record<string, string> = {
+        "Faculty Member": "faculty",
+        Administrator: "staff",
+        Dean: "representative",
+        "Department Head": "representative",
+        Other: "other",
+      };
+      const mappedRelation = relationMap[formData.statusRelation];
+      if (mappedRelation) payload.append("pic_relation", mappedRelation);
+      payload.append("supabaseUserId", data.user.id);
+
+      const registerUrl = `${window.location.origin}/api/register`;
+      const response = await fetch(registerUrl, {
+        method: "POST",
+        body: payload,
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || "Failed to store university profile");
+      }
+
+      setStatus({
+        type: "success",
+        message:
+          "Registration submitted. Check your inbox to verify the account while we review your documents.",
+      });
+      setFormData(createInitialFormState());
+      await supabase.auth.signOut(); // optional: keep them logged out until approved
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Unexpected error occurred",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleCountryChange = (selectedOption: any) => {
+  const handleCountryChange = (selectedOption: SingleValue<CountryOption>) => {
     setFormData((prev) => ({
       ...prev,
       country: selectedOption ? selectedOption.value : null,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Create FormData for file upload
-    const submitData = new FormData();
-    (Object.keys(formData) as Array<keyof FormData>).forEach((key) => {
-      const value = formData[key];
-      if (value) {
-        submitData.append(
-          key,
-          value instanceof File ? value : value.toString()
-        );
-      }
-    });
-
-    try {
-      // ENDPOINT ENDPOINT ENDPOINT ENDPOINT
-      const response = await fetch("/api/register", {
-        method: "POST",
-        body: submitData,
-      });
-
-      if (response.ok) {
-        console.log("Form submitted successfully:", formData);
-        alert("Registration submitted successfully!");
-        // Reset form after successful submission
-        setFormData({
-          universityName: "",
-          country: null,
-          directorName: "",
-          address: "",
-          contactPerson: "",
-          contactEmail: "",
-          statusRelation: "",
-          officialLetter: null,
-        });
-      } else {
-        throw new Error("Submission failed");
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Registration failed. Please try again.");
-    }
+  const handleStatusChange = (selectedOption: SingleValue<Option>) => {
+    setFormData((prev) => ({
+      ...prev,
+      statusRelation: selectedOption?.value ?? "",
+    }));
   };
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -305,18 +282,18 @@ export default function RegistrationPage() {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      if (
-        file.type === "application/pdf" ||
-        file.type === "application/msword" ||
-        file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      ) {
-        setFormData((prev) => ({
-          ...prev,
-          officialLetter: file,
-        }));
+      if (file.type === "application/pdf") {
+        const MAX_SIZE = 1 * 1024 * 1024; // 1MB
+        if (file.size > MAX_SIZE) {
+          alert("File too large. Max 1MB");
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            officialLetter: file,
+          }));
+        }
       } else {
-        alert("Please upload only PDF, DOC, or DOCX files.");
+        alert("Please upload PDF files only.");
       }
     }
   };
@@ -343,7 +320,21 @@ export default function RegistrationPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+              {status && (
+                <div
+                  className={`rounded-md border p-4 text-sm ${
+                    status.type === "success"
+                      ? "border-green-200 bg-green-50 text-green-800"
+                      : "border-red-200 bg-red-50 text-red-800"
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {status.message}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* University Name */}
                 <div className="md:col-span-2">
@@ -359,7 +350,7 @@ export default function RegistrationPage() {
                     name="universityName"
                     value={formData.universityName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    className={baseInputClass}
                     required
                   />
                 </div>
@@ -375,15 +366,21 @@ export default function RegistrationPage() {
                   <Select
                     id="country"
                     name="country"
-                    className="block text-sm font-medium text-black mb-1"
-                    options={countries}
+                    styles={reactSelectStyles}
+                    classNamePrefix="country-select"
+                    options={countryOptions}
                     value={
-                      countries.find(
+                      countryOptions.find(
                         (option) => option.value === formData.country
                       ) || null
                     }
                     onChange={handleCountryChange}
                     placeholder="Select a country"
+                    components={{
+                      IndicatorSeparator: () => null,
+                      DropdownIndicator,
+                    }}
+                    instanceId="country-select"
                   />
                 </div>
 
@@ -401,7 +398,7 @@ export default function RegistrationPage() {
                     name="directorName"
                     value={formData.directorName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    className={baseInputClass}
                     required
                   />
                 </div>
@@ -420,7 +417,7 @@ export default function RegistrationPage() {
                     value={formData.address}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-none"
                     required
                   ></textarea>
                 </div>
@@ -439,7 +436,7 @@ export default function RegistrationPage() {
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    className={baseInputClass}
                     required
                   />
                 </div>
@@ -450,7 +447,7 @@ export default function RegistrationPage() {
                     htmlFor="contactEmail"
                     className="block text-sm font-medium text-gray-900 mb-1"
                   >
-                    Contact Person's Email
+                    Contact Person&apos;s Email
                   </label>
                   <input
                     type="email"
@@ -458,7 +455,42 @@ export default function RegistrationPage() {
                     name="contactEmail"
                     value={formData.contactEmail}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
+                    className={baseInputClass}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-medium text-gray-900 mb-1"
+                  >
+                    Username
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={baseInputClass}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-900 mb-1"
+                  >
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={baseInputClass}
                     required
                   />
                 </div>
@@ -471,21 +503,25 @@ export default function RegistrationPage() {
                   >
                     Status/Relation
                   </label>
-                  <select
-                    id="statusRelation"
+                  <Select
+                    inputId="statusRelation"
                     name="statusRelation"
-                    value={formData.statusRelation}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-[#CD5C5C]"
-                    required
-                  >
-                    <option value="">Select your status/relation</option>
-                    <option value="Dean">Dean</option>
-                    <option value="Department Head">Department Head</option>
-                    <option value="Administrator">Administrator</option>
-                    <option value="Faculty Member">Faculty Member</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    styles={reactSelectStyles}
+                    classNamePrefix="status-select"
+                    placeholder="Select your status/relation"
+                    options={statusOptions}
+                    value={
+                      statusOptions.find(
+                        (option) => option.value === formData.statusRelation
+                      ) || null
+                    }
+                    onChange={handleStatusChange}
+                    components={{
+                      IndicatorSeparator: () => null,
+                      DropdownIndicator,
+                    }}
+                    instanceId="status-select"
+                  />
                 </div>
 
                 {/* Official Letter - Enhanced File Upload */}
@@ -544,15 +580,13 @@ export default function RegistrationPage() {
                             type="file"
                             className="sr-only"
                             onChange={handleChange}
-                            accept=".pdf,.doc,.docx"
+                            accept=".pdf"
                             required
                           />
                         </label>
                         <p className="pl-1">or drag and drop</p>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        PDF, DOC, DOCX up to 10MB
-                      </p>
+                      <p className="text-xs text-gray-500">PDF up to 1MB</p>
                     </div>
                   </div>
                   {formData.officialLetter && (
@@ -575,9 +609,10 @@ export default function RegistrationPage() {
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none"
+                  className="w-full sm:w-auto bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
                 >
-                  Register University
+                  {isSubmitting ? "Submitting..." : "Register University"}
                 </button>
                 <Link
                   href="/"

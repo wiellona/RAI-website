@@ -1,40 +1,89 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export default function GeneralInfoPage() {
   const router = useRouter();
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [currentUserEmail, setCurrentUserEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
-    institutionName: "",
+    universityName: "",
     dateEstablishment: "",
     websiteAddress: "",
     addressLocation: "",
-    directorName: "",
+    deanName: "",
     picName: "",
     emailAddress: "",
     aiPublicationsFile: null as File | null,
     aiOpenSourceFile: null as File | null,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-      router.push("/login");
-      return;
-    }
-    setCurrentUserEmail(userEmail);
+    let ignore = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const { data } = await supabase.auth.getSession();
+        if (ignore) return;
+        const email = data.session?.user.email;
+        if (!email) {
+          router.push("/login");
+          return;
+        }
+        setCurrentUserEmail(email);
 
-    const generalInfoKey = `generalInfo_${userEmail}`;
-    const savedInfo = localStorage.getItem(generalInfoKey);
-    if (savedInfo) {
-      setFormData(JSON.parse(savedInfo));
-    }
-  }, [router]);
+        const response = await fetch("/api/general-info", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "Failed to load general info");
+        }
+        const payload = await response.json();
+        if (ignore) return;
+        if (payload?.data) {
+          setFormData((prev) => ({
+            ...prev,
+            universityName: payload.data.name ?? "",
+            dateEstablishment:
+              payload.data.date_of_establishment?.slice(0, 10) ?? "",
+            websiteAddress: payload.data.website ?? "",
+            addressLocation: payload.data.address ?? "",
+            deanName: payload.data.dean_name ?? "",
+            picName: payload.data.pic_name ?? "",
+            emailAddress: payload.data.pic_email ?? email,
+          }));
+        }
+      } catch (error) {
+        if (!ignore) {
+          setStatus({
+            type: "error",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Unable to load general information",
+          });
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [router, supabase]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -54,12 +103,65 @@ export default function GeneralInfoPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const generalInfoKey = `generalInfo_${currentUserEmail}`;
-    localStorage.setItem(generalInfoKey, JSON.stringify(formData));
-    window.location.href = "/questionnaire/criteria";
+    if (!currentUserEmail) {
+      router.push("/login");
+      return;
+    }
+
+    setStatus(null);
+    setIsSubmitting(true);
+
+    try {
+      const payload = new FormData();
+      payload.append("universityName", formData.universityName.trim());
+      payload.append("dateEstablishment", formData.dateEstablishment);
+      payload.append("websiteAddress", formData.websiteAddress.trim());
+      payload.append("addressLocation", formData.addressLocation.trim());
+      payload.append("deanName", formData.deanName.trim());
+      payload.append("picName", formData.picName.trim());
+      payload.append("emailAddress", formData.emailAddress.trim());
+      if (formData.aiPublicationsFile) {
+        payload.append("aiPublicationsFile", formData.aiPublicationsFile);
+      }
+      if (formData.aiOpenSourceFile) {
+        payload.append("aiOpenSourceFile", formData.aiOpenSourceFile);
+      }
+
+      const response = await fetch("/api/general-info", {
+        method: "POST",
+        body: payload,
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to save general info");
+      }
+
+      setStatus({
+        type: "success",
+        message: "General information saved",
+      });
+      router.push("/questionnaire/criteria");
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to submit data",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Loading general information...
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -72,31 +174,42 @@ export default function GeneralInfoPage() {
           {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-[#5C2E2E] mb-4">
-              Institution Responsible AI Rating
+              University Responsible AI Rating
             </h1>
             <p className="text-gray-600">
-              Please provide general information about your institution
+              Please provide general information about your university
             </p>
           </div>
 
           {/* Form */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Institution Name */}
+              {status && (
+                <div
+                  className={`rounded-md border p-4 text-sm ${
+                    status.type === "success"
+                      ? "border-green-200 bg-green-50 text-green-800"
+                      : "border-red-200 bg-red-50 text-red-800"
+                  }`}
+                >
+                  {status.message}
+                </div>
+              )}
+              {/* university Name */}
               <div>
                 <label
-                  htmlFor="institutionName"
+                  htmlFor="universityName"
                   className="block text-sm font-medium text-[#5C2E2E] mb-2"
                 >
-                  Institution Name *
+                  University Name *
                 </label>
                 <input
                   type="text"
-                  id="institutionName"
-                  name="institutionName"
-                  value={formData.institutionName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  id="universityName"
+                  name="universityName"
+                  value={formData.universityName}
+                  readOnly
+                  className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
                   required
                 />
               </div>
@@ -159,27 +272,27 @@ export default function GeneralInfoPage() {
                 />
               </div>
 
-              {/* Director Name */}
+              {/* dean Name */}
               <div>
                 <label
-                  htmlFor="directorName"
+                  htmlFor="deanName"
                   className="block text-sm font-medium text-[#5C2E2E] mb-2"
                 >
-                  Director Name *
+                  Dean Name *
                 </label>
                 <input
                   type="text"
-                  id="directorName"
-                  name="directorName"
-                  value={formData.directorName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  id="deanName"
+                  name="deanName"
+                  value={formData.deanName}
+                  readOnly
+                  className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
                   required
                 />
               </div>
 
               {/* Contact Person */}
-              <div>
+              <div className="space-y-4">
                 <label
                   htmlFor="picName"
                   className="block text-sm font-medium text-[#5C2E2E] mb-2"
@@ -191,30 +304,27 @@ export default function GeneralInfoPage() {
                   id="picName"
                   name="picName"
                   value={formData.picName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  readOnly
+                  className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
                   required
                 />
-              </div>
-
-              {/* Email Address */}
-              <div>
-                <label
-                  htmlFor="emailAddress"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
-                >
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="emailAddress"
-                  name="emailAddress"
-                  value={formData.emailAddress}
-                  onChange={handleChange}
-                  placeholder="contact@university.edu"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
-                  required
-                />
+                <div>
+                  <label
+                    htmlFor="emailAddress"
+                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  >
+                    Contact Person Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="emailAddress"
+                    name="emailAddress"
+                    value={formData.emailAddress}
+                    disabled
+                    placeholder="contact@university.edu"
+                    className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
+                  />
+                </div>
               </div>
 
               {/* AI Publications File Upload */}
@@ -237,7 +347,7 @@ export default function GeneralInfoPage() {
                       <p className="font-semibold mb-2">What is this?</p>
                       <p className="mb-2">
                         Upload a document listing AI-related research papers,
-                        articles, or academic publications your institution has
+                        articles, or academic publications your university has
                         produced in the last 3 years.
                       </p>
                       <p className="text-gray-300 text-xs">
@@ -250,7 +360,7 @@ export default function GeneralInfoPage() {
                 </label>
                 <p className="mb-3 text-sm">
                   <a
-                    href="/templates/ai-publications-template.xlsx"
+                    href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Templates/ai-publications-template.csv"
                     download
                     className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200 inline-flex items-center gap-1"
                   >
@@ -308,9 +418,7 @@ export default function GeneralInfoPage() {
                   <p className="mt-2 text-sm text-gray-600">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500">
-                    XLSX, CSV, PDF, DOC, DOCX up to 10MB
-                  </p>
+                  <p className="text-xs text-gray-500">XLSX up to 10MB</p>
                 </div>
                 <input
                   id="aiPublicationsFile"
@@ -342,7 +450,7 @@ export default function GeneralInfoPage() {
                       <p className="font-semibold mb-2">What is this?</p>
                       <p className="mb-2">
                         Upload a document listing AI-related open-source
-                        resources your institution has released.
+                        resources your university has released.
                       </p>
                       <ul className="list-disc list-inside mb-2 space-y-1 text-xs">
                         <li>AI models (e.g., trained neural networks)</li>
@@ -358,7 +466,7 @@ export default function GeneralInfoPage() {
                 </label>
                 <p className="mb-3 text-sm">
                   <a
-                    href="/templates/ai-assets-template.xlsx"
+                    href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Templates/ai-assets-template.csv"
                     download
                     className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200 inline-flex items-center gap-1"
                   >
@@ -416,9 +524,7 @@ export default function GeneralInfoPage() {
                   <p className="mt-2 text-sm text-gray-600">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500">
-                    XLSX, CSV, PDF, DOC, DOCX up to 10MB
-                  </p>
+                  <p className="text-xs text-gray-500">XLSX up to 10MB</p>
                 </div>
                 <input
                   id="aiOpenSourceFile"
@@ -434,9 +540,10 @@ export default function GeneralInfoPage() {
               <div className="pt-6">
                 <button
                   type="submit"
-                  className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white font-medium py-3 rounded-md transition-colors"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#A84032] hover:bg-[#8B3528] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-3 rounded-md transition-colors"
                 >
-                  Continue to Questionnaire
+                  {isSubmitting ? "Saving..." : "Continue to Questionnaire"}
                 </button>
               </div>
             </form>

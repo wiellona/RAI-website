@@ -3,17 +3,38 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Header";
+import { useRouter } from "next/navigation";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
+  const supabase = getSupabaseBrowserClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Dummy login - redirect to questionnaire
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userEmail", email);
-    window.location.href = "/questionnaire/general-info";
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      localStorage.setItem("userEmail", normalizedEmail);
+      router.push("/questionnaire/general-info");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -34,6 +55,12 @@ export default function LoginPage() {
             <h2 className="text-2xl font-semibold text-[#5C2E2E] mb-6">
               University Portal Login
             </h2>
+
+            {error && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Field */}
@@ -77,9 +104,10 @@ export default function LoginPage() {
               {/* Login Button */}
               <button
                 type="submit"
-                className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white font-medium py-3 rounded-md transition-colors"
+                disabled={isLoading}
+                className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white font-medium py-3 rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Login
+                {isLoading ? "Logging in..." : "Login"}
               </button>
 
               {/* Links */}
