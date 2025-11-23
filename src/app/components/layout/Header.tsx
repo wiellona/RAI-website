@@ -55,7 +55,7 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
-              href="/login"
+              href="/authentication/register"
               className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
             >
               Participate
@@ -64,7 +64,7 @@ export default function Navbar() {
             {/* Desktop Login/Logout Button */}
             {!isLoggedIn ? (
               <Link
-                href="/login"
+                href="/authentication/login"
                 className="bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
               >
                 Login
@@ -121,7 +121,7 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
-              href="/login"
+              href="/authentication/register"
               className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -132,7 +132,7 @@ export default function Navbar() {
             <div className="px-4 pt-2">
               {!isLoggedIn ? (
                 <Link
-                  href="/login"
+                  href="/authentication/login"
                   className="block w-full bg-[#A84032] hover:bg-[#8B3528] text-white text-center px-6 py-2 rounded transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

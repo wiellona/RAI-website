@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/layout/Header";
+import Navbar from "@/app/components/layout/Header";
 import { getCriteriaData, type UICriteria } from "@/lib/api/questionnaire";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 

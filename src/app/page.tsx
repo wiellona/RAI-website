@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Header from "@/components/layout/Header";
+import Header from "@/app/components/layout/Header";
+import Footer from "@/app/components/layout/Footer";
 
 export default function LandingPage() {
   return (
@@ -55,7 +56,7 @@ export default function LandingPage() {
                   Explore the 2025 Ranking →
                 </Link>
                 <Link
-                  href="/login"
+                  href="/authentication/register"
                   className="inline-flex items-center justify-center bg-white border-2 border-[#c5372c] text-[#c5372c] hover:bg-[#c5372c] hover:text-white px-8 py-4 rounded-lg transition-all font-medium"
                 >
                   Participate
@@ -264,65 +265,7 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gradient-to-br from-[#511715] to-[#3a0f0f] text-white py-16 relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#c5372c]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-8 md:space-y-0">
-            {/* Logo and Description */}
-            <div className="flex flex-col space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-white/30 to-white/10 rounded-lg backdrop-blur-sm flex items-center justify-center">
-                  <div className="w-6 h-6 bg-white rounded"></div>
-                </div>
-                <span className="text-2xl font-bold">RAI</span>
-              </div>
-              <p className="text-sm text-white/70 max-w-xs leading-relaxed">
-                Responsible AI Global University Ranking
-              </p>
-            </div>
-
-            {/* Contact and Social Links */}
-            <div className="flex flex-col space-y-4">
-              <p className="text-sm font-medium">
-                Contact:{" "}
-                <span className="text-white/80">info@rai-ranking.org</span>
-              </p>
-              <div className="flex space-x-6 text-sm">
-                <a
-                  href="#"
-                  className="hover:text-white/90 transition-all hover:-translate-y-0.5"
-                >
-                  Twitter/X
-                </a>
-                <a
-                  href="#"
-                  className="hover:text-white/90 transition-all hover:-translate-y-0.5"
-                >
-                  LinkedIn
-                </a>
-                <a
-                  href="#"
-                  className="hover:text-white/90 transition-all hover:-translate-y-0.5"
-                >
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Copyright */}
-          <div className="mt-12 pt-8 border-t border-white/10">
-            <p className="text-sm text-white/50 text-center md:text-left">
-              © 2025 RAI. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import Navbar from "@/app/components/layout/Header";
+import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export default function GeneralInfoPage() {

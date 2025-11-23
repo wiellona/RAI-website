@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Navbar from "@/components/layout/Header";
+import Navbar from "@/app/components/layout/Header";
 
 export default function SubmissionPage() {
   return (
