@@ -34,10 +34,11 @@ export default function LoginPage() {
   };
 
   return (
-    <Container>
-      <div className="flex justify-center items-center py-16">
-        <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
+    <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <Container>
+        <div className="flex justify-center items-center">
+          <div className="w-full max-w-md bg-white border border-gray-200 p-8 rounded-lg shadow-sm">
+            <h1 className="text-3xl font-bold text-center mb-6 text-[#5C2E2E]">Login to RAI</h1>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
@@ -69,7 +70,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <button
                 type="submit"
-                className="btn btn-primary w-full"
+                className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white font-semibold py-3 px-4 rounded-lg transition-colors"
                 disabled={auth.isLoading}
               >
                 {auth.isLoading ? 'Logging in...' : 'Sign In'}
@@ -77,7 +78,7 @@ export default function LoginPage() {
             </div>
           </form>
         </div>
-      </div>
-    </Container>
+      </Container>
+    </div>
   );
 }

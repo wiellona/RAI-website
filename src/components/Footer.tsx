@@ -3,7 +3,7 @@ import Container from "./Container";
 
 export default function Footer() {
   return (
-    <footer className="mt-16 bg-[var(--footer-bg)] py-12 text-white">
+    <footer className="mt-16 bg-(--footer-bg) py-12 text-white">
       <Container>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
