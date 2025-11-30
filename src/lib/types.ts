@@ -1,3 +1,21 @@
+// 8 Dimensi RAI (Responsible AI)
+export type RAIDimensions = {
+  collaboration: number | null;
+  privacy: number | null;
+  accountability: number | null;
+  security: number | null;
+  ethicsInAI: number | null;
+  fairness: number | null;
+  transparency: number | null;
+  continuousLearning: number | null;
+};
+
+export type CategoryScore = {
+  categoryName: string;
+  score: number | null;
+  updatedAt: string | null;
+};
+
 export type University = {
   id: string;
   slug: string;
@@ -7,12 +25,8 @@ export type University = {
   rank: number;
   trustScore: number; // 0-100
   lastUpdated: string; // ISO date string
-  metrics: {
-    transparency: number; // 0-100
-    auditability: number; // 0-100
-    dataPrivacy: number; // 0-100
-    policyMaturity: number; // 0-100
-  };
+  metrics: RAIDimensions; // Updated to use 8 dimensions
+  categoryScores?: CategoryScore[]; // Array of category scores with timestamps
 };
 
 export type Filters = {
@@ -28,7 +42,7 @@ export interface Submission {
   questionnaire_id: string;
   submitted_by_user_id: string;
   submitted_at: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
   // Related data from joins
   university?: {
     name: string;

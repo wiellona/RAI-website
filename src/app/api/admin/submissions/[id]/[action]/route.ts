@@ -13,8 +13,8 @@ export async function POST(
 
     if (action === "accept") {
       const { error } = await supabase
-        .from("submissions")
-        .update({ status: "accepted" })
+        .from("Submissions")
+        .update({ status: "approved" })
         .eq("id", id);
 
       if (error) throw error;
@@ -22,7 +22,7 @@ export async function POST(
       return NextResponse.json({ success: true });
     } else if (action === "reject") {
       const { error } = await supabase
-        .from("submissions")
+        .from("Submissions")
         .update({ status: "rejected" })
         .eq("id", id);
 

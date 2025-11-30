@@ -1,4 +1,3 @@
-import { UNIVERSITIES } from "./mockData";
 import type { University } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
@@ -40,21 +39,6 @@ export function setLocalUniversityOverrides(id: string, patch: UniOverride) {
   localStorage.setItem('uniOverrides', JSON.stringify(next));
 }
 
-function applyOverrides(list: University[]): University[] {
-  if (typeof window === 'undefined') return list;
-  const overrides = getLocalOverrides();
-  return list.map(u => {
-    const o = overrides[u.id];
-    if (!o) return u;
-    const metrics = {
-      ...u.metrics,
-      ...(o.metrics || {}),
-    };
-    const trustScore = typeof o.trustScore === 'number' ? o.trustScore : u.trustScore;
-    return { ...u, metrics, trustScore };
-  });
-}
-
 async function apiFetch<T>(path: string, init: RequestInit = {}, requireAuth = false): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
@@ -71,7 +55,13 @@ async function apiFetch<T>(path: string, init: RequestInit = {}, requireAuth = f
 }
 
 export async function fetchUniversities(): Promise<University[]> {
-  return await apiFetch<University[]>(`/universities`);
+  try {
+    return await apiFetch<University[]>(`/universities`);
+  } catch (e) {
+    console.error("Failed to fetch universities from database:", e);
+    // Return empty array when database is empty or error occurs
+    return [];
+  }
 }
 
 export async function fetchUniversityBySlug(slug: string): Promise<University | null> {
@@ -116,9 +106,9 @@ export async function getRankings(): Promise<University[]> {
   try {
     return await apiFetch<University[]>(`/rankings`);
   } catch (e) {
-    console.warn("Falling back to mock rankings:", e);
-    await delay(300);
-    return UNIVERSITIES;
+    console.error("Failed to fetch rankings from database:", e);
+    // Return empty array when database is empty or error occurs
+    return [];
   }
 }
 
