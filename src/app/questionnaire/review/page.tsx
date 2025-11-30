@@ -1,7 +1,7 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
 
@@ -9,72 +9,158 @@ interface SectionStatus {
   id: number;
   title: string;
   completed: boolean;
+  totalQuestions: number;
+  answeredQuestions: number;
 }
 
-// Criteria data structure (same as criteria page)
-const criteriaData = [
-  { id: 1, title: "Ethics in AI", questions: 2 },
-  { id: 2, title: "Fairness", questions: 2 },
-  { id: 3, title: "Transparency", questions: 2 },
-  { id: 4, title: "Accountability", questions: 2 },
-  { id: 5, title: "Privacy", questions: 2 },
-  { id: 6, title: "Security", questions: 2 },
-  { id: 7, title: "Continuous Learning", questions: 2 },
-  { id: 8, title: "Collaboration", questions: 2 },
-];
+interface ReviewDataResponse {
+  submissionId: string;
+  sections: SectionStatus[];
+  completedCount: number;
+  totalCount: number;
+  allCompleted: boolean;
+  submissionStatus: string | null;
+  error?: string;
+}
 
 export default function ReviewPage() {
   const router = useRouter();
+
   const [sections, setSections] = useState<SectionStatus[]>([]);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
-  const totalCount = 8;
+  const [totalCount, setTotalCount] = useState(0);
+  const [allCompleted, setAllCompleted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusLevel, setStatusLevel] = useState<"info" | "error" | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const progressSummary = useMemo(
+    () => ({ completedCount, totalCount }),
+    [completedCount, totalCount]
+  );
 
   useEffect(() => {
-    // Get current user email
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-      // If no user logged in, redirect to login
-      router.push("/login");
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setStatusMessage(null);
+      setStatusLevel(null);
+      try {
+        const res = await fetch("/api/review-data", { cache: "no-store" });
+        const payload = (await res
+          .json()
+          .catch(() => ({}))) as ReviewDataResponse;
+
+        if (!res.ok) {
+          throw new Error(payload?.error ?? "Failed to load review data.");
+        }
+        if (cancelled) return;
+
+        setSubmissionId(payload.submissionId);
+        setSections(payload.sections ?? []);
+        setCompletedCount(payload.completedCount ?? 0);
+        setTotalCount(payload.totalCount ?? 0);
+        setAllCompleted(Boolean(payload.allCompleted));
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to load review data", error);
+        setSections([]);
+        setSubmissionId(null);
+        setCompletedCount(0);
+        setTotalCount(0);
+        setAllCompleted(false);
+        setStatusLevel("error");
+        setStatusMessage(
+          error instanceof Error ? error.message : "Failed to load review data."
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    // if (!submissionId || !allCompleted) {
+    //   setStatusLevel("error");
+    //   setStatusMessage("Please complete every section before submitting.");
+    //   return;
+    // }
+
+    if (!submissionId) {
+      setStatusLevel("error");
+      setStatusMessage("Submission is missing.");
       return;
     }
 
-    // Read answers from localStorage for this user
-    const answersKey = `questionnaireAnswers_${userEmail}`;
-    const savedAnswers = localStorage.getItem(answersKey);
-    const answers = savedAnswers ? JSON.parse(savedAnswers) : {};
+    setIsSubmitting(true);
+    setStatusMessage(null);
+    setStatusLevel(null);
 
-    // Check completion status for each criteria
-    const sectionsStatus = criteriaData.map((criteria) => {
-      // Check if all questions in this criteria are answered
-      const question1Id = `${criteria.id}.1`;
-      const question2Id = `${criteria.id}.2`;
-
-      const isCompleted =
-        answers[question1Id] !== undefined &&
-        answers[question2Id] !== undefined;
-
-      return {
-        id: criteria.id,
-        title: `${criteria.id}. ${criteria.title}`,
-        completed: isCompleted,
+    try {
+      const res = await fetch("/api/review-data", { method: "POST" });
+      const payload = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        error?: string;
       };
-    });
 
-    setSections(sectionsStatus);
-    setCompletedCount(sectionsStatus.filter((s) => s.completed).length);
-  }, [router]);
+      if (!res.ok || !payload?.success) {
+        throw new Error(payload?.error ?? "Failed to submit questionnaire.");
+      }
+
+      setStatusLevel("info");
+      setStatusMessage("Questionnaire submitted successfully.");
+      router.push("/questionnaire/submission");
+    } catch (error) {
+      console.error("Failed to submit questionnaire", error);
+      setStatusLevel("error");
+      setStatusMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit questionnaire."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [allCompleted, router, submissionId]);
+
+  if (loading) {
+    return (
+      <div className="bg-white min-h-screen flex items-center justify-center text-gray-600">
+        Loading review data...
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen flex flex-col">
-      {/* Header */}
       <Navbar />
 
-      {/* Main Content */}
       <main className="flex-1 py-12 flex items-center justify-center">
         <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Review Card */}
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 md:p-12">
-            {/* Success Icon */}
+            {statusMessage && (
+              <div
+                className={`mb-6 rounded-md px-4 py-3 text-sm ${
+                  statusLevel === "error"
+                    ? "bg-red-50 text-red-700 border border-red-200"
+                    : "bg-green-50 text-green-700 border border-green-200"
+                }`}
+              >
+                {statusMessage}
+              </div>
+            )}
+
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
                 <svg
@@ -93,17 +179,19 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            {/* Title */}
             <h1 className="text-3xl font-bold text-center text-[#5C2E2E] mb-8">
               Review and Submit Your Questionnaire
             </h1>
 
-            {/* Section Status Grid */}
             <div className="grid md:grid-cols-2 gap-3 mb-8">
               {sections.map((section) => (
                 <div
                   key={section.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-200"
+                  className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    section.completed
+                      ? "bg-green-50 border-green-200"
+                      : "bg-white border-gray-200"
+                  }`}
                 >
                   {section.completed ? (
                     <svg
@@ -130,26 +218,31 @@ export default function ReviewPage() {
                       />
                     </svg>
                   )}
-                  <span className="text-sm font-medium text-gray-900">
-                    {section.title}
-                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {section.title}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {section.answeredQuestions}/{section.totalQuestions}{" "}
+                      questions answered
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Warning Text */}
             <div className="bg-[#FFF5F5] border border-[#FFE5E5] rounded-lg p-4 mb-8">
               <p className="text-sm text-gray-700 text-center">
                 You have completed{" "}
-                <span className="font-bold">{completedCount}</span> out of{" "}
-                <span className="font-bold">{totalCount}</span> sections of the
-                RAI questionnaire. Please review your answers before final
-                submission. Once submitted, the questionnaire will be locked for
-                review and cannot be edited.
+                <span className="font-bold">
+                  {progressSummary.completedCount}
+                </span>{" "}
+                out of{" "}
+                <span className="font-bold">{progressSummary.totalCount}</span>{" "}
+                sections. Please review your answers before final submission.
               </p>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/questionnaire/criteria"
@@ -157,49 +250,33 @@ export default function ReviewPage() {
               >
                 Go Back and Edit
               </Link>
-              <Link
-                href="/questionnaire/submission"
-                className="inline-flex items-center justify-center bg-[#A84032] hover:bg-[#8B3528] text-white font-medium px-8 py-3 rounded-md transition-colors"
+              <button
+                type="button"
+                onClick={handleSubmit}
+                // disabled={!submissionId || !allCompleted || isSubmitting}
+                disabled={!submissionId || isSubmitting}
+                className="inline-flex items-center justify-center bg-[#A84032] hover:bg-[#8B3528] disabled:bg-gray-300 disabled:text-gray-500 text-white font-medium px-8 py-3 rounded-md transition-colors"
               >
-                Submit Final Questionnaire
-              </Link>
+                {isSubmitting ? "Submitting..." : "Submit Final Questionnaire"}
+              </button>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="bg-[#5C2E2E] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white/20 rounded"></div>
-                <span className="text-xl font-bold">RAI</span>
-              </div>
-              <p className="text-sm text-white/80">
-                Responsible AI Global University Ranking
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">Contact: info@rai-ranking.org</p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  Twitter/X
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  LinkedIn
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-sm text-white/60 text-center md:text-left">
-              © 2025 RAI. All rights reserved.
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6">
+          <div>
+            <p className="font-semibold text-lg">Need assistance?</p>
+            <p className="text-sm text-white/80">
+              Contact the National Research and Innovation Agency (BRIN) RAI
+              Team.
             </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-sm text-white/80">
+            <span>☎ (021) 1230-4567</span>
+            <span>✉ rai@brin.go.id</span>
+            <span>📍 Jakarta, Indonesia</span>
           </div>
         </div>
       </footer>

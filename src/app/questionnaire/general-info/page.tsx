@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 export default function GeneralInfoPage() {
   const router = useRouter();
@@ -27,6 +27,15 @@ export default function GeneralInfoPage() {
     aiOpenSourceFile: null as File | null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [existingFiles, setExistingFiles] = useState<{
+    publication: { url: string | null; path: string } | null;
+    asset: { url: string | null; path: string } | null;
+  }>({ publication: null, asset: null });
+
+  const publicationRequired =
+    !formData.aiPublicationsFile && !existingFiles.publication;
+  const assetRequired = !formData.aiOpenSourceFile && !existingFiles.asset;
 
   useEffect(() => {
     let ignore = false;
@@ -64,6 +73,12 @@ export default function GeneralInfoPage() {
             picName: payload.data.pic_name ?? "",
             emailAddress: payload.data.pic_email ?? email,
           }));
+        }
+        if (payload?.files) {
+          setExistingFiles({
+            publication: payload.files.publication,
+            asset: payload.files.asset,
+          });
         }
       } catch (error) {
         if (!ignore) {
@@ -152,6 +167,34 @@ export default function GeneralInfoPage() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveExisting = async (type: "publication" | "asset") => {
+    setStatus(null);
+    try {
+      const res = await fetch(`/api/general-info?type=${type}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to remove file");
+      }
+      setExistingFiles((prev) => ({ ...prev, [type]: null }));
+      if (type === "publication") {
+        setFormData((prev) => ({ ...prev, aiPublicationsFile: null }));
+      } else {
+        setFormData((prev) => ({ ...prev, aiOpenSourceFile: null }));
+      }
+      setStatus({
+        type: "success",
+        message: "Evidence removed. Upload a new file if needed.",
+      });
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to remove file",
+      });
     }
   };
 
@@ -329,7 +372,7 @@ export default function GeneralInfoPage() {
 
               {/* AI Publications File Upload */}
               <div>
-                <label className="block text-sm font-medium text-[#5C2E2E] mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-[#5C2E2E] mb-2 items-center gap-2">
                   AI Publications (Last 3 Years) *
                   <span className="relative group text-gray-400 hover:text-[#A84032] cursor-help transition-colors">
                     <svg
@@ -396,6 +439,34 @@ export default function GeneralInfoPage() {
                     {formData.aiPublicationsFile.name}
                   </p>
                 )}
+                {existingFiles.publication && (
+                  <div className="mb-3 rounded border border-green-200 bg-green-50 p-3 flex items-center justify-between text-sm text-green-800">
+                    <div className="space-y-1">
+                      <p className="font-medium">Existing upload</p>
+                      {existingFiles.publication.url ? (
+                        <a
+                          href={existingFiles.publication.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-green-700"
+                        >
+                          Download current file
+                        </a>
+                      ) : (
+                        <p className="text-xs text-green-700">
+                          File stored (no preview)
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExisting("publication")}
+                      className="text-red-600 hover:text-red-700 text-xs font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
                 <div
                   className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#A84032]/50 transition-colors"
                   onClick={() =>
@@ -426,13 +497,13 @@ export default function GeneralInfoPage() {
                   className="hidden"
                   accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
                   onChange={(e) => handleFileChange(e, "aiPublicationsFile")}
-                  required
+                  required={publicationRequired}
                 />
               </div>
 
               {/* AI Open-Source Assets File Upload */}
               <div>
-                <label className="block text-sm font-medium text-[#5C2E2E] mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-[#5C2E2E] mb-2 items-center gap-2">
                   AI Open-Source Assets *
                   <span className="relative group text-gray-400 hover:text-[#A84032] cursor-help transition-colors">
                     <svg
@@ -502,6 +573,34 @@ export default function GeneralInfoPage() {
                     {formData.aiOpenSourceFile.name}
                   </p>
                 )}
+                {existingFiles.asset && (
+                  <div className="mb-3 rounded border border-green-200 bg-green-50 p-3 flex items-center justify-between text-sm text-green-800">
+                    <div className="space-y-1">
+                      <p className="font-medium">Existing upload</p>
+                      {existingFiles.asset.url ? (
+                        <a
+                          href={existingFiles.asset.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-green-700"
+                        >
+                          Download current file
+                        </a>
+                      ) : (
+                        <p className="text-xs text-green-700">
+                          File stored (no preview)
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExisting("asset")}
+                      className="text-red-600 hover:text-red-700 text-xs font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
                 <div
                   className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#A84032]/50 transition-colors"
                   onClick={() =>
@@ -532,7 +631,7 @@ export default function GeneralInfoPage() {
                   className="hidden"
                   accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
                   onChange={(e) => handleFileChange(e, "aiOpenSourceFile")}
-                  required
+                  required={assetRequired}
                 />
               </div>
 

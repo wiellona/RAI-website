@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 export interface Profile {
   id: string;

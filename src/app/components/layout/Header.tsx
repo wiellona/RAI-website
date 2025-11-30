@@ -2,30 +2,63 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const supabase = getSupabaseBrowserClient();
+
+  // useEffect(() => {
+  //   // Check login status from localStorage
+  //   const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+  //   setIsLoggedIn(loggedIn);
+  // }, []);
 
   useEffect(() => {
-    // Check login status from localStorage
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loggedIn);
-  }, []);
+    const update = () =>
+      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
 
-  const handleLogout = () => {
+    // initial
+    update();
+
+    // listen to manual events
+    window.addEventListener("storage", update);
+    window.addEventListener("auth-change", update);
+
+    // listen to Supabase auth state (optional but robust)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+          localStorage.setItem("isLoggedIn", "true");
+        } else {
+          localStorage.removeItem("isLoggedIn");
+        }
+        update();
+      }
+    );
+
+    return () => {
+      window.removeEventListener("storage", update);
+      window.removeEventListener("auth-change", update);
+      listener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut(); // end Supabase session
+
     const userEmail = localStorage.getItem("userEmail");
-
-    // Remove user-specific data
     if (userEmail) {
       localStorage.removeItem(`generalInfo_${userEmail}`);
       localStorage.removeItem(`questionnaireAnswers_${userEmail}`);
     }
-
-    // Remove auth data
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("universityName");
+
+    window.dispatchEvent(new Event("auth-change")); // force re-check in this tab
+    setIsLoggedIn(false); // immediate UI update
 
     window.location.href = "/";
   };

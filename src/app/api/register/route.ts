@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { getSupabaseServerClient } from "@/supabase/supabaseServer";
 import { Buffer } from "node:buffer";
 
 export const runtime = "nodejs";
@@ -123,34 +123,44 @@ export async function POST(req: Request) {
   // Upload file to Storage bucket
   const safeName = sanitizeFilename(file.name);
   const path = `${FOLDER_PREFIX}/${Date.now()}_${safeName}`;
-  let buffer: Buffer;
-  try {
-    buffer = Buffer.from(await file.arrayBuffer());
-  } catch {
+  // Convert the uploaded File to a Node Buffer for Supabase storage upload
+  const arrayBuf = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuf);
+
+  const { data: bucketInfo } = await supabase.storage.getBucket(BUCKET_NAME);
+  if (!bucketInfo) {
+    const { error: bucketError } = await supabase.storage.createBucket(
+      BUCKET_NAME,
+      {
+        public: false,
+        allowedMimeTypes: ["application/pdf"],
+        fileSizeLimit: MAX_FILE_SIZE.toString(),
+      }
+    );
+    if (bucketError) {
+      console.error("[register] bucket create failed", bucketError);
+      return NextResponse.json(
+        { error: "Storage bucket unavailable" },
+        { status: 500 }
+      );
+    }
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(path, buffer, {
+      contentType: file.type || "application/pdf",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("[register] upload failed", uploadError);
     return NextResponse.json(
-      { error: "Failed to read file buffer" },
+      { error: "Failed to upload letter" },
       { status: 500 }
     );
   }
 
-  const { error: uploadErr } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(path, buffer, {
-      contentType: file.type || "application/octet-stream",
-      upsert: false,
-    });
-
-  if (uploadErr) {
-    console.error(uploadErr);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
-  }
-
-  // Derive public URL (will work if bucket is public; if private, handle signed URL later)
-  //   const { data: publicUrlData } = supabase.storage
-  //     .from(BUCKET_NAME)
-  //     .getPublicUrl(path);
-
-  // Insert university record
   const { data: inserted, error: insertErr } = await supabase
     .from("Universities")
     .insert({
@@ -174,23 +184,57 @@ export async function POST(req: Request) {
     );
   }
 
-  const { error: profileUpdateErr } = await supabase
+  // const { data: profileRow, error: profileUpdateErr } = await supabase
+  //   .from("Profiles")
+  //   .insert({
+  //     id: supabaseUserId,
+  //     name: contactPerson,
+  //     role: "user",
+  //     is_approved: false,
+  //   })
+  //   .select("id")
+  //   .single();
+
+  const { data: profileRow, error: profileUpdateErr } = await supabase
     .from("Profiles")
-    .update({ name: contactPerson })
-    .eq("id", supabaseUserId);
+    .upsert(
+      {
+        id: supabaseUserId,
+        name: contactPerson,
+        role: "user",
+        is_approved: false,
+      },
+      { onConflict: "id" }
+    )
+    .select("id")
+    .single();
 
   if (profileUpdateErr) {
     console.error(profileUpdateErr);
     return NextResponse.json(
-      { error: "Profile update failed" },
+      { error: "Profile creation failed" },
       { status: 500 }
     );
   }
+
+  // const { error: profileUpdateErr } = await supabase
+  //   .from("Profiles")
+  //   .update({ name: contactPerson })
+  //   .eq("id", supabaseUserId);
+
+  // if (profileUpdateErr) {
+  //   console.error(profileUpdateErr);
+  //   return NextResponse.json(
+  //     { error: "Profile update failed" },
+  //     { status: 500 }
+  //   );
+  // }
 
   return NextResponse.json(
     {
       ok: true,
       universityId: inserted.id,
+      profileId: profileRow.id,
       letterPath: path,
     },
     { status: 201 }

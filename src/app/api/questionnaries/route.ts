@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { getSupabaseServerClient } from "@/supabase/supabaseServer";
 
 type RawQuestionnaire = {
   id: string;
@@ -70,7 +70,7 @@ export async function GET() {
 
     const { data: questionnaireRows, error: questionnaireError } =
       await supabase
-        .from("Questionnaires")
+        .from("Questionnaries")
         .select("id, title, version, created_at")
         .order("version", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false, nullsFirst: false })
@@ -78,7 +78,7 @@ export async function GET() {
 
     if (questionnaireError) {
       console.error(
-        "[api/questionnaires] questionnaire query failed",
+        "[api/questionnaries] questionnaire query failed",
         questionnaireError
       );
       return NextResponse.json(
@@ -107,7 +107,7 @@ export async function GET() {
 
     if (categoryError) {
       console.error(
-        "[api/questionnaires] categories query failed",
+        "[api/questionnaries] categories query failed",
         categoryError
       );
       return NextResponse.json(
@@ -145,7 +145,7 @@ export async function GET() {
 
       if (questionError) {
         console.error(
-          "[api/questionnaires] questions query failed",
+          "[api/questionnaries] questions query failed",
           questionError
         );
         return NextResponse.json(
@@ -175,7 +175,7 @@ export async function GET() {
         .in("question_id", questionIds);
 
       if (optionError) {
-        console.error("[api/questionnaires] options query failed", optionError);
+        console.error("[api/questionnaries] options query failed", optionError);
         return NextResponse.json(
           {
             error: optionError.message,
@@ -258,7 +258,7 @@ export async function GET() {
       data: payload,
     });
   } catch (error) {
-    console.error("[api/questionnaires]", error);
+    console.error("[api/questionnaries]", error);
 
     return NextResponse.json(
       {

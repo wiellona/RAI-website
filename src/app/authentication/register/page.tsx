@@ -12,7 +12,9 @@ import Select, {
   type DropdownIndicatorProps,
 } from "react-select";
 import countryList from "react-select-country-list";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import { useRouter } from "next/navigation";
+import { useRef } from "react";
 
 type Option = { label: string; value: string };
 type CountryOption = Option;
@@ -47,6 +49,7 @@ const createInitialFormState = (): RegistrationFormData => ({
 
 export default function RegistrationPage() {
   const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
   const countryOptions = useMemo<CountryOption[]>(
     () => countryList().getData(),
     []
@@ -152,6 +155,25 @@ export default function RegistrationPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const letterInputRef = useRef<HTMLInputElement | null>(null);
+  const openLetterPicker = () => letterInputRef.current?.click();
+
+  const handleLetterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) return;
+
+    const MAX_SIZE = 1 * 1024 * 1024;
+    if (file.type !== "application/pdf") {
+      alert("Please upload PDF files only.");
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      alert("File too large. Max 1MB");
+      return;
+    }
+    setFormData((prev) => ({ ...prev, officialLetter: file }));
+  };
+
   const handleChange = (
     event: ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -192,6 +214,7 @@ export default function RegistrationPage() {
         throw new Error("Official letter PDF must be attached");
       }
 
+      // Change this in production
       const normalizedEmail = formData.contactEmail.trim().toLowerCase();
       if (!EMAIL_REGEX.test(normalizedEmail)) {
         throw new Error("Please enter a valid email address.");
@@ -215,7 +238,7 @@ export default function RegistrationPage() {
       payload.append("directorName", formData.directorName.trim());
       payload.append("address", formData.address.trim());
       payload.append("contactPerson", formData.contactPerson.trim());
-      payload.append("contactEmail", normalizedEmail);
+      payload.append("contactEmail", normalizedEmail); // Change to normalizedEmail in production
       payload.append("username", formData.username.trim());
       payload.append("statusRelation", formData.statusRelation);
       payload.append("officialLetter", formData.officialLetter);
@@ -251,7 +274,11 @@ export default function RegistrationPage() {
           "Registration submitted. Check your inbox to verify the account while we review your documents.",
       });
       setFormData(createInitialFormState());
-      await supabase.auth.signOut(); // optional: keep them logged out until approved
+      await supabase.auth.signOut();
+
+      setTimeout(() => {
+        router.push("/authentication/login");
+      }, 5000);
     } catch (err) {
       setStatus({
         type: "error",
@@ -542,67 +569,55 @@ export default function RegistrationPage() {
                       For template example, click here
                     </a>
                   </p>
+                  <input
+                    ref={letterInputRef}
+                    id="officialLetter"
+                    name="officialLetter"
+                    type="file"
+                    className="hidden"
+                    accept="application/pdf"
+                    onChange={handleLetterChange}
+                    required
+                  />
                   <div
-                    className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-[#CD5C5C] focus-within:border-[#CD5C5C]"
+                    className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#A84032]/50 transition-colors"
+                    onClick={openLetterPicker}
                     onDrop={handleFileDrop}
                     onDragOver={handleDragOver}
-                    onClick={() => {
-                      const fileInput = document.getElementById(
-                        "officialLetter"
-                      ) as HTMLInputElement;
-                      fileInput?.click();
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openLetterPicker();
+                      }
                     }}
+                    aria-label="Upload official letter PDF"
                   >
-                    <div className="space-y-1 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex text-sm text-gray-600 justify-center">
-                        <label
-                          htmlFor="officialLetter"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-[#511715] hover:text-[#a42e24] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#CD5C5C]"
-                        >
-                          <span>Upload a file</span>
-                          <input
-                            id="officialLetter"
-                            name="officialLetter"
-                            type="file"
-                            className="sr-only"
-                            onChange={handleChange}
-                            accept=".pdf"
-                            required
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">PDF up to 1MB</p>
-                    </div>
-                  </div>
-                  {formData.officialLetter && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                      <p className="text-sm text-green-800 font-medium">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <p className="mt-3 text-sm text-gray-600">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PDF up to 1MB</p>
+                    {formData.officialLetter && (
+                      <p className="mt-3 text-sm text-green-700">
                         ✓ File selected: {formData.officialLetter.name}
                       </p>
-                      <p className="text-xs text-green-600 mt-1">
-                        Size:{" "}
-                        {(formData.officialLetter.size / 1024 / 1024).toFixed(
-                          2
-                        )}{" "}
-                        MB
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 

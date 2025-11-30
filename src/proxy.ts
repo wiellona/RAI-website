@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { getSupabaseServerClient } from "@/supabase/supabaseServer";
 
 function decodeSupabaseCookie(value?: string | null) {
   if (!value) return value || undefined;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/app/components/layout/Header";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -119,7 +119,7 @@ export default function LoginPage() {
                   Forgot Password?
                 </Link>
                 <Link
-                  href="/register"
+                  href="/authentication/register"
                   className="text-sm text-[#A84032] hover:text-[#8B3528] transition-colors"
                 >
                   Register your University
