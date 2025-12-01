@@ -364,11 +364,25 @@ export function useCriteriaPage() {
 
       if (!rows.length) return;
 
-      const { error } = await supabase
-        .from("Answers")
-        .upsert(rows, { onConflict: "submission_id,question_id" });
+      for (const row of rows) {
+        try {
+          const { data, error } = await supabase.functions.invoke("submit-answer", {
+            body: row,
+          });
 
-      if (error) throw error;
+          if (error) {
+            console.error("submit-answer error", error);
+            continue;
+          }
+
+          const payload = data as { calculated_score?: number } | null;
+          if (payload?.calculated_score !== undefined) {
+            console.log(`QID ${row.question_id} saved. Score: ${payload.calculated_score}`);
+          }
+        } catch (err) {
+          console.error("submit-answer invocation failed", err);
+        }
+      }
     },
     [answers, submissionId, supabase]
   );

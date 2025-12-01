@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import { get } from "http";
 
 interface SectionStatus {
   id: number;
@@ -25,7 +27,6 @@ interface ReviewDataResponse {
 
 export default function ReviewPage() {
   const router = useRouter();
-
   const [sections, setSections] = useState<SectionStatus[]>([]);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
@@ -108,6 +109,13 @@ export default function ReviewPage() {
     setStatusLevel(null);
 
     try {
+      const { data, error } = await getSupabaseBrowserClient().functions.invoke(
+        "finalize-submission",
+        {
+          body: { submission_id: submissionId },
+        }
+      );
+
       const res = await fetch("/api/review-data", { method: "POST" });
       const payload = (await res.json().catch(() => ({}))) as {
         success?: boolean;
