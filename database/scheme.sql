@@ -111,10 +111,15 @@ CREATE TABLE public."Universities" (
     name text NOT NULL,
     website text,
     address text,
-    date_of_establishment date, -- DITAMBAHKAN
-    dean_name text,             -- DITAMBAHKAN (menggantikan director_name)
+    date_of_establishment date,
+    dean_name text,
     pic_name text,
     pic_email text,
+    country_code text,
+    pic_relation text,
+    publication_evidence_path text,
+    asset_evidence_path text,
+    letter_path text,
     created_at timestamptz DEFAULT now()
 );
 

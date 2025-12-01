@@ -11,7 +11,7 @@ export default function UserManagement({ users, onUpdateRole }: UserManagementPr
     return (
         <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">User Management</h2>
-            <p className="text-gray-600 mb-4">Manage user roles (admin, university representative, etc.).</p>
+            <p className="text-gray-600 mb-4">Manage user roles (admin, reviewer, etc.) - Only showing approved users.</p>
             <div className="space-y-3">
             {users.map(user => (
                 <div key={user.id} className="flex items-center justify-between">
@@ -25,7 +25,7 @@ export default function UserManagement({ users, onUpdateRole }: UserManagementPr
                         className="border border-gray-300 rounded p-1"
                     >
                         <option value="user">User</option>
-                        <option value="university">University</option>
+                        <option value="reviewer">Reviewer</option>
                         <option value="admin">Admin</option>
                     </select>
                 </div>

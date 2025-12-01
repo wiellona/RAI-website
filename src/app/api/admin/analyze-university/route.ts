@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     // Fetch university data
     const { data: university, error } = await supabase
-      .from("universities")
+      .from("Universities")
       .select("name, transparency, auditability, data_privacy, policy_maturity, trust_score")
       .eq("id", universityId)
       .single();

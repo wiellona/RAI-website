@@ -7,7 +7,7 @@ export async function GET() {
     const supabase = getSupabaseServerClient();
 
     const { data, error } = await supabase
-      .from("universities")
+      .from("Universities")
       .select("*")
       .order("rank", { ascending: true });
 

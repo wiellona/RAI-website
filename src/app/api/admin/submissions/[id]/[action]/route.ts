@@ -12,23 +12,58 @@ export async function POST(
     const action = url.pathname.split('/').pop();
 
     if (action === "accept") {
-      const { error } = await supabase
-        .from("Submissions")
-        .update({ status: "approved" })
-        .eq("id", id);
+      // 1. Ambil university berdasarkan ID untuk mendapatkan pic_name
+      const { data: university, error: fetchError } = await supabase
+        .from("Universities")
+        .select("pic_name")
+        .eq("id", id)
+        .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      return NextResponse.json({ success: true });
+      if (!university?.pic_name) {
+        return NextResponse.json({ error: "University pic_name not found" }, { status: 404 });
+      }
+
+      // 2. Update is_approved = true di Profiles berdasarkan pic_name
+      const { error: profileError } = await supabase
+        .from('Profiles')
+        .update({ is_approved: true })
+        .eq('name', university.pic_name);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        throw profileError;
+      }
+
+      return NextResponse.json({ success: true, message: "University approved successfully" });
     } else if (action === "reject") {
-      const { error } = await supabase
-        .from("Submissions")
-        .update({ status: "rejected" })
-        .eq("id", id);
+      // 1. Ambil university berdasarkan ID untuk mendapatkan pic_name
+      const { data: university, error: fetchError } = await supabase
+        .from("Universities")
+        .select("pic_name")
+        .eq("id", id)
+        .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      return NextResponse.json({ success: true });
+      if (!university?.pic_name) {
+        return NextResponse.json({ error: "University pic_name not found" }, { status: 404 });
+      }
+
+      // 2. Untuk reject, bisa delete university atau tetap set is_approved = false
+      // Di sini kita tetap set is_approved = false (tetap tidak disetujui)
+      const { error: profileError } = await supabase
+        .from('Profiles')
+        .update({ is_approved: false })
+        .eq('name', university.pic_name);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        throw profileError;
+      }
+
+      return NextResponse.json({ success: true, message: "University rejected" });
     }
 
     return NextResponse.json(

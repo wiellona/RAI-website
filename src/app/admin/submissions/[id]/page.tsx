@@ -6,72 +6,6 @@ import Container from "@/components/Container";
 import { Submission } from "@/lib/types";
 import AdminGuard from "@/components/auth/AdminGuard";
 
-// Mock data for frontend display
-const MOCK_SUBMISSIONS: Record<string, Submission> = {
-  "sub1": {
-    id: "sub1",
-    university_id: "uni1",
-    questionnaire_id: "q1",
-    submitted_by_user_id: "user1",
-    submitted_at: "2025-11-20T10:30:00Z",
-    status: "pending",
-    university: {
-      name: "Stanford University",
-      website: "https://www.stanford.edu",
-      address: "450 Serra Mall, Stanford, CA 94305, USA",
-      country_code: "US",
-      date_of_establishment: "1885-10-01",
-      dean_name: "Dr. Jennifer Widom",
-      pic_name: "John Smith",
-      pic_email: "john.smith@stanford.edu",
-      pic_relation: "Department Head",
-      publication_evidence_path: "/documents/stanford-publications.pdf",
-      asset_evidence_path: "/documents/stanford-assets.pdf",
-      letter_path: "/documents/stanford-letter.pdf",
-    },
-    questionnaire: {
-      title: "Responsible AI Assessment 2025",
-      version: "1.0",
-      description: "Comprehensive assessment of AI ethics and governance practices",
-    },
-    submittedBy: {
-      name: "John Smith",
-      email: "john.smith@stanford.edu",
-    },
-  },
-  "sub2": {
-    id: "sub2",
-    university_id: "uni2",
-    questionnaire_id: "q1",
-    submitted_by_user_id: "user2",
-    submitted_at: "2025-11-21T14:15:00Z",
-    status: "pending",
-    university: {
-      name: "MIT",
-      website: "https://www.mit.edu",
-      address: "77 Massachusetts Ave, Cambridge, MA 02139, USA",
-      country_code: "US",
-      date_of_establishment: "1861-04-10",
-      dean_name: "Dr. Anantha Chandrakasan",
-      pic_name: "Jane Doe",
-      pic_email: "jane.doe@mit.edu",
-      pic_relation: "Research Director",
-      publication_evidence_path: "/documents/mit-publications.pdf",
-      asset_evidence_path: "/documents/mit-assets.pdf",
-      letter_path: "/documents/mit-letter.pdf",
-    },
-    questionnaire: {
-      title: "Responsible AI Assessment 2025",
-      version: "1.0",
-      description: "Comprehensive assessment of AI ethics and governance practices",
-    },
-    submittedBy: {
-      name: "Jane Doe",
-      email: "jane.doe@mit.edu",
-    },
-  },
-};
-
 function SubmissionDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -79,34 +13,71 @@ function SubmissionDetailPage() {
   
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading with mock data
-    setTimeout(() => {
-      const found = MOCK_SUBMISSIONS[submissionId];
-      setSubmission(found || null);
-      setIsLoading(false);
-    }, 500);
+    // Fetch all submissions and find the one matching the ID
+    fetch('/api/admin/submissions')
+      .then(res => res.json())
+      .then((data: Submission[]) => {
+        const found = data.find(s => s.id === submissionId);
+        setSubmission(found || null);
+        if (!found) {
+          setError('Submission not found');
+        }
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching submission:', err);
+        setError('Failed to load submission');
+        setIsLoading(false);
+      });
   }, [submissionId]);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (!submission) return;
     
-    const confirmed = confirm(`Are you sure you want to APPROVE "${submission.university?.name || 'this submission'}"?`);
+    const confirmed = confirm(`Are you sure you want to APPROVE "${submission.university?.name || 'this submission'}"? This will set is_approved to true in Profiles table.`);
     if (!confirmed) return;
     
-    alert(`Submission has been approved successfully!`);
-    router.push("/admin");
+    try {
+      const response = await fetch(`/api/admin/submissions/${submissionId}/accept`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to accept submission');
+      }
+
+      alert(`Submission has been approved successfully!`);
+      router.push("/admin");
+    } catch (err) {
+      console.error('Error accepting submission:', err);
+      alert('Failed to accept submission');
+    }
   };
 
-  const handleReject = () => {
+  const handleDecline = async () => {
     if (!submission) return;
     
-    const confirmed = confirm(`Are you sure you want to DECLINE "${submission.university?.name || 'this submission'}"?`);
+    const confirmed = confirm(`Are you sure you want to REJECT "${submission.university?.name || 'this submission'}"? This will set is_approved to false in Profiles table.`);
     if (!confirmed) return;
     
-    alert(`Submission has been declined.`);
-    router.push("/admin");
+    try {
+      const response = await fetch(`/api/admin/submissions/${submissionId}/reject`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reject submission');
+      }
+
+      alert(`Submission has been rejected.`);
+      router.push("/admin");
+    } catch (err) {
+      console.error('Error rejecting submission:', err);
+      alert('Failed to reject submission');
+    }
   };
 
   if (isLoading) {
@@ -115,6 +86,25 @@ function SubmissionDetailPage() {
         <Container>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-[#5C2E2E]">Loading submission details...</h1>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-[#FAF9F6] min-h-screen py-16">
+        <Container>
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-red-600">Error</h1>
+            <p className="mt-2 text-gray-700">{error}</p>
+            <button
+              onClick={() => router.push("/admin")}
+              className="mt-4 px-6 py-2 bg-[#A84032] text-white rounded hover:bg-[#8B3528] transition-colors"
+            >
+              Back to Admin Dashboard
+            </button>
           </div>
         </Container>
       </div>
@@ -393,7 +383,7 @@ function SubmissionDetailPage() {
         {/* Action Buttons */}
         <div className="flex justify-end gap-4">
           <button
-            onClick={handleReject}
+            onClick={handleDecline}
             className="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-semibold"
           >
             Decline Submission

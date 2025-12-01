@@ -7,7 +7,7 @@ export async function POST() {
 
     // Get all universities with their metrics
     const { data: universities, error } = await supabase
-      .from("universities")
+      .from("Universities")
       .select("id, transparency, auditability, data_privacy, policy_maturity");
 
     if (error) throw error;
@@ -23,7 +23,7 @@ export async function POST() {
       );
 
       return supabase
-        .from("universities")
+        .from("Universities")
         .update({ trust_score: trustScore })
         .eq("id", uni.id);
     });
@@ -32,7 +32,7 @@ export async function POST() {
 
     // Recalculate ranks based on new trust scores
     const { data: rankedUniversities, error: rankError } = await supabase
-      .from("universities")
+      .from("Universities")
       .select("id, trust_score")
       .order("trust_score", { ascending: false });
 
@@ -40,7 +40,7 @@ export async function POST() {
 
     const rankUpdates = rankedUniversities.map((uni: { id: string; trust_score: number }, index: number) => {
       return supabase
-        .from("universities")
+        .from("Universities")
         .update({ rank: index + 1 })
         .eq("id", uni.id);
     });

@@ -1,22 +1,24 @@
 import type { University } from "./types";
 
 /**
- * Database type mapping untuk tabel universities
+ * Database type mapping untuk tabel Universities
  * Menggunakan snake_case sesuai dengan PostgreSQL convention
  */
 export type DbUniversity = {
   id: string;
-  slug: string;
+  slug?: string;
   name: string;
-  country: string;
-  region: string;
-  rank: number;
-  trust_score: number;
-  last_updated: string;
-  transparency: number;
-  auditability: number;
-  data_privacy: number;
-  policy_maturity: number;
+  website?: string;
+  address?: string;
+  date_of_establishment?: string;
+  dean_name?: string;
+  pic_name?: string;
+  pic_email?: string;
+  country_code?: string;
+  pic_relation?: string;
+  publication_evidence_path?: string;
+  asset_evidence_path?: string;
+  letter_path?: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -27,18 +29,22 @@ export type DbUniversity = {
 export function mapDbToUniversity(db: DbUniversity): University {
   return {
     id: db.id,
-    slug: db.slug,
+    slug: db.slug || '',
     name: db.name,
-    country: db.country,
-    region: db.region,
-    rank: db.rank,
-    trustScore: db.trust_score,
-    lastUpdated: db.last_updated,
+    country: db.country_code || '',
+    region: '', // Need to derive from country_code or add to DB
+    rank: 0, // Will be calculated from UniversityRankings
+    trustScore: 0, // Will be calculated from scores
+    lastUpdated: db.updated_at || db.created_at || new Date().toISOString(),
     metrics: {
-      transparency: db.transparency,
-      auditability: db.auditability,
-      dataPrivacy: db.data_privacy,
-      policyMaturity: db.policy_maturity,
+      collaboration: null,
+      privacy: null,
+      accountability: null,
+      security: null,
+      ethicsInAI: null,
+      fairness: null,
+      transparency: null,
+      continuousLearning: null,
     },
   };
 }
@@ -52,14 +58,9 @@ export function mapUniversityToDb(uni: University): Partial<DbUniversity> {
     id: uni.id,
     slug: uni.slug,
     name: uni.name,
-    country: uni.country,
-    region: uni.region,
-    rank: uni.rank,
-    trust_score: uni.trustScore,
-    last_updated: uni.lastUpdated,
-    transparency: uni.metrics.transparency,
-    auditability: uni.metrics.auditability,
-    data_privacy: uni.metrics.dataPrivacy,
-    policy_maturity: uni.metrics.policyMaturity,
+    country_code: uni.country,
+    dean_name: '',
+    pic_name: '',
+    pic_email: '',
   };
 }

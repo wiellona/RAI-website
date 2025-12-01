@@ -19,7 +19,7 @@ export async function PUT(
     }
 
     const { error } = await supabase
-      .from("universities")
+      .from("Universities")
       .update({ trust_score: score })
       .eq("id", id);
 

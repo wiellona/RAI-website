@@ -11,7 +11,7 @@ export async function GET(
     const { slug } = await params;
 
     const { data, error } = await supabase
-      .from("universities")
+      .from("Universities")
       .select("*")
       .eq("slug", slug)
       .single();

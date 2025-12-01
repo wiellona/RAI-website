@@ -42,7 +42,7 @@ export interface Submission {
   questionnaire_id: string;
   submitted_by_user_id: string;
   submitted_at: string;
-  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'pending';
   // Related data from joins
   university?: {
     name: string;

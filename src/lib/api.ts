@@ -84,7 +84,9 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function getSubmissions(): Promise<Submission[]> {
   try {
-    return await apiFetch<Submission[]>(`/admin/submissions`, {}, true);
+    const result = await apiFetch<Submission[]>(`/admin/submissions`, {}, true);
+    console.log('[api.ts] Submissions fetched from API:', result.length);
+    return result;
   } catch (e) {
     console.warn("Falling back to mock submissions:", e);
     await delay(300);
