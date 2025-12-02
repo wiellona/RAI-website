@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
-import type { User } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
@@ -15,30 +14,40 @@ export async function POST(request: Request) {
       );
     }
 
-    // Query user by email (using username as email)
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", username)
-      .single();
+    // Use Supabase Auth signInWithPassword
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: username, // assuming username is email
+      password: password,
+    });
 
-    if (error || !user) {
+    if (error || !data.user) {
+      console.error("[api/auth/login] Auth error:", error?.message);
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // In production, verify password hash
-    // For now, simple password check (replace with proper auth)
-    // You should use Supabase Auth instead of manual password handling
+    // Get user profile from Profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from("Profiles")
+      .select("*")
+      .eq("id", data.user.id)
+      .single();
 
-    // Generate a simple token (in production, use proper JWT)
-    const token = Buffer.from(`${user.id}:${Date.now()}`).toString("base64");
+    if (profileError) {
+      console.error("[api/auth/login] Profile error:", profileError.message);
+    }
 
     return NextResponse.json({
-      user: user as User,
-      token,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: profile?.name || data.user.email?.split('@')[0],
+        role: profile?.role || 'user',
+        is_approved: profile?.is_approved || false,
+      },
+      session: data.session,
     });
   } catch (error) {
     console.error("[api/auth/login]", error);

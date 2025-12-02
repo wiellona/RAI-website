@@ -174,8 +174,12 @@ export async function startScoreProcessing(): Promise<{ success: boolean, messag
 export async function login(username: string, pass: string): Promise<{ user: User, token: string } | null> {
   // If backend exists, call real endpoint
   try {
-    const result = await apiFetch<{ user: User, token: string }>(`/auth/login`, { method: 'POST', body: JSON.stringify({ username, password: pass }) });
-    return result;
+    const result = await apiFetch<{ user: User, session: { access_token: string } | null }>(`/auth/login`, { method: 'POST', body: JSON.stringify({ username, password: pass }) });
+    // Convert session to token format for compatibility
+    return { 
+      user: result.user, 
+      token: result.session?.access_token || 'mock-token' 
+    };
   } catch (e) {
     console.warn("Backend login failed, falling back to mock:", e);
     // Mock login

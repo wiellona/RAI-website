@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
-import { mapDbToUniversity, type DbUniversity } from "@/lib/dbMappers";
+import { type DbUniversity } from "@/lib/dbMappers";
+import type { University } from "@/lib/types";
 
 export async function GET() {
   try {
@@ -53,8 +54,114 @@ export async function GET() {
 
     console.log("[api/rankings] Approved universities count:", approvedUniversities.length);
 
-    // 4. Map to frontend format
-    const mappedUniversities = (approvedUniversities as DbUniversity[]).map(mapDbToUniversity);
+    // 4. Ambil Submissions untuk universities yang approved
+    const universityIds = approvedUniversities.map(u => u.id);
+    
+    const { data: submissions, error: submissionsError } = await supabase
+      .from("Submissions")
+      .select("id, university_id")
+      .in("university_id", universityIds);
+
+    if (submissionsError) {
+      console.error("[api/rankings] Error fetching submissions:", submissionsError);
+    }
+
+    console.log("[api/rankings] Submissions found:", submissions?.length || 0);
+
+    // 5. Ambil CategoryScores untuk submissions
+    const submissionIds = submissions?.map(s => s.id) || [];
+    
+    const { data: categoryScores, error: scoresError } = await supabase
+      .from("CategoryScores")
+      .select("submission_id, category_name, calculated_score, updated_at")
+      .in("submission_id", submissionIds);
+
+    if (scoresError) {
+      console.error("[api/rankings] Error fetching category scores:", scoresError);
+    }
+
+    console.log("[api/rankings] CategoryScores found:", categoryScores?.length || 0);
+
+    // 6. Ambil UniversityRankings
+    const { data: rankings, error: rankingsError } = await supabase
+      .from("UniversityRankings")
+      .select("*")
+      .in("university_id", universityIds);
+
+    if (rankingsError) {
+      console.error("[api/rankings] Error fetching rankings:", rankingsError);
+    }
+
+    // 7. Map to frontend format dengan scores dari CategoryScores
+    const mappedUniversities: University[] = approvedUniversities.map((university) => {
+      const dbUni = university as DbUniversity;
+      
+      // Find submission for this university
+      const submission = submissions?.find(s => s.university_id === dbUni.id);
+      
+      // Find ranking for this university
+      const ranking = rankings?.find(r => r.university_id === dbUni.id);
+      
+      // Build metrics from CategoryScores
+      const metrics = {
+        collaboration: null as number | null,
+        privacy: null as number | null,
+        accountability: null as number | null,
+        security: null as number | null,
+        ethicsInAI: null as number | null,
+        fairness: null as number | null,
+        transparency: null as number | null,
+        continuousLearning: null as number | null,
+      };
+
+      if (submission && categoryScores) {
+        const scores = categoryScores.filter(cs => cs.submission_id === submission.id);
+        
+        scores.forEach((score) => {
+          const categoryName = score.category_name.toLowerCase().replace(/\s+/g, '');
+          
+          if (categoryName === 'collaboration') {
+            metrics.collaboration = score.calculated_score;
+          } else if (categoryName === 'privacy') {
+            metrics.privacy = score.calculated_score;
+          } else if (categoryName === 'accountability') {
+            metrics.accountability = score.calculated_score;
+          } else if (categoryName === 'security') {
+            metrics.security = score.calculated_score;
+          } else if (categoryName.includes('ethics')) {
+            metrics.ethicsInAI = score.calculated_score;
+          } else if (categoryName === 'fairness') {
+            metrics.fairness = score.calculated_score;
+          } else if (categoryName === 'transparency') {
+            metrics.transparency = score.calculated_score;
+          } else if (categoryName.includes('learning')) {
+            metrics.continuousLearning = score.calculated_score;
+          }
+        });
+      }
+
+      // Get latest updated_at from category scores
+      const latestScoreUpdate = categoryScores
+        ?.filter(cs => submission && cs.submission_id === submission.id)
+        .map(cs => cs.updated_at)
+        .sort()
+        .reverse()[0];
+
+      return {
+        id: dbUni.id,
+        slug: dbUni.slug || '',
+        name: dbUni.name,
+        country: dbUni.country_code || '',
+        region: '', 
+        rank: ranking?.rank || 0,
+        trustScore: ranking?.final_total_score || 0,
+        lastUpdated: latestScoreUpdate || dbUni.updated_at || dbUni.created_at || new Date().toISOString(),
+        metrics,
+      };
+    });
+
+    // Sort by rank
+    mappedUniversities.sort((a, b) => a.rank - b.rank);
     
     return NextResponse.json(mappedUniversities);
   } catch (error) {
