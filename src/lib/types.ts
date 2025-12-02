@@ -69,7 +69,7 @@ export interface Submission {
   };
 }
 
-export type UserRole = "admin" | "university" | "user";
+export type UserRole = "admin" | "university" | "user" | "reviewer";
 
 export interface User {
   id: string;

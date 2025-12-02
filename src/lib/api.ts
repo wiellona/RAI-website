@@ -76,11 +76,7 @@ export async function fetchUniversityBySlug(slug: string): Promise<University | 
 
 // --- Admin API Functions ---
 
-import { mockSubmissions, mockUsers } from "./mockData";
 import { Submission, User, UserRole } from "./types";
-
-// Simulate API latency
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function getSubmissions(): Promise<Submission[]> {
   try {
@@ -88,9 +84,8 @@ export async function getSubmissions(): Promise<Submission[]> {
     console.log('[api.ts] Submissions fetched from API:', result.length);
     return result;
   } catch (e) {
-    console.warn("Falling back to mock submissions:", e);
-    await delay(300);
-    return mockSubmissions;
+    console.error("Failed to fetch submissions:", e);
+    return [];
   }
 }
 
@@ -98,9 +93,8 @@ export async function getUsers(): Promise<User[]> {
   try {
     return await apiFetch<User[]>(`/admin/users`, {}, true);
   } catch (e) {
-    console.warn("Falling back to mock users:", e);
-    await delay(300);
-    return mockUsers;
+    console.error("Failed to fetch users:", e);
+    return [];
   }
 }
 
@@ -119,9 +113,8 @@ export async function acceptSubmission(id: string): Promise<{ success: boolean }
     await apiFetch(`/admin/submissions/${id}/accept`, { method: 'POST' }, true);
     return { success: true };
   } catch (e) {
-    console.warn("Accept submission failed, mock success:", e);
-    await delay(500);
-    return { success: true };
+    console.error("Accept submission failed:", e);
+    return { success: false };
   }
 }
 
@@ -130,9 +123,8 @@ export async function rejectSubmission(id: string): Promise<{ success: boolean }
     await apiFetch(`/admin/submissions/${id}/reject`, { method: 'POST' }, true);
     return { success: true };
   } catch (e) {
-    console.warn("Reject submission failed, mock success:", e);
-    await delay(500);
-    return { success: true };
+    console.error("Reject submission failed:", e);
+    return { success: false };
   }
 }
 
@@ -141,9 +133,8 @@ export async function updateUserRole(id: string, role: UserRole): Promise<{ succ
     await apiFetch(`/admin/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }, true);
     return { success: true };
   } catch (e) {
-    console.warn("Update user role failed, mock success:", e);
-    await delay(500);
-    return { success: true };
+    console.error("Update user role failed:", e);
+    return { success: false };
   }
 }
 
@@ -152,11 +143,8 @@ export async function updateRankingScore(id: string, newScore: number): Promise<
     await apiFetch(`/rankings/${id}/score`, { method: 'PUT', body: JSON.stringify({ score: newScore }) }, true);
     return { success: true };
   } catch (e) {
-    console.warn("Update ranking score failed, mock success:", e);
-    await delay(500);
-    // Persist override locally for dev fallback
-    setLocalUniversityOverrides(id, { trustScore: newScore });
-    return { success: true };
+    console.error("Update ranking score failed:", e);
+    return { success: false };
   }
 }
 
@@ -165,9 +153,8 @@ export async function startScoreProcessing(): Promise<{ success: boolean, messag
     const res = await apiFetch<{ success: boolean, message: string }>(`/admin/process-scores`, { method: 'POST' }, true);
     return res;
   } catch (e) {
-    console.warn("Process scores failed, mock success:", e);
-    await delay(2000);
-    return { success: true, message: "Score processing started successfully." };
+    console.error("Process scores failed:", e);
+    return { success: false, message: "Failed to process scores." };
   }
 }
 
@@ -182,10 +169,12 @@ export async function login(username: string, pass: string): Promise<{ user: Use
     };
   } catch (e) {
     console.warn("Backend login failed, falling back to mock:", e);
-    // Mock login
-    await delay(300);
+    // Mock login for development
     if (username === 'admin' && pass === 'admin') {
       return { user: { id: 'admin-user', name: 'Admin', email: 'admin@app.com', role: 'admin' }, token: 'mock-admin-token' };
+    }
+    if (username === 'reviewer' && pass === 'reviewer') {
+      return { user: { id: 'reviewer-user', name: 'Reviewer', email: 'reviewer@app.com', role: 'reviewer' }, token: 'mock-reviewer-token' };
     }
     if (username === 'user' && pass === 'user') {
       return { user: { id: 'normal-user', name: 'User', email: 'user@app.com', role: 'user' }, token: 'mock-user-token' };
@@ -193,3 +182,51 @@ export async function login(username: string, pass: string): Promise<{ user: Use
     return null;
   }
 }
+
+// --- Reviewer API Functions ---
+
+export interface AnswerExportData extends Record<string, unknown> {
+  category: string;
+  question: string;
+  selected_option: string;
+  option_value: number;
+  evidence: string;
+}
+
+export interface CrawlingExportData extends Record<string, unknown> {
+  university_id: string;
+  num_publications: number;
+  num_assets: number;
+  crawling_score: number;
+  last_crawled_at: string | null;
+  note?: string;
+}
+
+export async function getAnswersData(universityId: string): Promise<AnswerExportData[]> {
+  try {
+    return await apiFetch<AnswerExportData[]>(`/reviewer/universities/${universityId}/answers`, {}, true);
+  } catch (e) {
+    console.error("Failed to fetch answers data:", e);
+    return [];
+  }
+}
+
+export async function getCrawlingData(universityId: string): Promise<CrawlingExportData[]> {
+  try {
+    return await apiFetch<CrawlingExportData[]>(`/reviewer/universities/${universityId}/crawling`, {}, true);
+  } catch (e) {
+    console.error("Failed to fetch crawling data:", e);
+    return [];
+  }
+}
+
+export async function invalidateUniversity(universityId: string): Promise<{ success: boolean, message: string }> {
+  try {
+    const result = await apiFetch<{ success: boolean, message: string }>(`/reviewer/universities/${universityId}/invalidate`, { method: 'POST' }, true);
+    return result;
+  } catch (e) {
+    console.error("Failed to invalidate university:", e);
+    return { success: false, message: 'Failed to invalidate university data' };
+  }
+}
+

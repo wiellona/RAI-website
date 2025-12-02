@@ -68,12 +68,18 @@ export async function GET() {
 
     console.log("[api/rankings] Submissions found:", submissions?.length || 0);
 
-    // 5. Ambil CategoryScores untuk submissions
+    // 5. Ambil CategoryScores untuk submissions dengan JOIN ke Categories
     const submissionIds = submissions?.map(s => s.id) || [];
     
     const { data: categoryScores, error: scoresError } = await supabase
       .from("CategoryScores")
-      .select("submission_id, category_name, calculated_score, updated_at")
+      .select(`
+        submission_id, 
+        calculated_score,
+        Categories (
+          name
+        )
+      `)
       .in("submission_id", submissionIds);
 
     if (scoresError) {
@@ -117,35 +123,37 @@ export async function GET() {
       if (submission && categoryScores) {
         const scores = categoryScores.filter(cs => cs.submission_id === submission.id);
         
+        console.log(`[api/rankings] Processing ${scores.length} scores for university "${dbUni.name}"`);
+        
         scores.forEach((score) => {
-          const categoryName = score.category_name.toLowerCase().replace(/\s+/g, '');
+          // @ts-ignore - Categories is joined data
+          const categoryName = score.Categories?.name || '';
+          const normalizedName = categoryName.toLowerCase().replace(/\s+/g, '');
+          const scoreValue = parseFloat(score.calculated_score);
           
-          if (categoryName === 'collaboration') {
-            metrics.collaboration = score.calculated_score;
-          } else if (categoryName === 'privacy') {
-            metrics.privacy = score.calculated_score;
-          } else if (categoryName === 'accountability') {
-            metrics.accountability = score.calculated_score;
-          } else if (categoryName === 'security') {
-            metrics.security = score.calculated_score;
-          } else if (categoryName.includes('ethics')) {
-            metrics.ethicsInAI = score.calculated_score;
-          } else if (categoryName === 'fairness') {
-            metrics.fairness = score.calculated_score;
-          } else if (categoryName === 'transparency') {
-            metrics.transparency = score.calculated_score;
-          } else if (categoryName.includes('learning')) {
-            metrics.continuousLearning = score.calculated_score;
+          console.log(`[api/rankings] Category: "${categoryName}" (normalized: "${normalizedName}") = ${scoreValue}`);
+          
+          if (normalizedName === 'collaboration') {
+            metrics.collaboration = scoreValue;
+          } else if (normalizedName === 'privacy') {
+            metrics.privacy = scoreValue;
+          } else if (normalizedName === 'accountability') {
+            metrics.accountability = scoreValue;
+          } else if (normalizedName === 'security') {
+            metrics.security = scoreValue;
+          } else if (normalizedName.includes('ethics')) {
+            metrics.ethicsInAI = scoreValue;
+          } else if (normalizedName === 'fairness') {
+            metrics.fairness = scoreValue;
+          } else if (normalizedName === 'transparency') {
+            metrics.transparency = scoreValue;
+          } else if (normalizedName.includes('learning') || normalizedName.includes('continous')) {
+            metrics.continuousLearning = scoreValue;
           }
         });
+        
+        console.log(`[api/rankings] Final metrics for "${dbUni.name}":`, metrics);
       }
-
-      // Get latest updated_at from category scores
-      const latestScoreUpdate = categoryScores
-        ?.filter(cs => submission && cs.submission_id === submission.id)
-        .map(cs => cs.updated_at)
-        .sort()
-        .reverse()[0];
 
       return {
         id: dbUni.id,
@@ -155,7 +163,7 @@ export async function GET() {
         region: '', 
         rank: ranking?.rank || 0,
         trustScore: ranking?.final_total_score || 0,
-        lastUpdated: latestScoreUpdate || dbUni.updated_at || dbUni.created_at || new Date().toISOString(),
+        lastUpdated: dbUni.updated_at || dbUni.created_at || new Date().toISOString(),
         metrics,
       };
     });

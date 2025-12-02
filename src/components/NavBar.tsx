@@ -50,6 +50,15 @@ export default function NavBar() {
               </Link>
             )}
 
+            {auth.user && auth.user.role === 'reviewer' && (
+              <Link
+                href="/reviewer"
+                className="text-gray-700 hover:text-[#5C2E2E] transition-colors font-semibold"
+              >
+                Reviewer Dashboard
+              </Link>
+            )}
+
             {/* Desktop Login/Logout Button */}
             {auth.isLoading ? null : auth.user ? (
               <>
@@ -127,6 +136,16 @@ export default function NavBar() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Admin Dashboard
+              </Link>
+            )}
+
+            {auth.user && auth.user.role === 'reviewer' && (
+              <Link
+                href="/reviewer"
+                className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors font-semibold"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Reviewer Dashboard
               </Link>
             )}
 
