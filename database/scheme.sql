@@ -52,6 +52,7 @@ create type public.user_role as enum ('user', 'reviewer', 'admin');
 -- Update Profile table
 alter table public."Profiles"
   add column if not exists is_approved boolean not null default false,
+  add column if not exists is_rejected boolean not null default false,
   add column if not exists role public.user_role not null default 'user';
 
 -- Update Profile policy

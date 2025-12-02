@@ -24,18 +24,19 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    // 2. Ambil semua Profiles dengan is_approved = false
+    // 2. Ambil semua Profiles dengan is_approved = false DAN is_rejected = false (pending)
     const { data: profiles, error: profilesError } = await supabase
       .from("Profiles")
-      .select("id, name, is_approved")
-      .eq("is_approved", false);
+      .select("id, name, is_approved, is_rejected")
+      .eq("is_approved", false)
+      .eq("is_rejected", false);
 
     if (profilesError) {
       console.error("[api/admin/submissions] Error fetching profiles:", profilesError);
       throw profilesError;
     }
 
-    console.log("[api/admin/submissions] Profiles with is_approved=false:", profiles?.length || 0);
+    console.log("[api/admin/submissions] Profiles pending (is_approved=false, is_rejected=false):", profiles?.length || 0);
 
     if (!profiles || profiles.length === 0) {
       console.log("[api/admin/submissions] No unapproved profiles found");

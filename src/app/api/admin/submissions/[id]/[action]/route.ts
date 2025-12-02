@@ -51,11 +51,11 @@ export async function POST(
         return NextResponse.json({ error: "University pic_name not found" }, { status: 404 });
       }
 
-      // 2. Untuk reject, bisa delete university atau tetap set is_approved = false
-      // Di sini kita tetap set is_approved = false (tetap tidak disetujui)
+      // 2. Set is_rejected = true untuk menandai bahwa submission ini ditolak
+      // Ini akan menghilangkan submission dari daftar pending
       const { error: profileError } = await supabase
         .from('Profiles')
-        .update({ is_approved: false })
+        .update({ is_rejected: true })
         .eq('name', university.pic_name);
 
       if (profileError) {
