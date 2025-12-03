@@ -60,6 +60,7 @@ export default function GeneralInfoPage() {
           throw new Error(payload.error || "Failed to load general info");
         }
         const payload = await response.json();
+        console.log("Loaded general info:", payload);
         if (ignore) return;
         if (payload?.data) {
           setFormData((prev) => ({
