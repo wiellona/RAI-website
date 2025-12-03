@@ -70,7 +70,7 @@ export async function GET() {
 
     const { data: questionnaireRows, error: questionnaireError } =
       await supabase
-        .from("Questionnaries")
+        .from("Questionnaires")
         .select("id, title, version, created_at")
         .order("version", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false, nullsFirst: false })

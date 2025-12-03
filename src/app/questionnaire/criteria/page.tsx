@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Navbar from "@/app/components/layout/Header";
 import {
   DragDropFileUpload,
@@ -25,6 +26,7 @@ const deriveEvidenceName = (path?: string) =>
   path?.split("/").pop() ?? "Stored file";
 
 export default function CriteriaPage() {
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const {
     answers,
     completionPercent,
@@ -49,10 +51,35 @@ export default function CriteriaPage() {
     getSignedUrl,
   } = useCriteriaPage();
 
-  if (loading) {
+  // Fetch signed URLs for evidence files
+  useEffect(() => {
+    const fetchUrls = async () => {
+      const paths = Object.values(answers)
+        .map((a) => a?.evidence)
+        .filter((p): p is string => Boolean(p));
+
+      const newUrls: Record<string, string> = {};
+      for (const path of paths) {
+        if (!signedUrls[path]) {
+          const url = await getSignedUrl(path);
+          if (url) {
+            newUrls[path] = url;
+          }
+        }
+      }
+
+      if (Object.keys(newUrls).length > 0) {
+        setSignedUrls((prev) => ({ ...prev, ...newUrls }));
+      }
+    };
+    void fetchUrls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, getSignedUrl]); // Remove signedUrls from deps
+
+  if (loading || !isSubmissionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading questionnaire...
+        {loading ? "Loading questionnaire..." : "Preparing your session..."}
       </div>
     );
   }
@@ -258,9 +285,9 @@ export default function CriteriaPage() {
                               name: deriveEvidenceName(
                                 answers[question.id]?.evidence
                               ),
-                              downloadUrl: getSignedUrl(
-                                answers[question.id]?.evidence
-                              ),
+                              downloadUrl:
+                                signedUrls[answers[question.id]?.evidence!] ??
+                                null,
                               description:
                                 "Evidence stored in Supabase. Uploading a new file will replace it.",
                             }

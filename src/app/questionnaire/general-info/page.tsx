@@ -96,17 +96,19 @@ export default function GeneralInfoPage() {
         const payload = await response.json();
         if (ignore) return;
         if (payload?.data) {
-          setFormData((prev) => ({
-            ...prev,
-            universityName: payload.data.name ?? "",
-            dateEstablishment:
-              payload.data.date_of_establishment?.slice(0, 10) ?? "",
-            websiteAddress: payload.data.website ?? "",
-            addressLocation: payload.data.address ?? "",
-            deanName: payload.data.dean_name ?? "",
-            picName: payload.data.pic_name ?? "",
-            emailAddress: payload.data.pic_email ?? email,
-          }));
+          if (payload?.data) {
+            setFormData((prev) => ({
+              ...prev,
+              universityName: payload.data.universityName ?? "",
+              dateEstablishment:
+                payload.data.dateOfEstablishment?.slice(0, 10) ?? "",
+              websiteAddress: payload.data.website ?? "",
+              addressLocation: payload.data.address ?? "",
+              deanName: payload.data.deanName ?? "",
+              picName: payload.data.contactPerson ?? "",
+              emailAddress: payload.data.contactPersonEmail ?? email,
+            }));
+          }
         }
         if (payload?.files) {
           setExistingFiles({

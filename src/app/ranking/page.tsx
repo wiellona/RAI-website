@@ -100,6 +100,11 @@ export default function RankingPage() {
     setScoresBreakdown([]);
 
     try {
+      console.log(
+        `[Ranking] Loading details for university: ${uni.university_id}`
+      );
+
+      // Step 1: Get the most recent completed submission
       const { data: subData, error: subError } =
         await getSupabaseBrowserClient()
           .from("Submissions")
@@ -111,10 +116,14 @@ export default function RankingPage() {
           .single();
 
       if (subError || !subData) {
+        console.error("[Ranking] No completed submission found:", subError);
         setLoadingDetails(false);
         return;
       }
 
+      console.log(`[Ranking] Found submission: ${subData.id}`);
+
+      // Step 2: Fetch category scores with category details
       const { data: scoresData, error: scoresError } =
         await getSupabaseBrowserClient()
           .from("CategoryScores")
@@ -129,29 +138,40 @@ export default function RankingPage() {
           )
           .eq("submission_id", subData.id);
 
-      if (scoresError) throw scoresError;
+      if (scoresError) {
+        console.error(
+          "[Ranking] Failed to fetch category scores:",
+          scoresError
+        );
+        throw scoresError;
+      }
 
-      const breakdown = scoresData
+      console.log(`[Ranking] Found ${scoresData?.length || 0} category scores`);
+
+      // Step 3: Sort by Categories.order (ascending) for proper UI display
+      const breakdown = (scoresData || [])
         .map((item: any) => ({
           category_name: item.Categories?.name || "Unknown Category",
-          score: Number(item.calculated_score),
+          score: Number(item.calculated_score) || 0,
           category_order:
             typeof item.Categories?.order === "number"
               ? item.Categories.order
-              : null,
+              : 999, // Put unordered categories at the end
         }))
         .sort((a, b) => {
-          if (a.category_order === null && b.category_order === null) {
-            return a.category_name.localeCompare(b.category_name); // fallback
+          // Primary sort: by category order
+          if (a.category_order !== b.category_order) {
+            return a.category_order - b.category_order;
           }
-          if (a.category_order === null) return 1;
-          if (b.category_order === null) return -1;
-          return a.category_order - b.category_order;
+          // Secondary sort: alphabetically if same order
+          return a.category_name.localeCompare(b.category_name);
         });
 
+      console.log(`[Ranking] Sorted ${breakdown.length} categories by order`);
       setScoresBreakdown(breakdown);
     } catch (err) {
-      console.error("Error loading details:", err);
+      console.error("[Ranking] Error loading details:", err);
+      setScoresBreakdown([]);
     } finally {
       setLoadingDetails(false);
     }
@@ -298,19 +318,29 @@ export default function RankingPage() {
                       scoresBreakdown.map((item, idx) => (
                         <div
                           key={idx}
-                          className="border border-gray-200 rounded-lg p-4"
+                          className="border border-gray-200 rounded-lg p-4 hover:border-[#c5372c] transition-colors"
                         >
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              {item.category_name}
-                            </span>
-                            <span className="text-sm font-bold text-[#c5372c]">
-                              {item.score}
-                            </span>
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-900 block">
+                                {item.category_name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Category {item.category_order}
+                              </span>
+                            </div>
+                            <div className="text-right ml-3">
+                              <span className="text-lg font-bold text-[#c5372c] block">
+                                {item.score.toLocaleString()}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                points
+                              </span>
+                            </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
                             <div
-                              className="bg-[#c5372c] h-2 rounded-full"
+                              className="bg-gradient-to-r from-[#c5372c] to-[#a42e24] h-2.5 rounded-full transition-all duration-500"
                               style={{
                                 width: `${Math.min(
                                   (item.score / 2000) * 100,
@@ -322,8 +352,8 @@ export default function RankingPage() {
                         </div>
                       ))
                     ) : (
-                      <p className="col-span-2 text-center text-gray-500 text-sm">
-                        No criteria data available.
+                      <p className="col-span-2 text-center text-gray-500 text-sm py-8">
+                        No criteria data available for this university yet.
                       </p>
                     )}
                   </div>
