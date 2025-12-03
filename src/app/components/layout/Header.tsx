@@ -88,6 +88,12 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
+              href="/ranking/automated"
+              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+            >
+              Automated Ranking
+            </Link>
+            <Link
               href="/authentication/register"
               className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
             >
