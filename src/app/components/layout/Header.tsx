@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import { useParticipateNavigation } from "@/hooks/useNavigation";
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const supabase = getSupabaseBrowserClient();
+  const { handleParticipateClick } = useParticipateNavigation();
 
   // useEffect(() => {
   //   // Check login status from localStorage
@@ -87,12 +89,13 @@ export default function Navbar() {
             >
               The Ranking
             </Link>
-            <Link
-              href="/authentication/register"
-              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+            <button
+              type="button"
+              onClick={handleParticipateClick}
+              className="text-gray-700 hover:text-[#5C2E2E] transition-colors cursor-pointer"
             >
               Participate
-            </Link>
+            </button>
 
             {/* Desktop Login/Logout Button */}
             {!isLoggedIn ? (
@@ -153,13 +156,16 @@ export default function Navbar() {
             >
               The Ranking
             </Link>
-            <Link
-              href="/authentication/register"
+            <button
+              type="button"
               className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={() => {
+                handleParticipateClick();
+                setIsMobileMenuOpen(false);
+              }}
             >
               Participate
-            </Link>
+            </button>
 
             {/* Mobile Login/Logout Button */}
             <div className="px-4 pt-2">

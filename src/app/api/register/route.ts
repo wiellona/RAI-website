@@ -184,17 +184,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // const { data: profileRow, error: profileUpdateErr } = await supabase
-  //   .from("Profiles")
-  //   .insert({
-  //     id: supabaseUserId,
-  //     name: contactPerson,
-  //     role: "user",
-  //     is_approved: false,
-  //   })
-  //   .select("id")
-  //   .single();
-
   const { data: profileRow, error: profileUpdateErr } = await supabase
     .from("Profiles")
     .upsert(
@@ -216,19 +205,6 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-
-  // const { error: profileUpdateErr } = await supabase
-  //   .from("Profiles")
-  //   .update({ name: contactPerson })
-  //   .eq("id", supabaseUserId);
-
-  // if (profileUpdateErr) {
-  //   console.error(profileUpdateErr);
-  //   return NextResponse.json(
-  //     { error: "Profile update failed" },
-  //     { status: 500 }
-  //   );
-  // }
 
   return NextResponse.json(
     {

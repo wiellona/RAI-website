@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import type { ChangeEvent } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCriteriaData,
@@ -45,19 +44,32 @@ export function useCriteriaPage() {
   const [uploadingQuestionId, setUploadingQuestionId] = useState<string | null>(
     null
   );
-  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const getSignedUrl = useCallback(
-    (path?: string) => {
-      if (!path) return "#";
-      const { data } = supabase.storage
-        .from(EVIDENCE_BUCKET)
-        .getPublicUrl(path);
-      return data.publicUrl;
+    async (path?: string): Promise<string | null> => {
+      if (!path) return null;
+      try {
+        // Use getPublicUrl for public bucket
+        const { data } = supabase.storage
+          .from(EVIDENCE_BUCKET)
+          .getPublicUrl(path);
+        return data.publicUrl;
+      } catch (err) {
+        console.error("[getSignedUrl] unexpected", err);
+        return null;
+      }
     },
     [supabase]
   );
+  const CURRENT_CRITERIA_KEY = "criteriaPage.currentCriteria";
 
   useEffect(() => {
+    const stored = localStorage.getItem(CURRENT_CRITERIA_KEY);
+    if (stored) {
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed)) {
+        setCurrentCriteria(parsed);
+      }
+    }
     let ignore = false;
     const load = async () => {
       const { data } = await supabase.auth.getSession();
@@ -110,6 +122,10 @@ export function useCriteriaPage() {
       ignore = true;
     };
   }, [router, supabase]);
+
+  useEffect(() => {
+    localStorage.setItem(CURRENT_CRITERIA_KEY, currentCriteria.toString());
+  }, [currentCriteria]);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,7 +234,12 @@ export function useCriteriaPage() {
   }, [criteriaData]);
 
   useEffect(() => {
-    if (!submissionId || !criteriaData.length) return;
+    if (
+      !submissionId ||
+      !criteriaData.length ||
+      !Object.keys(optionLookup).length
+    )
+      return;
     let cancelled = false;
 
     const hydrateAnswers = async () => {
@@ -229,26 +250,38 @@ export function useCriteriaPage() {
           .eq("submission_id", submissionId);
 
         if (error) throw error;
-        if (cancelled || !data?.length) return;
+        if (cancelled) return;
 
         const restored: Answer = {};
-        data.forEach((row) => {
-          if (!row.question_id) return;
-          const optionId = row.selected_option_id ?? null;
-          const optionValue =
-            optionId && optionLookup[row.question_id]?.[optionId] !== undefined
-              ? optionLookup[row.question_id][optionId]
-              : 0;
+        if (data && data.length > 0) {
+          data.forEach((row) => {
+            if (!row.question_id) return;
+            const optionId = row.selected_option_id ?? null;
+            const optionValue =
+              optionId &&
+              optionLookup[row.question_id]?.[optionId] !== undefined
+                ? optionLookup[row.question_id][optionId]
+                : 0;
 
-          restored[row.question_id] = {
-            value: optionValue,
-            optionId,
-            evidence: row.evidence_notes ?? undefined,
-          };
-        });
+            restored[row.question_id] = {
+              value: optionValue,
+              optionId,
+              evidence: row.evidence_notes ?? undefined,
+            };
+          });
 
-        if (!cancelled && Object.keys(restored).length) {
-          setAnswers((prev) => ({ ...prev, ...restored }));
+          console.log(
+            `[hydrateAnswers] Restored ${
+              Object.keys(restored).length
+            } answers from DB`
+          );
+        }
+
+        if (!cancelled) {
+          setAnswers((prev) => {
+            // Merge with localStorage data, giving DB priority
+            return { ...prev, ...restored };
+          });
         }
       } catch (error) {
         console.error("Failed to load saved answers", error);
@@ -265,6 +298,47 @@ export function useCriteriaPage() {
       cancelled = true;
     };
   }, [criteriaData, optionLookup, submissionId, supabase]);
+
+  const saveAnswer = useCallback(
+    async (
+      questionId: string,
+      optionId: string | null,
+      evidenceNotes: string | null = null
+    ) => {
+      if (!submissionId) {
+        throw new Error("Submission is not ready yet.");
+      }
+
+      if (!optionId) {
+        throw new Error(
+          "Please select an option before saving so the score can be calculated."
+        );
+      }
+
+      const payload = {
+        submission_id: submissionId,
+        question_id: questionId,
+        selected_option_id: optionId,
+        evidence_notes: evidenceNotes,
+      };
+
+      console.log("[saveAnswer] Payload:", payload);
+
+      const { data, error } = await supabase.functions.invoke(
+        "submit-answer",
+        {
+          body: payload,
+        }
+      );
+
+      console.log("[saveAnswer] Response:", { data, error });
+
+      if (error) {
+        throw new Error(error.message || "Failed to save answer.");
+      }
+    },
+    [submissionId, supabase]
+  );
 
   useEffect(() => {
     if (!criteriaData.length) return;
@@ -336,8 +410,27 @@ export function useCriteriaPage() {
           evidence: prev[questionId]?.evidence,
         },
       }));
+
+      if (!optionId) {
+        console.warn(
+          `[handleAnswer] No option selected for question ${questionId}. Skipping save.`
+        );
+        return;
+      }
+
+      const evidenceNotes = answers[questionId]?.evidence ?? null;
+
+      void saveAnswer(questionId, optionId, evidenceNotes).catch((error) => {
+        console.error("[handleAnswer] Failed to save answer", error);
+        setStatusLevel("error");
+        setStatusMessage(
+          error instanceof Error
+            ? error.message
+            : "Failed to save answer. Please try again."
+        );
+      });
     },
-    []
+    [answers, saveAnswer]
   );
 
   const persistAnswers = useCallback(
@@ -346,45 +439,35 @@ export function useCriteriaPage() {
 
       const source = override ?? answers;
 
-      const rows = Object.entries(source)
-        .map(([questionId, answer]) => ({
-          questionId,
-          answer,
-        }))
-        .filter(
-          ({ answer }) =>
-            Boolean(answer?.optionId) || Boolean(answer?.evidence?.length)
-        )
-        .map(({ questionId, answer }) => ({
-          submission_id: submissionId,
-          question_id: questionId,
-          selected_option_id: answer.optionId,
-          evidence_notes: answer.evidence ?? null,
-        }));
+      const entries = Object.entries(source).filter(([, answer]) =>
+        Boolean(answer?.optionId)
+      );
 
-      if (!rows.length) return;
+      if (!entries.length) {
+        console.log("[persistAnswers] No complete answers to save");
+        return;
+      }
 
-      for (const row of rows) {
+      console.log(
+        `[persistAnswers] Saving ${entries.length} answers via submit-answer`
+      );
+
+      for (const [questionId, answer] of entries) {
+        const optionId = answer?.optionId;
+        if (!optionId) continue;
         try {
-          const { data, error } = await supabase.functions.invoke("submit-answer", {
-            body: row,
-          });
-
-          if (error) {
-            console.error("submit-answer error", error);
-            continue;
-          }
-
-          const payload = data as { calculated_score?: number } | null;
-          if (payload?.calculated_score !== undefined) {
-            console.log(`QID ${row.question_id} saved. Score: ${payload.calculated_score}`);
-          }
+          await saveAnswer(
+            questionId,
+            optionId,
+            answer?.evidence ?? null
+          );
         } catch (err) {
-          console.error("submit-answer invocation failed", err);
+          console.error("[persistAnswers] Failed while saving", err);
+          throw err;
         }
       }
     },
-    [answers, submissionId, supabase]
+    [answers, saveAnswer, submissionId]
   );
 
   const handleNext = useCallback(async () => {
@@ -477,7 +560,15 @@ export function useCriteriaPage() {
           [questionId]: { ...answers[questionId], evidence: payload.path },
         };
         setAnswers(updated);
-        await persistAnswers(updated);
+
+        const optionId = updated[questionId]?.optionId ?? null;
+        if (!optionId) {
+          throw new Error(
+            "Please select an answer before uploading evidence so scoring can run."
+          );
+        }
+
+        await saveAnswer(questionId, optionId, payload.path);
         setStatusLevel("info");
         setStatusMessage("Evidence uploaded.");
       } catch (error) {
@@ -490,7 +581,7 @@ export function useCriteriaPage() {
         setUploadingQuestionId(null);
       }
     },
-    [answers, persistAnswers, submissionId, universityId]
+    [answers, saveAnswer, submissionId, universityId]
   );
 
   const handleRemoveEvidence = useCallback(
@@ -517,7 +608,15 @@ export function useCriteriaPage() {
           [questionId]: { ...answers[questionId], evidence: undefined },
         };
         setAnswers(updated);
-        await persistAnswers(updated);
+
+        const optionId = updated[questionId]?.optionId ?? null;
+        if (optionId) {
+          await saveAnswer(questionId, optionId, null);
+        } else {
+          console.warn(
+            `[handleRemoveEvidence] No option selected for question ${questionId}; skipping submit-answer call.`
+          );
+        }
       } catch (error) {
         console.error("Failed to remove evidence", error);
         setStatusLevel("error");
@@ -526,21 +625,33 @@ export function useCriteriaPage() {
         );
       }
     },
-    [answers, persistAnswers, submissionId]
+    [answers, saveAnswer, submissionId]
   );
 
-  const handleFileInputChange = useCallback(
-    (
-      event: ChangeEvent<HTMLInputElement>,
-      questionId: string,
-      categoryTitle: string
-    ) => {
-      const file = event.target.files?.[0] ?? null;
+  const handleEvidenceSelect = useCallback(
+    (questionId: string, categoryTitle: string, file: File | null) => {
+      if (!file) {
+        setStatusMessage("No file selected");
+        setStatusLevel("error");
+        return;
+      }
+      if (!submissionId || !universityId) {
+        setStatusMessage("Session not ready. Please refresh the page.");
+        setStatusLevel("error");
+        return;
+      }
+
+      const optionId = answers[questionId]?.optionId;
+      if (!optionId) {
+        setStatusMessage(
+          "Please choose an answer before uploading supporting evidence."
+        );
+        setStatusLevel("error");
+        return;
+      }
       void handleFileUpload(questionId, categoryTitle, file);
-      // eslint-disable-next-line no-param-reassign
-      event.target.value = "";
     },
-    [handleFileUpload]
+    [answers, handleFileUpload, submissionId, universityId]
   );
 
   const handleBack = useCallback(() => {
@@ -571,7 +682,7 @@ export function useCriteriaPage() {
     goToCriteria,
     handleAnswer,
     handleBack,
-    handleFileInputChange,
+    handleEvidenceSelect,
     handleNext,
     handleSaveAndExit,
     isSubmissionReady: Boolean(submissionId),
@@ -584,7 +695,6 @@ export function useCriteriaPage() {
     totalScore,
     uploadingQuestionId,
     handleRemoveEvidence,
-    fileInputs,
     getSignedUrl,
   };
 }

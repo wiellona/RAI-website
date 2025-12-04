@@ -1,10 +1,40 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import {
+  DragDropFileUpload,
+  type DragDropAccept,
+} from "@/app/components/inputs/DragDropFileUpload";
+
+const MAX_EVIDENCE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_EVIDENCE_TYPES = new Set([
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "text/csv",
+  "text/plain",
+]);
+const EVIDENCE_ACCEPT: DragDropAccept = {
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    ".docx",
+  ],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+    ".xlsx",
+  ],
+  "text/csv": [".csv"],
+};
+
+const deriveFileName = (path?: string | null) =>
+  path?.split("/").pop() ?? "Stored file";
 
 export default function GeneralInfoPage() {
   const router = useRouter();
@@ -27,6 +57,10 @@ export default function GeneralInfoPage() {
     aiOpenSourceFile: null as File | null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [removingExisting, setRemovingExisting] = useState({
+    publication: false,
+    asset: false,
+  });
 
   const [existingFiles, setExistingFiles] = useState<{
     publication: { url: string | null; path: string } | null;
@@ -62,17 +96,19 @@ export default function GeneralInfoPage() {
         const payload = await response.json();
         if (ignore) return;
         if (payload?.data) {
-          setFormData((prev) => ({
-            ...prev,
-            universityName: payload.data.name ?? "",
-            dateEstablishment:
-              payload.data.date_of_establishment?.slice(0, 10) ?? "",
-            websiteAddress: payload.data.website ?? "",
-            addressLocation: payload.data.address ?? "",
-            deanName: payload.data.dean_name ?? "",
-            picName: payload.data.pic_name ?? "",
-            emailAddress: payload.data.pic_email ?? email,
-          }));
+          if (payload?.data) {
+            setFormData((prev) => ({
+              ...prev,
+              universityName: payload.data.universityName ?? "",
+              dateEstablishment:
+                payload.data.dateOfEstablishment?.slice(0, 10) ?? "",
+              websiteAddress: payload.data.website ?? "",
+              addressLocation: payload.data.address ?? "",
+              deanName: payload.data.deanName ?? "",
+              picName: payload.data.contactPerson ?? "",
+              emailAddress: payload.data.contactPersonEmail ?? email,
+            }));
+          }
         }
         if (payload?.files) {
           setExistingFiles({
@@ -107,16 +143,60 @@ export default function GeneralInfoPage() {
     });
   };
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    fieldName: string
-  ) => {
-    const file = e.target.files?.[0] || null;
-    setFormData({
-      ...formData,
-      [fieldName]: file,
-    });
-  };
+  const validateEvidenceFile = useCallback((file: File) => {
+    if (file.size > MAX_EVIDENCE_FILE_SIZE) {
+      throw new Error("File too large. Maximum size is 10MB.");
+    }
+    if (file.type && !ACCEPTED_EVIDENCE_TYPES.has(file.type)) {
+      throw new Error(
+        "Unsupported file type. Upload PDF, Word, or Excel formats."
+      );
+    }
+  }, []);
+
+  const handlePublicationsSelect = useCallback(
+    (file: File | null) => {
+      if (!file) {
+        setFormData((prev) => ({ ...prev, aiPublicationsFile: null }));
+        return;
+      }
+      try {
+        validateEvidenceFile(file);
+        setFormData((prev) => ({ ...prev, aiPublicationsFile: file }));
+      } catch (err) {
+        setStatus({
+          type: "error",
+          message:
+            err instanceof Error
+              ? err.message
+              : "Invalid AI Publications evidence file.",
+        });
+      }
+    },
+    [validateEvidenceFile]
+  );
+
+  const handleAssetsSelect = useCallback(
+    (file: File | null) => {
+      if (!file) {
+        setFormData((prev) => ({ ...prev, aiOpenSourceFile: null }));
+        return;
+      }
+      try {
+        validateEvidenceFile(file);
+        setFormData((prev) => ({ ...prev, aiOpenSourceFile: file }));
+      } catch (err) {
+        setStatus({
+          type: "error",
+          message:
+            err instanceof Error
+              ? err.message
+              : "Invalid AI Open-Source Asset evidence file.",
+        });
+      }
+    },
+    [validateEvidenceFile]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,6 +209,13 @@ export default function GeneralInfoPage() {
     setIsSubmitting(true);
 
     try {
+      if (publicationRequired) {
+        throw new Error("AI Publications evidence is required.");
+      }
+      if (assetRequired) {
+        throw new Error("AI Open-Source Assets evidence is required.");
+      }
+
       const payload = new FormData();
       payload.append("universityName", formData.universityName.trim());
       payload.append("dateEstablishment", formData.dateEstablishment);
@@ -137,6 +224,16 @@ export default function GeneralInfoPage() {
       payload.append("deanName", formData.deanName.trim());
       payload.append("picName", formData.picName.trim());
       payload.append("emailAddress", formData.emailAddress.trim());
+
+      if (existingFiles.publication?.path) {
+        payload.append(
+          "publicationExistingPath",
+          existingFiles.publication.path
+        );
+      }
+      if (existingFiles.asset?.path) {
+        payload.append("assetExistingPath", existingFiles.asset.path);
+      }
       if (formData.aiPublicationsFile) {
         payload.append("aiPublicationsFile", formData.aiPublicationsFile);
       }
@@ -172,6 +269,7 @@ export default function GeneralInfoPage() {
 
   const handleRemoveExisting = async (type: "publication" | "asset") => {
     setStatus(null);
+    setRemovingExisting((prev) => ({ ...prev, [type]: true }));
     try {
       const res = await fetch(`/api/general-info?type=${type}`, {
         method: "DELETE",
@@ -181,11 +279,11 @@ export default function GeneralInfoPage() {
         throw new Error(body.error || "Failed to remove file");
       }
       setExistingFiles((prev) => ({ ...prev, [type]: null }));
-      if (type === "publication") {
-        setFormData((prev) => ({ ...prev, aiPublicationsFile: null }));
-      } else {
-        setFormData((prev) => ({ ...prev, aiOpenSourceFile: null }));
-      }
+      setFormData((prev) => ({
+        ...prev,
+        [type === "publication" ? "aiPublicationsFile" : "aiOpenSourceFile"]:
+          null,
+      }));
       setStatus({
         type: "success",
         message: "Evidence removed. Upload a new file if needed.",
@@ -195,6 +293,8 @@ export default function GeneralInfoPage() {
         type: "error",
         message: err instanceof Error ? err.message : "Failed to remove file",
       });
+    } finally {
+      setRemovingExisting((prev) => ({ ...prev, [type]: false }));
     }
   };
 
@@ -372,8 +472,8 @@ export default function GeneralInfoPage() {
 
               {/* AI Publications File Upload */}
               <div>
-                <label className="block text-sm font-medium text-[#5C2E2E] mb-2 items-center gap-2">
-                  AI Publications (Last 3 Years) *
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-[#5C2E2E] mb-2">
+                  <span>AI Publications (Last 3 Years)</span>
                   <span className="relative group text-gray-400 hover:text-[#A84032] cursor-help transition-colors">
                     <svg
                       className="w-4 h-4"
@@ -423,88 +523,36 @@ export default function GeneralInfoPage() {
                     Download Template (Spreadsheet)
                   </a>
                 </p>
-                {formData.aiPublicationsFile && (
-                  <p className="text-sm text-green-600 mb-2 flex items-center gap-1">
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {formData.aiPublicationsFile.name}
-                  </p>
-                )}
-                {existingFiles.publication && (
-                  <div className="mb-3 rounded border border-green-200 bg-green-50 p-3 flex items-center justify-between text-sm text-green-800">
-                    <div className="space-y-1">
-                      <p className="font-medium">Existing upload</p>
-                      {existingFiles.publication.url ? (
-                        <a
-                          href={existingFiles.publication.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline text-green-700"
-                        >
-                          Download current file
-                        </a>
-                      ) : (
-                        <p className="text-xs text-green-700">
-                          File stored (no preview)
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveExisting("publication")}
-                      className="text-red-600 hover:text-red-700 text-xs font-medium"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#A84032]/50 transition-colors"
-                  onClick={() =>
-                    document.getElementById("aiPublicationsFile")?.click()
+                <DragDropFileUpload
+                  currentFile={formData.aiPublicationsFile}
+                  onFileSelect={handlePublicationsSelect}
+                  accept={EVIDENCE_ACCEPT}
+                  helperText="PDF, DOC/DOCX, XLS/XLSX, CSV · up to 10 MB"
+                  maxSize={MAX_EVIDENCE_FILE_SIZE}
+                  disabled={isSubmitting}
+                  existingFile={
+                    existingFiles.publication
+                      ? {
+                          name: deriveFileName(existingFiles.publication.path),
+                          downloadUrl: existingFiles.publication.url,
+                          description:
+                            "This file is already stored in Supabase. Uploading a new document will replace it.",
+                        }
+                      : undefined
                   }
-                >
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    stroke="currentColor"
-                    fill="none"
-                    viewBox="0 0 48 48"
-                  >
-                    <path
-                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Click to upload or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">XLSX up to 10MB</p>
-                </div>
-                <input
-                  id="aiPublicationsFile"
-                  type="file"
-                  className="hidden"
-                  accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, "aiPublicationsFile")}
-                  required={publicationRequired}
+                  onRemoveExisting={
+                    existingFiles.publication
+                      ? () => handleRemoveExisting("publication")
+                      : undefined
+                  }
+                  removingExisting={removingExisting.publication}
                 />
               </div>
 
               {/* AI Open-Source Assets File Upload */}
               <div>
-                <label className="block text-sm font-medium text-[#5C2E2E] mb-2 items-center gap-2">
-                  AI Open-Source Assets *
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-[#5C2E2E] mb-2">
+                  <span>AI Open-Source Assets</span>
                   <span className="relative group text-gray-400 hover:text-[#A84032] cursor-help transition-colors">
                     <svg
                       className="w-4 h-4"
@@ -557,81 +605,29 @@ export default function GeneralInfoPage() {
                     Download Template (Spreadsheet)
                   </a>
                 </p>
-                {formData.aiOpenSourceFile && (
-                  <p className="text-sm text-green-600 mb-2 flex items-center gap-1">
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {formData.aiOpenSourceFile.name}
-                  </p>
-                )}
-                {existingFiles.asset && (
-                  <div className="mb-3 rounded border border-green-200 bg-green-50 p-3 flex items-center justify-between text-sm text-green-800">
-                    <div className="space-y-1">
-                      <p className="font-medium">Existing upload</p>
-                      {existingFiles.asset.url ? (
-                        <a
-                          href={existingFiles.asset.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline text-green-700"
-                        >
-                          Download current file
-                        </a>
-                      ) : (
-                        <p className="text-xs text-green-700">
-                          File stored (no preview)
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveExisting("asset")}
-                      className="text-red-600 hover:text-red-700 text-xs font-medium"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#A84032]/50 transition-colors"
-                  onClick={() =>
-                    document.getElementById("aiOpenSourceFile")?.click()
+                <DragDropFileUpload
+                  currentFile={formData.aiOpenSourceFile}
+                  onFileSelect={handleAssetsSelect}
+                  accept={EVIDENCE_ACCEPT}
+                  helperText="PDF, DOC/DOCX, XLS/XLSX, CSV · up to 10 MB"
+                  maxSize={MAX_EVIDENCE_FILE_SIZE}
+                  disabled={isSubmitting}
+                  existingFile={
+                    existingFiles.asset
+                      ? {
+                          name: deriveFileName(existingFiles.asset.path),
+                          downloadUrl: existingFiles.asset.url,
+                          description:
+                            "This file is already stored in Supabase. Uploading a new document will replace it.",
+                        }
+                      : undefined
                   }
-                >
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    stroke="currentColor"
-                    fill="none"
-                    viewBox="0 0 48 48"
-                  >
-                    <path
-                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Click to upload or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">XLSX up to 10MB</p>
-                </div>
-                <input
-                  id="aiOpenSourceFile"
-                  type="file"
-                  className="hidden"
-                  accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, "aiOpenSourceFile")}
-                  required={assetRequired}
+                  onRemoveExisting={
+                    existingFiles.asset
+                      ? () => handleRemoveExisting("asset")
+                      : undefined
+                  }
+                  removingExisting={removingExisting.asset}
                 />
               </div>
 

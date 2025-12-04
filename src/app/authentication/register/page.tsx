@@ -15,6 +15,7 @@ import countryList from "react-select-country-list";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
+import { DragDropFileUpload } from "@/app/components/inputs/DragDropFileUpload";
 
 type Option = { label: string; value: string };
 type CountryOption = Option;
@@ -158,10 +159,11 @@ export default function RegistrationPage() {
   const letterInputRef = useRef<HTMLInputElement | null>(null);
   const openLetterPicker = () => letterInputRef.current?.click();
 
-  const handleLetterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    if (!file) return;
-
+  const handleLetterChange = (file: File | null) => {
+    if (!file) {
+      setFormData((prev) => ({ ...prev, officialLetter: null }));
+      return;
+    }
     const MAX_SIZE = 1 * 1024 * 1024;
     if (file.type !== "application/pdf") {
       alert("Please upload PDF files only.");
@@ -455,7 +457,7 @@ export default function RegistrationPage() {
                     htmlFor="contactPerson"
                     className="block text-sm font-medium text-gray-900 mb-1"
                   >
-                    Contact Person
+                    Contact Person's Full Name
                   </label>
                   <input
                     type="text"
@@ -569,72 +571,31 @@ export default function RegistrationPage() {
                       For template example, click here
                     </a>
                   </p>
-                  <input
-                    ref={letterInputRef}
-                    id="officialLetter"
-                    name="officialLetter"
-                    type="file"
-                    className="hidden"
-                    accept="application/pdf"
-                    onChange={handleLetterChange}
-                    required
+                  <DragDropFileUpload
+                    label="Official letter of Request that signed by the dean"
+                    currentFile={formData.officialLetter}
+                    onFileSelect={handleLetterChange}
+                    accept={{ "application/pdf": [".pdf"] }}
+                    helperText="PDF up to 1 MB"
                   />
-                  <div
-                    className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#A84032]/50 transition-colors"
-                    onClick={openLetterPicker}
-                    onDrop={handleFileDrop}
-                    onDragOver={handleDragOver}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        openLetterPicker();
-                      }
-                    }}
-                    aria-label="Upload official letter PDF"
-                  >
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <p className="mt-3 text-sm text-gray-600">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">PDF up to 1MB</p>
-                    {formData.officialLetter && (
-                      <p className="mt-3 text-sm text-green-700">
-                        ✓ File selected: {formData.officialLetter.name}
-                      </p>
-                    )}
-                  </div>
                 </div>
               </div>
-
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Submitting..." : "Register University"}
-                </button>
-                <Link
-                  href="/"
-                  className="w-full sm:w-auto text-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none"
-                >
-                  Cancel
-                </Link>
+                <div className="ml-auto flex gap-4">
+                  <Link
+                    href="/"
+                    className="w-full sm:w-auto text-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none cursor-pointers"
+                  >
+                    Cancel
+                  </Link>
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Submitting..." : "Register University"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

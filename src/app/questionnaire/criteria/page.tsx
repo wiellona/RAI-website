@@ -1,9 +1,32 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Navbar from "@/app/components/layout/Header";
+import {
+  DragDropFileUpload,
+  type DragDropAccept,
+} from "@/app/components/inputs/DragDropFileUpload";
 import { useCriteriaPage } from "@/hooks/useCriteriaPage";
 
+const MAX_EVIDENCE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const EVIDENCE_ACCEPT: DragDropAccept = {
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    ".docx",
+  ],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+    ".xlsx",
+  ],
+  "text/csv": [".csv"],
+};
+
+const deriveEvidenceName = (path?: string) =>
+  path?.split("/").pop() ?? "Stored file";
+
 export default function CriteriaPage() {
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const {
     answers,
     completionPercent,
@@ -13,7 +36,7 @@ export default function CriteriaPage() {
     goToCriteria,
     handleAnswer,
     handleBack,
-    handleFileInputChange,
+    handleEvidenceSelect,
     handleNext,
     handleSaveAndExit,
     institutionName,
@@ -25,14 +48,38 @@ export default function CriteriaPage() {
     statusMessage,
     uploadingQuestionId,
     handleRemoveEvidence,
-    fileInputs,
     getSignedUrl,
   } = useCriteriaPage();
 
-  if (loading) {
+  // Fetch signed URLs for evidence files
+  useEffect(() => {
+    const fetchUrls = async () => {
+      const paths = Object.values(answers)
+        .map((a) => a?.evidence)
+        .filter((p): p is string => Boolean(p));
+
+      const newUrls: Record<string, string> = {};
+      for (const path of paths) {
+        if (!signedUrls[path]) {
+          const url = await getSignedUrl(path);
+          if (url) {
+            newUrls[path] = url;
+          }
+        }
+      }
+
+      if (Object.keys(newUrls).length > 0) {
+        setSignedUrls((prev) => ({ ...prev, ...newUrls }));
+      }
+    };
+    void fetchUrls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, getSignedUrl]); // Remove signedUrls from deps
+
+  if (loading || !isSubmissionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading questionnaire...
+        {loading ? "Loading questionnaire..." : "Preparing your session..."}
       </div>
     );
   }
@@ -101,7 +148,7 @@ export default function CriteriaPage() {
                   <button
                     key={criteria.id}
                     onClick={() => goToCriteria(criteria.id)}
-                    className={`w-full text-left px-4 py-3 rounded-md font-medium text-sm mb-2 transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-4 py-3 rounded-md font-medium text-sm mb-2 transition-colors flex items-center justify-between cursor-pointer ${
                       currentCriteria === criteria.id
                         ? "bg-[#FFE5E5] text-[#A84032]"
                         : "text-gray-900 hover:bg-gray-50"
@@ -215,62 +262,43 @@ export default function CriteriaPage() {
                     <p className="font-medium text-sm text-gray-900 mb-3">
                       Evidence Upload
                     </p>
-
-                    {answers[question.id]?.evidence && (
-                      <div className="mb-3 rounded border border-green-200 bg-green-50 p-3 flex items-center justify-between text-sm text-green-800">
-                        <div className="space-y-1">
-                          <p className="font-medium">Evidence uploaded</p>
-                          <a
-                            href={getSignedUrl(answers[question.id]?.evidence)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline text-green-700"
-                          >
-                            Download current file
-                          </a>
-                        </div>
-                        <button
-                          type="button"
-                          className="text-red-600 hover:text-red-700 text-xs font-medium"
-                          onClick={() => handleRemoveEvidence(question.id)}
-                          disabled={uploadingQuestionId === question.id}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-
-                    <input
-                      id={`evidence-${question.id}`}
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
-                      onChange={(event) =>
-                        handleFileInputChange(
-                          event,
+                    <DragDropFileUpload
+                      currentFile={null}
+                      onFileSelect={(file) =>
+                        handleEvidenceSelect(
                           question.id,
-                          currentCriteriaData.title
+                          currentCriteriaData.title,
+                          file
                         )
                       }
+                      accept={EVIDENCE_ACCEPT}
+                      helperText={
+                        uploadingQuestionId === question.id
+                          ? "Uploading evidence..."
+                          : "PDF, DOC/DOCX, XLS/XLSX, CSV · up to 10 MB"
+                      }
+                      maxSize={MAX_EVIDENCE_FILE_SIZE}
+                      disabled={uploadingQuestionId === question.id}
+                      existingFile={
+                        answers[question.id]?.evidence
+                          ? {
+                              name: deriveEvidenceName(
+                                answers[question.id]?.evidence
+                              ),
+                              downloadUrl:
+                                signedUrls[answers[question.id]?.evidence!] ??
+                                null,
+                              description:
+                                "Evidence stored in Supabase. Uploading a new file will replace it.",
+                            }
+                          : undefined
+                      }
+                      onRemoveExisting={
+                        answers[question.id]?.evidence
+                          ? () => handleRemoveEvidence(question.id)
+                          : undefined
+                      }
                     />
-
-                    <label
-                      htmlFor={`evidence-${question.id}`}
-                      className="border-2 border-dashed border-gray-300 rounded-lg h-24 flex flex-col items-center justify-center cursor-pointer hover:border-[#A84032]/50 transition-colors text-center px-4"
-                    >
-                      {uploadingQuestionId === question.id ? (
-                        <p className="text-sm text-gray-600">Uploading...</p>
-                      ) : (
-                        <>
-                          <p className="text-base text-[#A84032] mb-1">
-                            Upload Document
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Drag and drop or click to upload
-                          </p>
-                        </>
-                      )}
-                    </label>
                   </div>
                 </div>
               ))}
@@ -279,13 +307,16 @@ export default function CriteriaPage() {
                 <button
                   onClick={handleBack}
                   disabled={currentCriteria === 1}
-                  className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm px-6 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm px-6 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   ← Back
                 </button>
                 <button
-                  onClick={() => void handleNext()}
-                  className="bg-[#A84032] hover:bg-[#8B3528] text-white font-medium text-sm px-8 py-2 rounded-md transition-colors"
+                  onClick={async () => {
+                    await handleNext();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="bg-[#A84032] hover:bg-[#8B3528] text-white font-medium text-sm px-8 py-2 rounded-md transition-colors cursor-pointer"
                 >
                   {currentCriteria < criteriaData.length
                     ? "Next Question →"

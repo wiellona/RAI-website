@@ -70,7 +70,11 @@ export async function GET() {
 
     const { data: questionnaireRows, error: questionnaireError } =
       await supabase
+<<<<<<< HEAD
         .from("Questionnaries")
+=======
+        .from("Questionnaires")
+>>>>>>> kuisioner-final
         .select("id, title, version, created_at")
         .order("version", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false, nullsFirst: false })
