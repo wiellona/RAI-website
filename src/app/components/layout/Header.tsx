@@ -92,6 +92,10 @@ export default function Navbar() {
             <Link
               href="/authentication/register"
               className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+            >
+              Register
+            </Link>
+
             <button
               type="button"
               onClick={handleParticipateClick}
