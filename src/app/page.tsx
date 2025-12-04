@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Header from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
+import { useParticipateNavigation } from "@/hooks/useNavigation";
 
 export default function LandingPage() {
+  const { handleParticipateClick } = useParticipateNavigation();
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
@@ -55,12 +57,13 @@ export default function LandingPage() {
                 >
                   Explore the 2025 Ranking →
                 </Link>
-                <Link
-                  href="/authentication/register"
-                  className="inline-flex items-center justify-center bg-white border-2 border-[#c5372c] text-[#c5372c] hover:bg-[#c5372c] hover:text-white px-8 py-4 rounded-lg transition-all font-medium"
+                <button
+                  type="button"
+                  onClick={handleParticipateClick}
+                  className="inline-flex items-center justify-center bg-white border-2 border-[#c5372c] text-[#c5372c] hover:bg-[#c5372c] hover:text-white px-8 py-4 rounded-lg transition-all font-medium cursor-pointer"
                 >
                   Participate
-                </Link>
+                </button>
               </div>
             </div>
           </div>

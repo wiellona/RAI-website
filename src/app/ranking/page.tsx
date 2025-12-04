@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Header from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import { getPublicUrl } from "@/utils/storage";
+import { useCallback } from "react";
 
 interface UniversityRank {
   id: string;
@@ -13,13 +15,14 @@ interface UniversityRank {
   university_name: string;
   aiPublications: number;
   aiAssets: number;
-  publicationPdfUrl?: string;
-  assetsPdfUrl?: string;
+  publicationPdfUrl?: string | null;
+  assetsPdfUrl?: string | null;
 }
 
 interface ScoreBreakdown {
   category_name: string;
   score: number;
+  category_order: number | null;
 }
 
 export default function RankingPage() {
@@ -30,6 +33,10 @@ export default function RankingPage() {
   const [selectedUni, setSelectedUni] = useState<UniversityRank | null>(null);
   const [scoresBreakdown, setScoresBreakdown] = useState<ScoreBreakdown[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  const PUBLICATIONS_BUCKET = "publication_evidences";
+  const ASSETS_BUCKET = "asset_evidences";
+  const EVIDENCE_BUCKET = "evidence_uploads";
 
   useEffect(() => {
     async function fetchRankings() {
@@ -45,6 +52,8 @@ export default function RankingPage() {
             university_id,
             Universities (
               name,
+              publication_evidence_path,
+              asset_evidence_path,
               CrawlingData ( num_publications, num_assets )
             )
           `
@@ -63,8 +72,14 @@ export default function RankingPage() {
           aiPublications:
             item.Universities?.CrawlingData?.[0]?.num_publications || 0,
           aiAssets: item.Universities?.CrawlingData?.[0]?.num_assets || 0,
-          publicationPdfUrl: item.Universities?.publication_evidence_path,
-          assetsPdfUrl: item.Universities?.asset_evidence_path,
+          publicationPdfUrl: getPublicUrl(
+            item.Universities?.publication_evidence_path,
+            EVIDENCE_BUCKET
+          ),
+          assetsPdfUrl: getPublicUrl(
+            item.Universities?.asset_evidence_path,
+            EVIDENCE_BUCKET
+          ),
         }));
 
         setRankings(formatted);
@@ -85,6 +100,11 @@ export default function RankingPage() {
     setScoresBreakdown([]);
 
     try {
+      console.log(
+        `[Ranking] Loading details for university: ${uni.university_id}`
+      );
+
+      // Step 1: Get the most recent completed submission
       const { data: subData, error: subError } =
         await getSupabaseBrowserClient()
           .from("Submissions")
@@ -96,32 +116,62 @@ export default function RankingPage() {
           .single();
 
       if (subError || !subData) {
-        console.warn("Belum ada submission completed untuk univ ini");
+        console.error("[Ranking] No completed submission found:", subError);
         setLoadingDetails(false);
         return;
       }
 
+      console.log(`[Ranking] Found submission: ${subData.id}`);
+
+      // Step 2: Fetch category scores with category details
       const { data: scoresData, error: scoresError } =
         await getSupabaseBrowserClient()
           .from("CategoryScores")
           .select(
             `
-          calculated_score,
-          Categories ( name )
-        `
+              calculated_score,
+              Categories (
+                name,
+                order
+              )
+            `
           )
           .eq("submission_id", subData.id);
 
-      if (scoresError) throw scoresError;
+      if (scoresError) {
+        console.error(
+          "[Ranking] Failed to fetch category scores:",
+          scoresError
+        );
+        throw scoresError;
+      }
 
-      const breakdown = scoresData.map((item: any) => ({
-        category_name: item.Categories?.name || "Unknown Category",
-        score: Number(item.calculated_score),
-      }));
+      console.log(`[Ranking] Found ${scoresData?.length || 0} category scores`);
 
+      // Step 3: Sort by Categories.order (ascending) for proper UI display
+      const breakdown = (scoresData || [])
+        .map((item: any) => ({
+          category_name: item.Categories?.name || "Unknown Category",
+          score: Number(item.calculated_score) || 0,
+          category_order:
+            typeof item.Categories?.order === "number"
+              ? item.Categories.order
+              : 999, // Put unordered categories at the end
+        }))
+        .sort((a, b) => {
+          // Primary sort: by category order
+          if (a.category_order !== b.category_order) {
+            return a.category_order - b.category_order;
+          }
+          // Secondary sort: alphabetically if same order
+          return a.category_name.localeCompare(b.category_name);
+        });
+
+      console.log(`[Ranking] Sorted ${breakdown.length} categories by order`);
       setScoresBreakdown(breakdown);
     } catch (err) {
-      console.error("Gagal load detail:", err);
+      console.error("[Ranking] Error loading details:", err);
+      setScoresBreakdown([]);
     } finally {
       setLoadingDetails(false);
     }
@@ -132,11 +182,25 @@ export default function RankingPage() {
     setSelectedUni(null);
   };
 
+  const openDocument = useCallback(async (publicUrl?: string | null) => {
+    if (!publicUrl) return;
+    try {
+      const response = await fetch(publicUrl);
+      if (!response.ok) throw new Error("Unable to fetch document");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+    } catch (error) {
+      console.error("Failed to open document", error);
+      alert("Sorry, we couldn't open that file. Please try again.");
+    }
+  }, []);
+
   return (
     <div className="bg-white min-h-screen">
       <Header />
 
-      {/* Hero Section */}
       <section className="pt-[65px] bg-gradient-to-br from-[#511715] to-[#8B3528] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -149,7 +213,6 @@ export default function RankingPage() {
         </div>
       </section>
 
-      {/* Rankings Table */}
       <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
@@ -178,11 +241,11 @@ export default function RankingPage() {
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center">
-                        Loading data...
+                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                        Loading rankings...
                       </td>
                     </tr>
-                  ) : (
+                  ) : rankings.length > 0 ? (
                     rankings.map((uni) => (
                       <tr
                         key={uni.id}
@@ -200,6 +263,12 @@ export default function RankingPage() {
                         </td>
                       </tr>
                     ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                        No rankings available yet.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -208,7 +277,6 @@ export default function RankingPage() {
         </div>
       </section>
 
-      {/* Detail Modal */}
       {isModalOpen && selectedUni && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -218,8 +286,7 @@ export default function RankingPage() {
             className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="bg-[#511715] text-white p-6 flex justify-between sticky top-0">
+            <div className="bg-[#511715] text-white p-6 flex justify-between sticky top-0 z-10">
               <div>
                 <h3 className="text-2xl font-bold">
                   #{selectedUni.ranking} {selectedUni.university_name}
@@ -228,68 +295,130 @@ export default function RankingPage() {
                   Total Score: {selectedUni.score.toLocaleString()}
                 </p>
               </div>
-              <button onClick={closeModal} className="text-2xl">
+              <button
+                onClick={closeModal}
+                className="text-white hover:text-white/80 transition-colors text-2xl"
+              >
                 &times;
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6">
               {loadingDetails ? (
-                <p className="text-center py-8">Loading details...</p>
+                <p className="text-center py-8 text-gray-500">
+                  Loading details...
+                </p>
               ) : (
                 <>
-                  <h4 className="text-lg font-semibold mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
                     Criteria Breakdown
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    {scoresBreakdown.map((item, idx) => (
-                      <div key={idx} className="border p-4 rounded-lg">
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">
-                            {item.category_name}
-                          </span>
-                          <span className="font-bold text-[#c5372c]">
-                            {item.score}
-                          </span>
+                    {scoresBreakdown.length > 0 ? (
+                      scoresBreakdown.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="border border-gray-200 rounded-lg p-4 hover:border-[#c5372c] transition-colors"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-900 block">
+                                {item.category_name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Category {item.category_order}
+                              </span>
+                            </div>
+                            <div className="text-right ml-3">
+                              <span className="text-lg font-bold text-[#c5372c] block">
+                                {item.score.toLocaleString()}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                points
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                            <div
+                              className="bg-gradient-to-r from-[#c5372c] to-[#a42e24] h-2.5 rounded-full transition-all duration-500"
+                              style={{
+                                width: `${Math.min(
+                                  (item.score / 2000) * 100,
+                                  100
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
                         </div>
-                        {/* Progress Bar Visual (Assuming max per category is roughly 1500-2000, adjust scale accordingly) */}
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-[#c5372c] h-2 rounded-full"
-                            style={{
-                              width: `${Math.min(
-                                (item.score / 2000) * 100,
-                                100
-                              )}%`,
-                            }} // Estimasi max score
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="col-span-2 text-center text-gray-500 text-sm py-8">
+                        No criteria data available for this university yet.
+                      </p>
+                    )}
                   </div>
 
-                  <h4 className="text-lg font-semibold mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
                     Additional Metrics
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg border">
-                      <p className="text-sm text-gray-600">AI Publications</p>
-                      <p className="text-2xl font-bold">
-                        {selectedUni.aiPublications}
-                      </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600 mb-1">
+                        Number of AI Publications
+                      </div>
+                      <div className="flex items-end justify-between">
+                        {selectedUni.publicationPdfUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openDocument(selectedUni.publicationPdfUrl)
+                            }
+                            className="text-[#c5372c] hover:text-[#a42e24] font-medium text-sm underline cursor-pointer"
+                          >
+                            See Here
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-sm italic">
+                            No Document
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border">
-                      <p className="text-sm text-gray-600">
-                        Open Source Assets
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {selectedUni.aiAssets}
-                      </p>
+
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600 mb-1">
+                        Number of AI Open-Source Assets
+                      </div>
+                      <div className="flex items-end justify-between">
+                        {selectedUni.assetsPdfUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openDocument(selectedUni.assetsPdfUrl)
+                            }
+                            className="text-[#c5372c] hover:text-[#a42e24] font-medium text-sm underline cursor-pointer"
+                          >
+                            See Here
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-sm italic">
+                            No Document
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </>
               )}
+            </div>
+
+            <div className="border-t border-gray-200 p-6 bg-gray-50">
+              <button
+                onClick={closeModal}
+                className="w-full bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-6 rounded-md transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
