@@ -11,12 +11,6 @@ export default function Navbar() {
   const supabase = getSupabaseBrowserClient();
   const { handleParticipateClick } = useParticipateNavigation();
 
-  // useEffect(() => {
-  //   // Check login status from localStorage
-  //   const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-  //   setIsLoggedIn(loggedIn);
-  // }, []);
-
   useEffect(() => {
     const update = () =>
       setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
@@ -89,6 +83,15 @@ export default function Navbar() {
             >
               The Ranking
             </Link>
+            <Link
+              href="/ranking/automated"
+              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+            >
+              Automated Ranking
+            </Link>
+            <Link
+              href="/authentication/register"
+              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
             <button
               type="button"
               onClick={handleParticipateClick}

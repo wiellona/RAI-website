@@ -1,0 +1,479 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Header from "@/app/components/layout/Header";
+import Footer from "@/app/components/layout/Footer";
+
+interface UniversityCrawlData {
+  id: string;
+  university_name: string;
+  university_name_normalized: string;
+  analysis_timestamp: string;
+  duration_seconds: number;
+  status: string;
+
+  // Step completion flags
+  step_publications_completed: boolean;
+  step_huggingface_completed: boolean;
+  step_github_completed: boolean;
+  step_policies_completed: boolean;
+  step_organigram_completed: boolean;
+
+  // Summary counts
+  total_publications: number;
+  total_models: number;
+  total_datasets: number;
+  total_policies: number;
+  total_divisions: number;
+  total_assets: number;
+
+  // Ranking data
+  publications_grade: number;
+  assets_grade: number;
+  policies_grade: number;
+  divisions_grade: number;
+  total_score: number;
+  rank: number;
+
+  // Storage and CSV URLs
+  storage_folder_path?: string;
+  publications_csv_url?: string;
+  huggingface_csv_url?: string;
+  github_csv_url?: string;
+  policies_csv_url?: string;
+  organigram_csv_url?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+const gradeToLetter = (grade: number): string => {
+  if (grade === 4.0) return "E";
+  if (grade === 3.0) return "D";
+  if (grade === 2.0) return "C";
+  if (grade === 1.0) return "B";
+  return "A";
+};
+export default function AutomatedRankingPage() {
+  const [crawlData, setCrawlData] = useState<UniversityCrawlData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUniversity, setSelectedUniversity] =
+    useState<UniversityCrawlData | null>(null);
+
+  useEffect(() => {
+    async function fetchCrawlData() {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/automated-ranking");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch automated ranking data");
+        }
+
+        const result = await response.json();
+        setCrawlData(result.data || []);
+      } catch (err) {
+        console.error("Failed to load automated ranking data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCrawlData();
+  }, []);
+
+  const handleRowClick = (university: UniversityCrawlData) => {
+    setSelectedUniversity(university);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedUniversity(null);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const calculateTotalAssets = (uni: UniversityCrawlData) => {
+    return uni.total_assets || uni.total_models + uni.total_datasets;
+  };
+
+  return (
+    <div className="bg-white min-h-screen">
+      <Header />
+
+      {/* Hero Section */}
+      <section className="pt-[65px] bg-gradient-to-br from-[#511715] to-[#8B3528] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Automated RAI University Rankings
+          </h1>
+          <p className="text-xl text-white/90 max-w-3xl">
+            Automated analysis of universities' AI research, assets, and
+            policies through web crawling.
+          </p>
+        </div>
+      </section>
+
+      {/* Rankings Table */}
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div className="bg-[#511715] text-white p-6">
+              <h2 className="text-2xl font-bold">Automated Rankings</h2>
+              <p className="text-white/80 mt-1">
+                Data collected through automated web crawling and analysis.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-100 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      Rank
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      University
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      Publications
+                      <br />
+                      <span className="text-xs font-normal">(0-4)</span>
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      Models & Datasets
+                      <br />
+                      <span className="text-xs font-normal">(0-4)</span>
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      Policies
+                      <br />
+                      <span className="text-xs font-normal">(0-4)</span>
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      Divisions
+                      <br />
+                      <span className="text-xs font-normal">(0-4)</span>
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      Total Score
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center">
+                        Loading data...
+                      </td>
+                    </tr>
+                  ) : crawlData.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-gray-500">
+                        No automated ranking data available yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    crawlData.map((uni) => (
+                      <tr
+                        key={uni.id}
+                        onClick={() => handleRowClick(uni)}
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-6 py-4 font-bold text-gray-900">
+                          #{uni.rank}
+                        </td>
+                        <td className="px-6 py-4 text-gray-900 font-medium">
+                          {uni.university_name}
+                        </td>
+                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                          {uni.publications_grade.toFixed(1)}
+                        </td>
+                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                          {uni.assets_grade.toFixed(1)}
+                        </td>
+                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                          {uni.policies_grade.toFixed(1)}
+                        </td>
+                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                          {uni.divisions_grade.toFixed(1)}
+                        </td>
+                        <td className="px-6 py-4 text-center font-bold text-[#c5372c] text-lg">
+                          {uni.total_score.toFixed(1)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Detail Modal */}
+      {isModalOpen && selectedUniversity && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-[#511715] text-white p-6 flex justify-between sticky top-0">
+              <div>
+                <h3 className="text-2xl font-bold">
+                  {selectedUniversity.university_name}
+                </h3>
+                <p className="opacity-90 text-sm mt-1">
+                  Analysis completed:{" "}
+                  {formatDate(selectedUniversity.analysis_timestamp)}
+                </p>
+                {selectedUniversity.duration_seconds && (
+                  <p className="opacity-90 text-sm">
+                    Duration: {selectedUniversity.duration_seconds.toFixed(2)}s
+                  </p>
+                )}
+              </div>
+              <button onClick={closeModal} className="text-2xl">
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {/* Ranking Score Breakdown */}
+              <h4 className="text-lg font-semibold mb-4">
+                Score Breakdown (Total:{" "}
+                {selectedUniversity.total_score.toFixed(1)})
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm text-gray-600">Publications Grade</p>
+                  <p className="text-3xl font-bold text-blue-700">
+                    {gradeToLetter(selectedUniversity.publications_grade)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedUniversity.publications_grade.toFixed(1)} points
+                  </p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <p className="text-sm text-gray-600">
+                    Models & Datasets Grade
+                  </p>
+                  <p className="text-3xl font-bold text-green-700">
+                    {gradeToLetter(selectedUniversity.assets_grade)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedUniversity.assets_grade.toFixed(1)} points
+                  </p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <p className="text-sm text-gray-600">Policies Grade</p>
+                  <p className="text-3xl font-bold text-purple-700">
+                    {gradeToLetter(selectedUniversity.policies_grade)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedUniversity.policies_grade.toFixed(1)} points
+                  </p>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <p className="text-sm text-gray-600">Divisions Grade</p>
+                  <p className="text-3xl font-bold text-orange-700">
+                    {gradeToLetter(selectedUniversity.divisions_grade)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedUniversity.divisions_grade.toFixed(1)} points
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">
+                  Data Breakdown
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Publications
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900 mt-2">
+                      {selectedUniversity.total_publications}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Total Models
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900 mt-2">
+                      {selectedUniversity.total_models}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Total Datasets
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900 mt-2">
+                      {selectedUniversity.total_datasets}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Policies
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900 mt-2">
+                      {selectedUniversity.total_policies}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Divisions
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900 mt-2">
+                      {selectedUniversity.total_divisions}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Total Assets
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900 mt-2">
+                      {calculateTotalAssets(selectedUniversity)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step Completion Status */}
+              {/* <div className="mb-6">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">
+                  Crawling Steps Completed
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-white p-3 rounded-md border border-gray-200 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Publications
+                    </span>
+                    {selectedUniversity.step_publications_completed ? (
+                      <span className="text-green-600 text-lg">✓</span>
+                    ) : (
+                      <span className="text-gray-300 text-lg">✗</span>
+                    )}
+                  </div>
+                  <div className="bg-white p-3 rounded-md border border-gray-200 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      HuggingFace
+                    </span>
+                    {selectedUniversity.step_huggingface_completed ? (
+                      <span className="text-green-600 text-lg">✓</span>
+                    ) : (
+                      <span className="text-gray-300 text-lg">✗</span>
+                    )}
+                  </div>
+                  <div className="bg-white p-3 rounded-md border border-gray-200 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Policies
+                    </span>
+                    {selectedUniversity.step_policies_completed ? (
+                      <span className="text-green-600 text-lg">✓</span>
+                    ) : (
+                      <span className="text-gray-300 text-lg">✗</span>
+                    )}
+                  </div>
+                  <div className="bg-white p-3 rounded-md border border-gray-200 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Organigram
+                    </span>
+                    {selectedUniversity.step_organigram_completed ? (
+                      <span className="text-green-600 text-lg">✓</span>
+                    ) : (
+                      <span className="text-gray-300 text-lg">✗</span>
+                    )}
+                  </div>
+                </div>
+              </div> */}
+
+              {/* CSV Download Links */}
+              {(selectedUniversity.publications_csv_url ||
+                selectedUniversity.huggingface_csv_url ||
+                selectedUniversity.github_csv_url ||
+                selectedUniversity.policies_csv_url ||
+                selectedUniversity.organigram_csv_url) && (
+                <div>
+                  <h4 className="text-base font-semibold text-gray-900 mb-3">
+                    Download Data
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {selectedUniversity.publications_csv_url && (
+                      <a
+                        href={selectedUniversity.publications_csv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
+                      >
+                        <span>📄</span>
+                        <span>Publications CSV</span>
+                      </a>
+                    )}
+                    {selectedUniversity.huggingface_csv_url && (
+                      <a
+                        href={selectedUniversity.huggingface_csv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
+                      >
+                        <span>🤗</span>
+                        <span>HuggingFace CSV</span>
+                      </a>
+                    )}
+                    {selectedUniversity.github_csv_url && (
+                      <a
+                        href={selectedUniversity.github_csv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
+                      >
+                        <span>💻</span>
+                        <span>GitHub CSV</span>
+                      </a>
+                    )}
+                    {selectedUniversity.policies_csv_url && (
+                      <a
+                        href={selectedUniversity.policies_csv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
+                      >
+                        <span>📋</span>
+                        <span>Policies CSV</span>
+                      </a>
+                    )}
+                    {selectedUniversity.organigram_csv_url && (
+                      <a
+                        href={selectedUniversity.organigram_csv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
+                      >
+                        <span>🏢</span>
+                        <span>Organigram CSV</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Footer />
+    </div>
+  );
+}
