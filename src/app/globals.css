@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Form field baseline styles for readability */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="date"],
+input[type="file"],
+select,
+textarea {
+  color: #000000; /* Ensure filled-in text is pure black */
+}
+
+/* Placeholder styling for inputs and textareas */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* Darker gray for better contrast */
+  opacity: 1; /* Keep consistent intensity across browsers */
+}
