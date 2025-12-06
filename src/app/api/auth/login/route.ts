@@ -1,9 +1,23 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: Request) {
   try {
-    const supabase = getSupabaseServerClient();
+    // Create a client-side auth client using ANON key (not service role)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { error: "Supabase configuration missing" },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false }
+    });
+
     const body = await request.json();
     const { username, password } = body;
 
@@ -14,7 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use Supabase Auth signInWithPassword
+    // Use Supabase Auth signInWithPassword with ANON key
     const { data, error } = await supabase.auth.signInWithPassword({
       email: username, // assuming username is email
       password: password,
@@ -28,8 +42,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get user profile from Profiles table
-    const { data: profile, error: profileError } = await supabase
+    // Create admin client to fetch profile (bypassing RLS)
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseServiceKey) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+
+    // Get user profile from Profiles table using admin client
+    const { data: profile, error: profileError } = await adminClient
       .from("Profiles")
       .select("*")
       .eq("id", data.user.id)

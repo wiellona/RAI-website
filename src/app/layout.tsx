@@ -30,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FAF9F6]`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FAF9F6]`} suppressHydrationWarning>
         <AuthProvider>
           <NavBar />
           <main className="min-h-screen flex flex-col">
