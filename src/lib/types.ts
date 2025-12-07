@@ -78,3 +78,32 @@ export interface User {
   role: UserRole;
 }
 
+export interface Answer {
+  id: string;
+  submission_id: string;
+  question_id: string;
+  selected_option_id: string;
+  evidence_notes: string | null;
+  score: number;
+  // Related data from joins
+  question?: {
+    question_text: string;
+    dimension: string;
+  };
+  option?: {
+    option_text: string;
+  };
+  submission?: {
+    university_id: string;
+    submitted_at: string;
+  };
+}
+
+export interface UniversityAnswerDetail {
+  universityId: string;
+  universityName: string;
+  submissionId: string;
+  submittedAt: string;
+  answers: Answer[];
+}
+

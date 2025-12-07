@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Container from "@/components/Container";
 import UniversitySubmissions from "@/components/admin/UniversitySubmissions";
 import UserManagement from "@/components/admin/UserManagement";
+import NotFull from "@/components/admin/NotFull";
 import ManageRankings from "@/components/admin/ManageRankings";
 import AIAnalysis from "@/components/admin/AIAnalysis";
 import { Submission, User, University, UserRole } from "@/lib/types";
@@ -87,6 +88,10 @@ function AdminDashboard() {
 
           <UserManagement users={users} onUpdateRole={handleUpdateUserRole} />
 
+          {/* Incomplete Universities - shown before complete rankings */}
+          <NotFull rankings={rankings} />
+
+          {/* Complete Rankings */}
           <ManageRankings rankings={rankings} />
         </div>
 

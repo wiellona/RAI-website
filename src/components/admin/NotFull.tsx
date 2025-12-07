@@ -2,11 +2,11 @@
 
 import { University } from "@/lib/types";
 
-interface ManageRankingsProps {
+interface NotFullProps {
     rankings: University[];
 }
 
-export default function ManageRankings({ rankings }: ManageRankingsProps) {
+export default function NotFull({ rankings }: NotFullProps) {
     // Helper function to format score display
     const formatScore = (score: number | null): string => {
         return score === null ? 'NULL' : score.toFixed(2);
@@ -18,35 +18,34 @@ export default function ManageRankings({ rankings }: ManageRankingsProps) {
         return new Date(timestamp).toISOString().replace('T', ' ').substring(0, 19) + '+00';
     };
 
-    // Filter universities - hanya tampilkan yang sudah memiliki semua score (tidak ada NULL)
-    const filteredRankings = rankings.filter(uni => {
+    // Filter universities - hanya tampilkan yang memiliki score tidak lengkap (ada yang NULL)
+    const incompleteRankings = rankings.filter(uni => {
         const metrics = uni.metrics;
-        return metrics.collaboration !== null &&
-               metrics.privacy !== null &&
-               metrics.accountability !== null &&
-               metrics.security !== null &&
-               metrics.ethicsInAI !== null &&
-               metrics.fairness !== null &&
-               metrics.transparency !== null &&
-               metrics.continuousLearning !== null;
+        return metrics.collaboration === null ||
+               metrics.privacy === null ||
+               metrics.accountability === null ||
+               metrics.security === null ||
+               metrics.ethicsInAI === null ||
+               metrics.fairness === null ||
+               metrics.transparency === null ||
+               metrics.continuousLearning === null;
     });
 
     return (
         <div className="card p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-[#5C2E2E]">University Rankings - RAI Dimensions</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-[#5C2E2E]">Incomplete Universities - Pending Completion</h2>
             <p className="text-gray-600 mb-4">
-                View all university rankings across 8 Responsible AI dimensions. Only universities with complete scores are displayed.
+                Universities that have not completed all 8 RAI dimensions. These will be hidden from public rankings until all scores are available.
             </p>
-            {filteredRankings.length === 0 ? (
-                <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                    <p className="text-gray-600">No universities have completed all scoring dimensions yet.</p>
+            {incompleteRankings.length === 0 ? (
+                <div className="p-6 bg-green-50 border border-green-200 rounded-lg text-center">
+                    <p className="text-green-700">✓ All universities have completed their scoring dimensions!</p>
                 </div>
             ) : (
                 <div className="overflow-x-auto">
                     <table className="min-w-full bg-white border border-gray-200 rounded-lg">
                         <thead className="bg-[#5C2E2E] text-white">
                             <tr>
-                                <th className="text-left py-3 px-4 font-semibold">Rank</th>
                                 <th className="text-left py-3 px-4 font-semibold">University</th>
                                 <th className="text-center py-3 px-4 font-semibold">Details</th>
                                 <th className="text-left py-3 px-4 font-semibold">Collaboration</th>
@@ -61,12 +60,11 @@ export default function ManageRankings({ rankings }: ManageRankingsProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredRankings.map((uni, index) => (
+                            {incompleteRankings.map((uni, index) => (
                                 <tr 
                                     key={uni.id} 
                                     className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-[#FAF9F6]`}
                                 >
-                                    <td className="py-3 px-4 font-medium text-[#5C2E2E]">{uni.rank}</td>
                                     <td className="py-3 px-4 font-medium text-[#5C2E2E]">{uni.name}</td>
                                     <td className="py-3 px-4 text-center">
                                         <a
@@ -78,42 +76,74 @@ export default function ManageRankings({ rankings }: ManageRankingsProps) {
                                         </a>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.collaboration === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.collaboration)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.privacy === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.privacy)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.accountability === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.accountability)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.security === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.security)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.ethicsInAI === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.ethicsInAI)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.fairness === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.fairness)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.transparency === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.transparency)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <span className="px-2 py-1 rounded font-medium bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]">
+                                        <span className={`px-2 py-1 rounded font-medium ${
+                                            uni.metrics.continuousLearning === null 
+                                                ? 'bg-gray-100 text-gray-500 border border-gray-300' 
+                                                : 'bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032]'
+                                        }`}>
                                             {formatScore(uni.metrics.continuousLearning)}
                                         </span>
                                     </td>
@@ -128,11 +158,12 @@ export default function ManageRankings({ rankings }: ManageRankingsProps) {
             )}
             <div className="mt-4 p-3 bg-[#FAF9F6] border border-[#A84032] rounded-lg">
                 <p className="text-sm text-[#5C2E2E]">
-                    <strong>Note:</strong> This displays only universities that have completed all 8 RAI (Responsible AI) dimensions: Collaboration, Privacy, Accountability, Security, Ethics in AI, Fairness, Transparency, and Continuous Learning. 
-                    Universities with incomplete scoring are hidden until all dimensions are evaluated.
+                    <strong>Status Legend:</strong>
+                    <span className="ml-2 inline-block px-2 py-1 bg-gray-100 text-gray-500 border border-gray-300 rounded text-xs">NULL</span> = Not yet scored
+                    <span className="ml-2 inline-block px-2 py-1 bg-[#FAF9F6] text-[#5C2E2E] border border-[#A84032] rounded text-xs">Score</span> = Completed
                 </p>
                 <p className="text-sm text-[#5C2E2E] mt-2">
-                    <strong>Total displayed:</strong> {filteredRankings.length} of {rankings.length} universities
+                    <strong>Total incomplete:</strong> {incompleteRankings.length} of {rankings.length} universities
                 </p>
             </div>
         </div>
