@@ -10,6 +10,7 @@ import AIAnalysis from "@/components/admin/AIAnalysis";
 import { Submission, User, University, UserRole } from "@/lib/types";
 import * as api from "@/lib/api";
 import AdminGuard from "@/components/auth/AdminGuard";
+import { useAuth } from "@/hooks/useAuth";
 
 function AdminDashboard() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -78,6 +79,7 @@ function AdminDashboard() {
         </p>
       
         <div className="space-y-8">
+          {/* HANYA ADMIN YANG BISA LIHAT INI */}
           <UniversitySubmissions 
             submissions={submissions} 
             onAccept={handleAcceptSubmission}
@@ -88,7 +90,7 @@ function AdminDashboard() {
 
           <UserManagement users={users} onUpdateRole={handleUpdateUserRole} />
 
-          {/* Incomplete Universities - shown before complete rankings */}
+          {/* Incomplete Universities */}
           <NotFull rankings={rankings} />
 
           {/* Complete Rankings */}
