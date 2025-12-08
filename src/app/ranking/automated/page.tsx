@@ -47,13 +47,6 @@ interface UniversityCrawlData {
   updated_at: string;
 }
 
-const gradeToLetter = (grade: number): string => {
-  if (grade === 4.0) return "E";
-  if (grade === 3.0) return "D";
-  if (grade === 2.0) return "C";
-  if (grade === 1.0) return "B";
-  return "A";
-};
 export default function AutomatedRankingPage() {
   const [crawlData, setCrawlData] = useState<UniversityCrawlData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,19 +184,19 @@ export default function AutomatedRankingPage() {
                           {uni.university_name}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-gray-900">
-                          {uni.publications_grade.toFixed(1)}
+                          {uni.publications_grade.toFixed(3)}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-gray-900">
-                          {uni.assets_grade.toFixed(1)}
+                          {uni.assets_grade.toFixed(3)}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-gray-900">
-                          {uni.policies_grade.toFixed(1)}
+                          {uni.policies_grade.toFixed(3)}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-gray-900">
-                          {uni.divisions_grade.toFixed(1)}
+                          {uni.divisions_grade.toFixed(3)}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#c5372c] text-lg">
-                          {uni.total_score.toFixed(1)}
+                          {uni.total_score.toFixed(3)}
                         </td>
                       </tr>
                     ))
@@ -249,48 +242,58 @@ export default function AutomatedRankingPage() {
             {/* Modal Body */}
             <div className="p-6">
               {/* Ranking Score Breakdown */}
-              <h4 className="text-lg font-semibold mb-4">
-                Score Breakdown (Total:{" "}
-                {selectedUniversity.total_score.toFixed(1)})
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-sm text-gray-600">Publications Grade</p>
-                  <p className="text-3xl font-bold text-blue-700">
-                    {gradeToLetter(selectedUniversity.publications_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.publications_grade.toFixed(1)} points
-                  </p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <p className="text-sm text-gray-600">
-                    Models & Datasets Grade
-                  </p>
-                  <p className="text-3xl font-bold text-green-700">
-                    {gradeToLetter(selectedUniversity.assets_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.assets_grade.toFixed(1)} points
-                  </p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <p className="text-sm text-gray-600">Policies Grade</p>
-                  <p className="text-3xl font-bold text-purple-700">
-                    {gradeToLetter(selectedUniversity.policies_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.policies_grade.toFixed(1)} points
-                  </p>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <p className="text-sm text-gray-600">Divisions Grade</p>
-                  <p className="text-3xl font-bold text-orange-700">
-                    {gradeToLetter(selectedUniversity.divisions_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.divisions_grade.toFixed(1)} points
-                  </p>
+              <div className="mb-6">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">
+                  Score Breakdown
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    Total: {selectedUniversity.total_score.toFixed(3)} / 10.000
+                  </span>
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Publications
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.publications_grade.toFixed(3)}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 2.5</p>
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Models & Datasets
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.assets_grade.toFixed(3)}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 2.5</p>
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Policies
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.policies_grade.toFixed(3)}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 2.5</p>
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Divisions
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.divisions_grade.toFixed(3)}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 2.5</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
