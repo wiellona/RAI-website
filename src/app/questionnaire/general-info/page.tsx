@@ -91,24 +91,27 @@ export default function GeneralInfoPage() {
         });
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
+          console.error("Failed to load general info:", payload);
           throw new Error(payload.error || "Failed to load general info");
         }
         const payload = await response.json();
+        console.log("General info loaded:", payload);
         if (ignore) return;
         if (payload?.data) {
-          if (payload?.data) {
-            setFormData((prev) => ({
-              ...prev,
-              universityName: payload.data.universityName ?? "",
-              dateEstablishment:
-                payload.data.dateOfEstablishment?.slice(0, 10) ?? "",
-              websiteAddress: payload.data.website ?? "",
-              addressLocation: payload.data.address ?? "",
-              deanName: payload.data.deanName ?? "",
-              picName: payload.data.contactPerson ?? "",
-              emailAddress: payload.data.contactPersonEmail ?? email,
-            }));
-          }
+          console.log("Setting form data:", payload.data);
+          setFormData((prev) => ({
+            ...prev,
+            universityName: payload.data.name ?? "",
+            dateEstablishment:
+              payload.data.date_of_establishment?.slice(0, 10) ?? "",
+            websiteAddress: payload.data.website ?? "",
+            addressLocation: payload.data.address ?? "",
+            deanName: payload.data.dean_name ?? "",
+            picName: payload.data.pic_name ?? "",
+            emailAddress: payload.data.pic_email ?? email,
+          }));
+        } else {
+          console.warn("No data in payload:", payload);
         }
         if (payload?.files) {
           setExistingFiles({
@@ -316,7 +319,7 @@ export default function GeneralInfoPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-[#5C2E2E] mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#000080] mb-4">
               University Responsible AI Rating
             </h1>
             <p className="text-gray-600">
@@ -332,7 +335,7 @@ export default function GeneralInfoPage() {
                   className={`rounded-md border p-4 text-sm ${
                     status.type === "success"
                       ? "border-green-200 bg-green-50 text-green-800"
-                      : "border-red-200 bg-red-50 text-red-800"
+                      : "border-red-200 bg-red-50 text-red-700"
                   }`}
                 >
                   {status.message}
@@ -342,7 +345,7 @@ export default function GeneralInfoPage() {
               <div>
                 <label
                   htmlFor="universityName"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text-sm font-medium text-[#000080] mb-2"
                 >
                   University Name *
                 </label>
@@ -361,7 +364,7 @@ export default function GeneralInfoPage() {
               <div>
                 <label
                   htmlFor="dateEstablishment"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text-sm font-medium text-[#000080] mb-2"
                 >
                   Date of Establishment *
                 </label>
@@ -371,7 +374,7 @@ export default function GeneralInfoPage() {
                   name="dateEstablishment"
                   value={formData.dateEstablishment}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
                   required
                 />
               </div>
@@ -380,7 +383,7 @@ export default function GeneralInfoPage() {
               <div>
                 <label
                   htmlFor="websiteAddress"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text-sm font-medium text-[#000080] mb-2"
                 >
                   Website Address *
                 </label>
@@ -391,7 +394,7 @@ export default function GeneralInfoPage() {
                   value={formData.websiteAddress}
                   onChange={handleChange}
                   placeholder="https://example.edu"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
                   required
                 />
               </div>
@@ -400,7 +403,7 @@ export default function GeneralInfoPage() {
               <div>
                 <label
                   htmlFor="addressLocation"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text-sm font-medium text-[#000080] mb-2"
                 >
                   Address of Location *
                 </label>
@@ -410,7 +413,7 @@ export default function GeneralInfoPage() {
                   name="addressLocation"
                   value={formData.addressLocation}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A84032] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
                   required
                 />
               </div>
@@ -419,7 +422,7 @@ export default function GeneralInfoPage() {
               <div>
                 <label
                   htmlFor="deanName"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text-sm font-medium text-[#000080] mb-2"
                 >
                   Dean Name *
                 </label>
@@ -428,8 +431,8 @@ export default function GeneralInfoPage() {
                   id="deanName"
                   name="deanName"
                   value={formData.deanName}
-                  readOnly
-                  className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
                   required
                 />
               </div>
@@ -438,7 +441,7 @@ export default function GeneralInfoPage() {
               <div className="space-y-4">
                 <label
                   htmlFor="picName"
-                  className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                  className="block text-sm font-medium text-[#000080] mb-2"
                 >
                   Contact Person *
                 </label>
@@ -447,14 +450,14 @@ export default function GeneralInfoPage() {
                   id="picName"
                   name="picName"
                   value={formData.picName}
-                  readOnly
-                  className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
                   required
                 />
                 <div>
                   <label
                     htmlFor="emailAddress"
-                    className="block text-sm font-medium text-[#5C2E2E] mb-2"
+                    className="block text-sm font-medium text-[#000080] mb-2"
                   >
                     Contact Person Email *
                   </label>
@@ -463,18 +466,18 @@ export default function GeneralInfoPage() {
                     id="emailAddress"
                     name="emailAddress"
                     value={formData.emailAddress}
-                    disabled
+                    readOnly
                     placeholder="contact@university.edu"
-                    className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-md text-gray-600"
+                    className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
                   />
                 </div>
               </div>
 
               {/* AI Publications File Upload */}
               <div>
-                <label className="inline-flex items-center gap-2 text-sm font-medium text-[#5C2E2E] mb-2">
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-[#000080] mb-2">
                   <span>AI Publications (Last 3 Years)</span>
-                  <span className="relative group text-gray-400 hover:text-[#A84032] cursor-help transition-colors">
+                  <span className="relative group text-gray-400 hover:text-[#0047AB] cursor-help transition-colors">
                     <svg
                       className="w-4 h-4"
                       fill="currentColor"
@@ -505,7 +508,7 @@ export default function GeneralInfoPage() {
                   <a
                     href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Templates/ai-publications-template.csv"
                     download
-                    className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200 inline-flex items-center gap-1"
+                    className="text-[#0047AB] hover:text-[#0099ED] underline transition-colors duration-200 inline-flex items-center gap-1 font-semibold"
                   >
                     <svg
                       className="w-4 h-4"
@@ -551,9 +554,9 @@ export default function GeneralInfoPage() {
 
               {/* AI Open-Source Assets File Upload */}
               <div>
-                <label className="inline-flex items-center gap-2 text-sm font-medium text-[#5C2E2E] mb-2">
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-[#000080] mb-2">
                   <span>AI Open-Source Assets</span>
-                  <span className="relative group text-gray-400 hover:text-[#A84032] cursor-help transition-colors">
+                  <span className="relative group text-gray-400 hover:text-[#0047AB] cursor-help transition-colors">
                     <svg
                       className="w-4 h-4"
                       fill="currentColor"
@@ -587,7 +590,7 @@ export default function GeneralInfoPage() {
                   <a
                     href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Templates/ai-assets-template.csv"
                     download
-                    className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200 inline-flex items-center gap-1"
+                    className="text-[#0047AB] hover:text-[#0099ED] underline transition-colors duration-200 inline-flex items-center gap-1 font-semibold"
                   >
                     <svg
                       className="w-4 h-4"
@@ -636,7 +639,7 @@ export default function GeneralInfoPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#A84032] hover:bg-[#8B3528] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-3 rounded-md transition-colors"
+                  className="w-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   {isSubmitting ? "Saving..." : "Continue to Questionnaire"}
                 </button>

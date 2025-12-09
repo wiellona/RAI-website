@@ -192,6 +192,7 @@ export async function POST(req: Request) {
         name: contactPerson,
         role: "user",
         is_approved: false,
+        university_id: inserted.id,
       },
       { onConflict: "id" }
     )

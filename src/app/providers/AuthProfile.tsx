@@ -8,6 +8,7 @@ export interface Profile {
   name: string | null;
   role: "user" | "reviewer" | "admin";
   is_approved: boolean;
+  university_id?: string | null;
 }
 
 export function useAuthProfile() {
@@ -21,8 +22,10 @@ export function useAuthProfile() {
 
     const load = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
         if (ignore) return;
 
         setUser(authUser ?? null);
@@ -30,7 +33,7 @@ export function useAuthProfile() {
         if (authUser) {
           const { data: profileData } = await supabase
             .from("Profiles")
-            .select("id,name,role,is_approved")
+            .select("id,name,role,is_approved,university_id")
             .eq("id", authUser.id)
             .single();
 
@@ -41,7 +44,7 @@ export function useAuthProfile() {
           setProfile(null);
         }
       } catch (error) {
-        console.error('[AuthProfile] Error:', error);
+        console.error("[AuthProfile] Error:", error);
       } finally {
         if (!ignore) {
           setLoading(false);
@@ -62,12 +65,12 @@ export function useAuthProfile() {
             .select("id,name,role,is_approved")
             .eq("id", session.user.id)
             .single();
-          
+
           setProfile((data as Profile) ?? null);
         } else {
           setProfile(null);
         }
-        
+
         setLoading(false);
       }
     );

@@ -108,14 +108,15 @@ export default function ReviewPage() {
     console.log("[handleFinalSubmit] Payload:", payload);
 
     try {
-      const { data, error: edgeFunctionError } = await supabase.functions.invoke(
-        "finalize-submission",
-        {
+      const { data, error: edgeFunctionError } =
+        await supabase.functions.invoke("finalize-submission", {
           body: payload,
-        }
-      );
+        });
 
-      console.log("[handleFinalSubmit] Response:", { data, error: edgeFunctionError });
+      console.log("[handleFinalSubmit] Response:", {
+        data,
+        error: edgeFunctionError,
+      });
 
       if (edgeFunctionError) {
         throw new Error(
@@ -133,7 +134,10 @@ export default function ReviewPage() {
         router.push("/ranking");
       }, 1500);
     } catch (error) {
-      console.error("[handleFinalSubmit] Failed to finalize submission:", error);
+      console.error(
+        "[handleFinalSubmit] Failed to finalize submission:",
+        error
+      );
       setStatusLevel("error");
       setStatusMessage(
         error instanceof Error
@@ -189,7 +193,7 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-center text-[#5C2E2E] mb-8 cursor-pointer">
+            <h1 className="text-3xl font-bold text-center text-[#000080] mb-8 cursor-pointer">
               Review and Submit Your Questionnaire
             </h1>
 
@@ -217,7 +221,7 @@ export default function ReviewPage() {
                     </svg>
                   ) : (
                     <svg
-                      className="w-5 h-5 text-red-600 shrink-0"
+                      className="w-5 h-5 text-orange-600 shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -241,8 +245,8 @@ export default function ReviewPage() {
               ))}
             </div>
 
-            <div className="bg-[#FFF5F5] border border-[#FFE5E5] rounded-lg p-4 mb-8">
-              <p className="text-sm text-gray-700 text-center">
+            <div className="bg-gradient-to-r from-[#0047AB]/5 to-[#0099ED]/5 border-2 border-[#0047AB]/20 rounded-lg p-4 mb-8">
+              <p className="text-sm text-[#000080] text-center font-medium">
                 You have completed{" "}
                 <span className="font-bold">
                   {progressSummary.completedCount}
@@ -264,7 +268,7 @@ export default function ReviewPage() {
                 type="button"
                 onClick={handleFinalSubmit}
                 disabled={!submissionId || isSubmitting}
-                className="inline-flex items-center justify-center bg-[#A84032] hover:bg-[#8B3528] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-medium px-8 py-3 rounded-md transition-colors"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 {isSubmitting ? (
                   <>
@@ -299,7 +303,7 @@ export default function ReviewPage() {
         </div>
       </main>
 
-      <footer className="bg-[#5C2E2E] text-white py-12">
+      <footer className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white py-12">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6">
           <div>
             <p className="font-semibold text-lg">Need assistance?</p>

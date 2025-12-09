@@ -69,11 +69,18 @@ export default function RegistrationPage() {
     () => ({
       control: (provided, state) => ({
         ...provided,
-        minHeight: 44,
-        borderColor: state.isFocused ? "#CD5C5C" : "#d1d5db",
-        boxShadow: state.isFocused ? "0 0 0 1px #CD5C5C" : provided.boxShadow,
+        minHeight: 48,
+        borderRadius: "0.75rem",
+        borderWidth: "2px",
+        borderColor: state.isFocused ? "#0047AB" : "rgba(0, 71, 171, 0.2)",
+        background: state.isFocused
+          ? "#ffffff"
+          : "linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)",
+        boxShadow: state.isFocused
+          ? "0 0 0 4px rgba(0, 71, 171, 0.1)"
+          : provided.boxShadow,
         "&:hover": {
-          borderColor: state.isFocused ? "#CD5C5C" : "#9ca3af",
+          borderColor: state.isFocused ? "#0047AB" : "#0099ED",
         },
       }),
       valueContainer: (provided) => ({
@@ -84,19 +91,21 @@ export default function RegistrationPage() {
         ...provided,
         margin: 0,
         padding: 0,
+        color: "#000080",
       }),
       indicatorsContainer: (provided) => ({
         ...provided,
-        height: 44,
-        color: "#374151",
+        height: 48,
+        color: "#0047AB",
       }),
       dropdownIndicator: (provided) => ({
         ...provided,
         padding: "0 12px",
+        color: "#0047AB",
       }),
       placeholder: (provided) => ({
         ...provided,
-        color: "#6b7280",
+        color: "rgba(0, 0, 128, 0.4)",
       }),
       singleValue: (provided) => ({
         ...provided,
@@ -104,14 +113,14 @@ export default function RegistrationPage() {
       }),
       option: (provided, state) => ({
         ...provided,
-        color: state.isDisabled ? "#9ca3af" : "#111827",
+        color: state.isDisabled ? "#9ca3af" : "#000080",
         backgroundColor: state.isSelected
-          ? "#c5372c"
+          ? "#0047AB"
           : state.isFocused
-          ? "rgba(197, 55, 44, 0.08)"
+          ? "rgba(0, 71, 171, 0.1)"
           : "#fff",
         ":active": {
-          backgroundColor: "rgba(197, 55, 44, 0.12)",
+          backgroundColor: "rgba(0, 71, 171, 0.15)",
         },
       }),
       menu: (provided) => ({
@@ -143,7 +152,7 @@ export default function RegistrationPage() {
     </selectComponents.DropdownIndicator>
   );
   const baseInputClass =
-    "w-full h-11 px-4 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-none";
+    "w-full h-11 px-4 border-2 border-[#0047AB]/20 rounded-xl focus:ring-4 focus:ring-[#0047AB]/20 focus:border-[#0047AB] text-[#000080] outline-none transition-all duration-300 bg-gradient-to-r from-white to-[#f8f9ff] font-medium";
 
   const [formData, setFormData] = useState<RegistrationFormData>(
     createInitialFormState
@@ -332,18 +341,24 @@ export default function RegistrationPage() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen">
       <Header />
 
       {/* Registration Section */}
-      <section className="pt-[65px] min-h-screen flex items-center justify-center bg-gray-50">
+      <section className="pt-[65px] min-h-screen flex items-center justify-center relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-20 right-10 w-96 h-96 bg-[#0047AB]/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-10 w-80 h-80 bg-[#0099ED]/10 rounded-full blur-3xl"></div>
+        </div>
+
         <div className="max-w-4xl w-full mx-auto px-4 py-12">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-            <div className="bg-[#511715] text-white p-6">
+          <div className="bg-gradient-to-br from-white via-[#f8f9ff] to-white rounded-2xl shadow-2xl overflow-hidden border-2 border-[#0047AB]/20">
+            <div className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white p-6">
               <h1 className="text-2xl font-bold">
                 RAI University Registration
               </h1>
-              <p className="text-white/80 mt-2">
+              <p className="text-white/90 mt-2 font-medium">
                 Register your university for the Responsible AI Global
                 University Ranking
               </p>
@@ -369,7 +384,7 @@ export default function RegistrationPage() {
                 <div className="md:col-span-2">
                   <label
                     htmlFor="universityName"
-                    className="block text-sm font-medium text-gray-900 mb-1"
+                    className="block text-sm font-semibold text-[#000080] mb-2"
                   >
                     University Name
                   </label>
@@ -557,7 +572,7 @@ export default function RegistrationPage() {
                 <div className="md:col-span-2">
                   <label
                     htmlFor="officialLetter"
-                    className="block text-sm font-medium text-gray-900 mb-1"
+                    className="block text-sm font-semibold text-[#000080] mb-2"
                   >
                     Official letter of Request that signed by the dean
                   </label>
@@ -566,7 +581,7 @@ export default function RegistrationPage() {
                       href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Official%20Request%20Letter/Official%20Request%20Letter.pdf"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#c5372c] hover:text-[#a42e24] underline transition-colors duration-200"
+                      className="text-[#0047AB] hover:text-[#0099ED] underline transition-colors duration-300 font-semibold"
                     >
                       For template example, click here
                     </a>
@@ -584,13 +599,13 @@ export default function RegistrationPage() {
                 <div className="ml-auto flex gap-4">
                   <Link
                     href="/"
-                    className="w-full sm:w-auto text-center border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none cursor-pointers"
+                    className="w-full sm:w-auto text-center border-2 border-[#0047AB] text-[#0047AB] hover:bg-gradient-to-r hover:from-[#0047AB]/10 hover:to-[#0099ED]/10 font-semibold py-3 px-8 rounded-xl transition-all duration-300 focus:ring-4 focus:ring-[#0047AB]/20 focus:outline-none"
                   >
                     Cancel
                   </Link>
                   <button
                     type="submit"
-                    className="w-full sm:w-auto bg-[#c5372c] hover:bg-[#a42e24] text-white font-medium py-3 px-8 rounded-md transition-colors focus:ring-2 focus:ring-[#CD5C5C] focus:ring-offset-2 focus:outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 shadow-xl shadow-[#0047AB]/30 hover:shadow-2xl hover:shadow-[#0047AB]/40 transform hover:-translate-y-0.5 focus:ring-4 focus:ring-[#0047AB]/20 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Submitting..." : "Register University"}

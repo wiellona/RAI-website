@@ -13,19 +13,19 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@langchain/google-genai": "^1.0.1",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.81.1",
+    "langchain": "^1.0.4",
     "lucide-react": "^0.555.0",
     "next": "^16.0.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",
     "react-select": "^5.10.2",
-    "react-select-country-list": "^2.2.3",
-    "@google/generative-ai": "^0.24.1",
-    "@langchain/google-genai": "^1.0.1",
-    "langchain": "^1.0.4"
+    "react-select-country-list": "^2.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
