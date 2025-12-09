@@ -70,26 +70,27 @@ export async function proxy(req: NextRequest) {
   });
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   const protectedBases = ["/questionnaire", "/admin", "/dashboard"];
   const needsAuth = protectedBases.some((p) =>
     req.nextUrl.pathname.startsWith(p)
   );
 
-  if (!session && needsAuth) {
+  if (!user && needsAuth) {
     const url = new URL("/login", req.url);
     url.searchParams.set("next", req.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
-  if (session && needsAuth) {
+  if (user && needsAuth) {
     const adminSupabase = getSupabaseServerClient();
     const { data: profile, error } = await adminSupabase
       .from("Profiles")
       .select("is_approved")
-      .eq("id", session.user.id)
+      .eq("id", user.id)
       .single();
 
     if (error) {

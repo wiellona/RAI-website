@@ -14,46 +14,67 @@ export function useAuthProfile() {
   const supabase = getSupabaseBrowserClient();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    let cancelled = false;
+    let ignore = false;
 
-    async function load() {
-      const { data } = await supabase.auth.getSession();
-      if (cancelled) return;
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        const { data: p } = await supabase
-          .from("Profiles")
-          .select("id,name,role,is_approved")
-          .eq("id", data.session.user.id)
-          .single();
-        if (!cancelled) setProfile((p as Profile) ?? null);
-      } else {
-        setProfile(null);
+    const load = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (ignore) return;
+
+        setUser(authUser ?? null);
+
+        if (authUser) {
+          const { data: profileData } = await supabase
+            .from("Profiles")
+            .select("id,name,role,is_approved")
+            .eq("id", authUser.id)
+            .single();
+
+          if (!ignore) {
+            setProfile((profileData as Profile) ?? null);
+          }
+        } else {
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error('[AuthProfile] Error:', error);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
-      if (!cancelled) setLoading(false);
-    }
+    };
+
     load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        supabase
-          .from("Profiles")
-          .select("id,name,role,is_approved")
-          .eq("id", session.user.id)
-          .single()
-          .then(({ data: p }) => setProfile((p as Profile) ?? null));
-      } else {
-        setProfile(null);
+    // Listen to auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          const { data } = await supabase
+            .from("Profiles")
+            .select("id,name,role,is_approved")
+            .eq("id", session.user.id)
+            .single();
+          
+          setProfile((data as Profile) ?? null);
+        } else {
+          setProfile(null);
+        }
+        
+        setLoading(false);
       }
-    });
+    );
 
     return () => {
-      cancelled = true;
-      sub.subscription.unsubscribe();
+      ignore = true;
+      listener.subscription.unsubscribe();
     };
   }, [supabase]);
 

@@ -7,14 +7,14 @@ export function useParticipateNavigation() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
   const handleParticipateClick = useCallback(async () => {
-    const { data, error } = await supabase.auth.getSession();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (error || !data.session) {
+    if (error || !user) {
       router.push("/authentication/register");
       return;
     }
 
-    const userId = data.session.user.id;
+    const userId = user.id;
 
     const { data: submission, error: submissionError } = await supabase
       .from("Submissions")
@@ -30,12 +30,17 @@ export function useParticipateNavigation() {
       return;
     }
 
-    const destination =
-      submission?.status === "completed"
-        ? "/questionnaire/submission"
-        : "/questionnaire/general-info";
+    if (!submission) {
+      router.push("/questionnaire/general-info");
+      return;
+    }
 
-    router.push(destination);
+    if (submission.status === "approved") {
+      alert("Your submission has already been approved.");
+      return;
+    }
+
+    router.push("/questionnaire/general-info");
   }, [router, supabase]);
 
   return { handleParticipateClick };

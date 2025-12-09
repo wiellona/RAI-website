@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import { useAuthProfile } from "@/hooks/useAuthProfile";
 
 export default function UniversityInfoPage() {
     const router = useRouter();
     const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+    const { profile, loading: profileLoading } = useAuthProfile();
     const [loading, setLoading] = useState(true);
     const [universityData, setUniversityData] = useState({
         universityName: "",
@@ -40,57 +42,30 @@ export default function UniversityInfoPage() {
         const load = async () => {
         try {
             setLoading(true);
-            const { data } = await supabase.auth.getSession();
-            if (ignore) return;
-            const email = data.session?.user.email;
-            if (!email) {
-            router.push("/login");
-            return;
-            }
+            // const { data } = await supabase.auth.getSession();
+            // if (ignore) return;
+            // const email = data.session?.user.email;
+            // if (!email) {
+            // router.push("/login");
+            // return;
+            // }
 
-            // Apa harus bikin API Baru?
-            const response = await fetch("/api/general-info", {
-            method: "GET",
-            credentials: "include",
-            });
-            
-            if (!response.ok) {
-            const payload = await response.json().catch(() => ({}));
-            throw new Error(payload.error || "Failed to load university info");
-            }
-            
-            const payload = await response.json();
+            // ✅ FIXED: Use getUser() instead of getSession()
+            const { data: { user: authUser }, error } = await supabase.auth.getUser();
             if (ignore) return;
-            
-            if (payload?.data) {
-            const data = payload.data;
-            
-            // Set data untuk display
-            setUniversityData({
-                universityName: data.name ?? "",
-                addressLocation: data.address ?? "",
-                deanName: data.dean_name ?? "",
-                picName: data.pic_name ?? "",
-                emailAddress: data.pic_email ?? email,
-                status: data.status ?? "Pending",
-                lastUpdated: data.updated_at 
-                ? new Date(data.updated_at).toLocaleDateString('en-GB', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                    })
-                : "Not available",
-                aiPublicationsFile: payload.files?.publication ?? null,
-                aiOpenSourceFile: payload.files?.asset ?? null,
-            });
+
+            if (authUser) {
+                const { data: profileData } = await supabase
+                .from("Profiles")
+                .select("id,name,role,is_approved")
+                .eq("id", authUser.id)
+                .single();
+
+                if (!ignore) setProfile((profileData as Profile) ?? null);
+            } else {
+                setProfile(null);
             }
-            
-            if (payload?.files) {
-            setExistingFiles({
-                publication: payload.files.publication,
-                asset: payload.files.asset,
-            });
-            }
+            if (!ignore) setLoading(false);
         } catch (error) {
             if (!ignore) {
             console.error("Error loading university data:", error);
@@ -142,7 +117,7 @@ export default function UniversityInfoPage() {
         }
     };
 
-    if (loading) {
+    if (loading || profileLoading) {
         return (
         <div className="min-h-screen flex flex-col">
             <Navbar />
@@ -150,6 +125,22 @@ export default function UniversityInfoPage() {
             <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#A84032] mb-4"></div>
                 <p>Loading university information...</p>
+            </div>
+            </div>
+            <Footer />
+        </div>
+        );
+    }
+
+    if (!profile) {
+        return (
+        <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <div className="flex-1 flex items-center justify-center text-gray-600">
+            <div className="text-center">
+                <p className="text-lg text-gray-800">
+                Profile not found. Please contact the admin.
+                </p>
             </div>
             </div>
             <Footer />

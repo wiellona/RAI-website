@@ -72,9 +72,8 @@ export function useCriteriaPage() {
     }
     let ignore = false;
     const load = async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (ignore) return;
-      const user = data.session?.user;
       const email = user?.email ?? "";
       if (!user || !email) {
         router.push("/authentication/login");

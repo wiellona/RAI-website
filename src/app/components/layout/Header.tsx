@@ -4,45 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import { useParticipateNavigation } from "@/hooks/useNavigation";
+import { useAuth } from "@/app/providers/AuthProvider"; // ✅ Ubah import ini
 
 export default function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const auth = useAuth(); // Sekarang menggunakan { user, profile, loading }
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const supabase = getSupabaseBrowserClient();
   const { handleParticipateClick } = useParticipateNavigation();
 
-  useEffect(() => {
-    const update = () =>
-      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
-
-    // initial
-    update();
-
-    // listen to manual events
-    window.addEventListener("storage", update);
-    window.addEventListener("auth-change", update);
-
-    // listen to Supabase auth state (optional but robust)
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) {
-          localStorage.setItem("isLoggedIn", "true");
-        } else {
-          localStorage.removeItem("isLoggedIn");
-        }
-        update();
-      }
-    );
-
-    return () => {
-      window.removeEventListener("storage", update);
-      window.removeEventListener("auth-change", update);
-      listener.subscription.unsubscribe();
-    };
-  }, [supabase]);
-
   const handleLogout = async () => {
-    await supabase.auth.signOut(); // end Supabase session
+    await supabase.auth.signOut();
 
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail) {
@@ -53,8 +24,7 @@ export default function Navbar() {
     localStorage.removeItem("userEmail");
     localStorage.removeItem("universityName");
 
-    window.dispatchEvent(new Event("auth-change")); // force re-check in this tab
-    setIsLoggedIn(false); // immediate UI update
+    window.dispatchEvent(new Event("auth-change"));
 
     window.location.href = "/";
   };
@@ -104,21 +74,46 @@ export default function Navbar() {
               Participate
             </button>
 
+            {/* Admin Dashboard Link */}
+            {auth.profile && auth.profile.role === "admin" && (
+              <Link
+                href="/admin"
+                className="text-gray-700 hover:text-[#5C2E2E] transition-colors font-semibold"
+              >
+                Admin Dashboard
+              </Link>
+            )}
+
+            {/* Reviewer Dashboard Link */}
+            {auth.profile && auth.profile.role === "reviewer" && (
+              <Link
+                href="/reviewer"
+                className="text-gray-700 hover:text-[#5C2E2E] transition-colors font-semibold"
+              >
+                Reviewer Dashboard
+              </Link>
+            )}
+
             {/* Desktop Login/Logout Button */}
-            {!isLoggedIn ? (
+            {auth.loading ? null : auth.user ? (
+              <>
+                <span className="text-sm text-gray-600">
+                  Welcome, {auth.profile?.name || auth.user.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
               <Link
                 href="/authentication/login"
                 className="bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
               >
                 Login
               </Link>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
-              >
-                Logout
-              </button>
             )}
           </div>
 
@@ -163,9 +158,16 @@ export default function Navbar() {
             >
               The Ranking
             </Link>
+            <Link
+              href="/ranking/automated"
+              className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Automated Ranking
+            </Link>
             <button
               type="button"
-              className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
+              className="block w-full text-left px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
               onClick={() => {
                 handleParticipateClick();
                 setIsMobileMenuOpen(false);
@@ -174,9 +176,46 @@ export default function Navbar() {
               Participate
             </button>
 
+            {/* Mobile Admin Dashboard */}
+            {auth.profile && auth.profile.role === "admin" && (
+              <Link
+                href="/admin"
+                className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors font-semibold"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Admin Dashboard
+              </Link>
+            )}
+
+            {/* Mobile Reviewer Dashboard */}
+            {auth.profile && auth.profile.role === "reviewer" && (
+              <Link
+                href="/reviewer"
+                className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors font-semibold"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Reviewer Dashboard
+              </Link>
+            )}
+
             {/* Mobile Login/Logout Button */}
             <div className="px-4 pt-2">
-              {!isLoggedIn ? (
+              {auth.loading ? null : auth.user ? (
+                <>
+                  <div className="text-sm text-gray-600 mb-2">
+                    Welcome, {auth.profile?.name || auth.user.email}
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
                 <Link
                   href="/authentication/login"
                   className="block w-full bg-[#A84032] hover:bg-[#8B3528] text-white text-center px-6 py-2 rounded transition-colors"
@@ -184,16 +223,6 @@ export default function Navbar() {
                 >
                   Login
                 </Link>
-              ) : (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
-                >
-                  Logout
-                </button>
               )}
             </div>
           </div>

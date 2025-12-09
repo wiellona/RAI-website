@@ -21,16 +21,17 @@ export function useAuthProfile() {
     let ignore = false;
 
     const load = async () => {
-      const { data } = await supabase.auth.getSession();
+      // ✅ FIXED: Use getUser() instead of getSession()
+      const { data: { user: authUser }, error } = await supabase.auth.getUser();
       if (ignore) return;
 
-      setUser(data.session?.user ?? null);
+      setUser(authUser ?? null);
 
-      if (data.session?.user) {
+      if (authUser) {
         const { data: profileData } = await supabase
           .from("Profiles")
           .select("id,name,role,is_approved")
-          .eq("id", data.session.user.id)
+          .eq("id", authUser.id)
           .single();
 
         if (!ignore) setProfile((profileData as Profile) ?? null);
