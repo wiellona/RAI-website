@@ -46,22 +46,26 @@ interface RankedUniversity extends UniversityData {
 
 /**
  * Calculate score based on percentile ranking
- * Scale: 0.000 - 2.500 for each column
- * Total possible score: 10.000 (4 columns × 2.500)
+ * Scale: 0 - maxScore for each column
+ * Total possible score: 10,000 (Ethics & Fairness: 3,200 + Transparency & Accountability: 2,100 + Privacy & Security: 1,800 + Continuous Learning & Collaboration: 1,900)
  */
-function calculateScore(value: number, sortedValues: number[]): number {
+function calculateScore(
+  value: number,
+  sortedValues: number[],
+  maxScore: number
+): number {
   const n = sortedValues.length;
   if (n === 0) return 0;
-  if (n === 1) return 2.5; // Single entry gets top score
+  if (n === 1) return maxScore; // Single entry gets top score
 
   // Find the position of this value in the sorted array
   const position = sortedValues.indexOf(value);
   const percentile = (position / (n - 1)) * 100;
 
-  // Linear scale from 0.000 to 2.500 based on percentile
+  // Linear scale from 0.000 to maxScore based on percentile
   // 0th percentile (worst) = 0.000
-  // 100th percentile (best) = 2.500
-  return (percentile / 100) * 2.5;
+  // 100th percentile (best) = maxScore
+  return (percentile / 100) * maxScore;
 }
 
 export async function GET(request: NextRequest) {
@@ -146,17 +150,24 @@ export async function GET(request: NextRequest) {
       .map((d) => d.total_divisions)
       .sort((a, b) => a - b);
 
-    // Calculate scores for each university (0-2.500 per column, total 0-10.000)
+    // Calculate scores for each university with new max points (total 0-10,000)
+    // Ethics & Fairness: 3,200, Transparency & Accountability: 2,100, Privacy & Security: 1,800, Continuous Learning & Collaboration: 1,900
     const rankedData: RankedUniversity[] = formattedData.map((uni) => {
       const publications_grade = calculateScore(
         uni.total_publications,
-        publicationsValues
+        publicationsValues,
+        3200
       );
-      const assets_grade = calculateScore(uni.total_assets, assetsValues);
-      const policies_grade = calculateScore(uni.total_policies, policiesValues);
+      const assets_grade = calculateScore(uni.total_assets, assetsValues, 2100);
+      const policies_grade = calculateScore(
+        uni.total_policies,
+        policiesValues,
+        1800
+      );
       const divisions_grade = calculateScore(
         uni.total_divisions,
-        divisionsValues
+        divisionsValues,
+        1900
       );
 
       const total_score =
