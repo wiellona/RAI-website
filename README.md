@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Responsible AI Global University Ranking (RAI)
+
+RAI is a global benchmark for responsible AI in academia, ranking universities based on transparency, auditability, data privacy, and AI policy maturity. The app is built with Next.js + Tailwind on the frontend and is designed to integrate with a Django + MongoDB backend.
+
+This project was bootstrapped with [Next.js](https://nextjs.org).
 
 ## Getting Started
 
@@ -19,6 +23,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Features
+
+- Authentication with roles (user/admin)
+- Admin dashboard to accept submissions, manage users, and edit rankings
+- University detail pages (login required)
+- API abstraction layer (ready for backend integration, with mock fallback)
+- Consistent data between admin edits and university pages in mock mode
 
 ## Learn More
 

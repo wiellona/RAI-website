@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Navbar from "@/app/components/layout/Header";
 import {
   DragDropFileUpload,
@@ -25,6 +26,7 @@ const deriveEvidenceName = (path?: string) =>
   path?.split("/").pop() ?? "Stored file";
 
 export default function CriteriaPage() {
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const {
     answers,
     completionPercent,
@@ -49,10 +51,35 @@ export default function CriteriaPage() {
     getSignedUrl,
   } = useCriteriaPage();
 
-  if (loading) {
+  // Fetch signed URLs for evidence files
+  useEffect(() => {
+    const fetchUrls = async () => {
+      const paths = Object.values(answers)
+        .map((a) => a?.evidence)
+        .filter((p): p is string => Boolean(p));
+
+      const newUrls: Record<string, string> = {};
+      for (const path of paths) {
+        if (!signedUrls[path]) {
+          const url = await getSignedUrl(path);
+          if (url) {
+            newUrls[path] = url;
+          }
+        }
+      }
+
+      if (Object.keys(newUrls).length > 0) {
+        setSignedUrls((prev) => ({ ...prev, ...newUrls }));
+      }
+    };
+    void fetchUrls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, getSignedUrl]); // Remove signedUrls from deps
+
+  if (loading || !isSubmissionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading questionnaire...
+        {loading ? "Loading questionnaire..." : "Preparing your session..."}
       </div>
     );
   }
@@ -74,7 +101,7 @@ export default function CriteriaPage() {
           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 mb-8">
             <div>
               <p className="text-sm text-gray-600 mb-1">University</p>
-              <h1 className="font-bold text-xl text-[#5C2E2E]">
+              <h1 className="font-bold text-xl text-[#000080]">
                 {institutionName}
               </h1>
             </div>
@@ -84,9 +111,9 @@ export default function CriteriaPage() {
                 <p className="text-sm text-gray-600">Completion</p>
                 <p className="text-sm text-gray-600">{completionPercent} %</p>
               </div>
-              <div className="w-full h-3 bg-[#FFE5E5] rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-gradient-to-r from-[#0047AB]/10 to-[#0099ED]/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#A84032] transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] transition-all duration-300"
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
@@ -96,7 +123,7 @@ export default function CriteriaPage() {
               type="button"
               onClick={() => void handleSaveAndExit()}
               disabled={saving || !isSubmissionReady}
-              className="bg-white border border-[#A84032] text-[#A84032] hover:bg-[#A84032]/5 font-medium text-sm px-6 py-2 rounded-md transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+              className="bg-white border-2 border-[#0047AB] text-[#0047AB] hover:bg-[#0047AB]/10 font-semibold text-sm px-6 py-2 rounded-lg transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
             >
               {saving ? "Saving..." : "Save and Exit"}
             </button>
@@ -121,9 +148,9 @@ export default function CriteriaPage() {
                   <button
                     key={criteria.id}
                     onClick={() => goToCriteria(criteria.id)}
-                    className={`w-full text-left px-4 py-3 rounded-md font-medium text-sm mb-2 transition-colors flex items-center justify-between cursor-pointer ${
+                    className={`w-full text-left px-4 py-3 rounded-lg font-medium text-sm mb-2 transition-colors flex items-center justify-between cursor-pointer ${
                       currentCriteria === criteria.id
-                        ? "bg-[#FFE5E5] text-[#A84032]"
+                        ? "bg-gradient-to-r from-[#0047AB]/10 to-[#0099ED]/10 text-[#0047AB] border-2 border-[#0047AB]/20"
                         : "text-gray-900 hover:bg-gray-50"
                     }`}
                   >
@@ -149,7 +176,7 @@ export default function CriteriaPage() {
             </aside>
 
             <div className="flex-1">
-              <h2 className="font-bold text-2xl text-[#5C2E2E] mb-6">
+              <h2 className="font-bold text-2xl text-[#000080] mb-6">
                 {currentCriteria}. {currentCriteriaData.title}
               </h2>
 
@@ -178,7 +205,7 @@ export default function CriteriaPage() {
                             onChange={() =>
                               handleAnswer(question.id, option.id, option.value)
                             }
-                            className="w-5 h-5 text-[#A84032] accent-[#A84032] cursor-pointer"
+                            className="w-5 h-5 text-[#0047AB] accent-[#0047AB] cursor-pointer"
                           />
                           <span className="text-sm text-gray-700 group-hover:text-gray-900">
                             {option.label}
@@ -211,10 +238,10 @@ export default function CriteriaPage() {
                                   option.value
                                 )
                               }
-                              className={`h-10 rounded-md font-normal text-sm transition-all ${
+                              className={`h-10 rounded-lg font-normal text-sm transition-all ${
                                 isSelected
-                                  ? "border-2 border-[#A84032] bg-[#A84032]/5 text-[#A84032] font-medium"
-                                  : "border border-gray-300 text-gray-700 hover:border-[#A84032]/50"
+                                  ? "border-2 border-[#0047AB] bg-gradient-to-r from-[#0047AB]/10 to-[#0099ED]/10 text-[#0047AB] font-semibold"
+                                  : "border border-gray-300 text-gray-700 hover:border-[#0047AB]/50"
                               }`}
                             >
                               {option.label || idx + 1}
@@ -258,9 +285,9 @@ export default function CriteriaPage() {
                               name: deriveEvidenceName(
                                 answers[question.id]?.evidence
                               ),
-                              downloadUrl: getSignedUrl(
-                                answers[question.id]?.evidence
-                              ),
+                              downloadUrl:
+                                signedUrls[answers[question.id]?.evidence!] ??
+                                null,
                               description:
                                 "Evidence stored in Supabase. Uploading a new file will replace it.",
                             }
@@ -289,7 +316,7 @@ export default function CriteriaPage() {
                     await handleNext();
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="bg-[#A84032] hover:bg-[#8B3528] text-white font-medium text-sm px-8 py-2 rounded-md transition-colors cursor-pointer"
+                  className="bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white font-semibold text-sm px-8 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
                 >
                   {currentCriteria < criteriaData.length
                     ? "Next Question →"

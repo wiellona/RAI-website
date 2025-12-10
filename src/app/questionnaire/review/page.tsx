@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
-import { get } from "http";
 
 interface SectionStatus {
   id: number;
@@ -27,6 +26,7 @@ interface ReviewDataResponse {
 
 export default function ReviewPage() {
   const router = useRouter();
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [sections, setSections] = useState<SectionStatus[]>([]);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
@@ -91,56 +91,62 @@ export default function ReviewPage() {
     };
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    // if (!submissionId || !allCompleted) {
-    //   setStatusLevel("error");
-    //   setStatusMessage("Please complete every section before submitting.");
-    //   return;
-    // }
-
+  const handleFinalSubmit = useCallback(async () => {
     if (!submissionId) {
       setStatusLevel("error");
-      setStatusMessage("Submission is missing.");
+      setStatusMessage(
+        "Submission ID is missing. Please refresh and try again."
+      );
       return;
     }
 
     setIsSubmitting(true);
-    setStatusMessage(null);
-    setStatusLevel(null);
+    setStatusMessage("Processing your submission...");
+    setStatusLevel("info");
+
+    const payload = { submission_id: submissionId };
+    console.log("[handleFinalSubmit] Payload:", payload);
 
     try {
-      const { data, error } = await getSupabaseBrowserClient().functions.invoke(
-        "finalize-submission",
-        {
-          body: { submission_id: submissionId },
-        }
-      );
+      const { data, error: edgeFunctionError } =
+        await supabase.functions.invoke("finalize-submission", {
+          body: payload,
+        });
 
-      const res = await fetch("/api/review-data", { method: "POST" });
-      const payload = (await res.json().catch(() => ({}))) as {
-        success?: boolean;
-        error?: string;
-      };
+      console.log("[handleFinalSubmit] Response:", {
+        data,
+        error: edgeFunctionError,
+      });
 
-      if (!res.ok || !payload?.success) {
-        throw new Error(payload?.error ?? "Failed to submit questionnaire.");
+      if (edgeFunctionError) {
+        throw new Error(
+          edgeFunctionError.message ||
+            "Failed to finalize submission on the server."
+        );
       }
 
       setStatusLevel("info");
-      setStatusMessage("Questionnaire submitted successfully.");
-      router.push("/questionnaire/submission");
+      setStatusMessage(
+        "✅ Submission successful! Redirecting you to the live rankings..."
+      );
+
+      setTimeout(() => {
+        router.push("/ranking");
+      }, 1500);
     } catch (error) {
-      console.error("Failed to submit questionnaire", error);
+      console.error(
+        "[handleFinalSubmit] Failed to finalize submission:",
+        error
+      );
       setStatusLevel("error");
       setStatusMessage(
         error instanceof Error
-          ? error.message
-          : "Failed to submit questionnaire."
+          ? `Submission failed: ${error.message}`
+          : "An unexpected error occurred. Please try again."
       );
-    } finally {
       setIsSubmitting(false);
     }
-  }, [allCompleted, router, submissionId]);
+  }, [router, submissionId, supabase]);
 
   if (loading) {
     return (
@@ -187,7 +193,7 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-center text-[#5C2E2E] mb-8 cursor-pointer">
+            <h1 className="text-3xl font-bold text-center text-[#000080] mb-8 cursor-pointer">
               Review and Submit Your Questionnaire
             </h1>
 
@@ -215,7 +221,7 @@ export default function ReviewPage() {
                     </svg>
                   ) : (
                     <svg
-                      className="w-5 h-5 text-red-600 shrink-0"
+                      className="w-5 h-5 text-orange-600 shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -239,8 +245,8 @@ export default function ReviewPage() {
               ))}
             </div>
 
-            <div className="bg-[#FFF5F5] border border-[#FFE5E5] rounded-lg p-4 mb-8">
-              <p className="text-sm text-gray-700 text-center">
+            <div className="bg-gradient-to-r from-[#0047AB]/5 to-[#0099ED]/5 border-2 border-[#0047AB]/20 rounded-lg p-4 mb-8">
+              <p className="text-sm text-[#000080] text-center font-medium">
                 You have completed{" "}
                 <span className="font-bold">
                   {progressSummary.completedCount}
@@ -260,19 +266,44 @@ export default function ReviewPage() {
               </Link>
               <button
                 type="button"
-                onClick={handleSubmit}
-                // disabled={!submissionId || !allCompleted || isSubmitting}
+                onClick={handleFinalSubmit}
                 disabled={!submissionId || isSubmitting}
-                className="inline-flex items-center justify-center bg-[#A84032] hover:bg-[#8B3528] disabled:bg-gray-300 disabled:text-gray-500 text-white font-medium px-8 py-3 rounded-md transition-colors"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                {isSubmitting ? "Submitting..." : "Submit Final Questionnaire"}
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing Submission...
+                  </>
+                ) : (
+                  "Submit Final Questionnaire"
+                )}
               </button>
             </div>
           </div>
         </div>
       </main>
 
-      <footer className="bg-[#5C2E2E] text-white py-12">
+      <footer className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white py-12">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6">
           <div>
             <p className="font-semibold text-lg">Need assistance?</p>

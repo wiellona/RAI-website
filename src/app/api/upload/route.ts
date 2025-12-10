@@ -67,10 +67,14 @@ export async function POST(req: Request) {
         upsert: true,
       });
     if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      console.error("[criteria-evidence] storage upload error", uploadError);
+      return NextResponse.json(
+        { error: uploadError.message || "Storage upload failed" },
+        { status: 500 }
+      );
     }
 
-    await supabase.from("Answers").upsert(
+    const { error: upsertError } = await supabase.from("Answers").upsert(
       {
         submission_id: submissionId,
         question_id: questionId,
@@ -78,6 +82,14 @@ export async function POST(req: Request) {
       },
       { onConflict: "submission_id,question_id" }
     );
+
+    if (upsertError) {
+      console.error("[criteria-evidence] DB upsert error", upsertError);
+      return NextResponse.json(
+        { error: "Failed to save evidence reference" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ path: storagePath });
   } catch (error) {
