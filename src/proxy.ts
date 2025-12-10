@@ -89,7 +89,7 @@ export async function proxy(req: NextRequest) {
     const adminSupabase = getSupabaseServerClient();
     const { data: profile, error } = await adminSupabase
       .from("Profiles")
-      .select("is_approved")
+      .select("is_approved,role")
       .eq("id", user.id)
       .single();
 
@@ -98,7 +98,10 @@ export async function proxy(req: NextRequest) {
       return res;
     }
 
-    if (!profile?.is_approved) {
+    const requiresApproval =
+      profile?.role !== "admin" && !profile?.is_approved;
+
+    if (requiresApproval) {
       return NextResponse.redirect(new URL("/pending-approval", req.url));
     }
   }

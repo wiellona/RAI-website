@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError, data } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
       });
@@ -29,7 +29,34 @@ export default function LoginPage() {
       if (authError) throw authError;
 
       localStorage.setItem("userEmail", normalizedEmail);
-      router.push("/questionnaire/general-info");
+
+      // Fetch user profile to get role
+      if (data.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("Profiles")
+          .select("id,name,role,is_approved")
+          .eq("id", data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          // Default redirect if profile fetch fails
+          router.push("/questionnaire/general-info");
+          return;
+        }
+
+        // Redirect based on role
+        if (profileData?.role === "admin") {
+          router.push("/admin");
+        } else if (profileData?.role === "reviewer") {
+          router.push("/reviewer");
+        } else {
+          // Default redirect for university/user role
+          router.push("/questionnaire/general-info");
+        }
+      } else {
+        router.push("/questionnaire/general-info");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
