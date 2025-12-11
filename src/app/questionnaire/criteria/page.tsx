@@ -141,8 +141,8 @@ export default function CriteriaPage() {
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="w-full lg:w-64 shrink-0">
+          <div className="flex flex-col lg:flex-row gap-8 ">
+            <aside className="w-full lg:w-64 shrink-0 lg:sticky lg:top-8 lg:self-start">
               <nav className="bg-white border border-gray-200 rounded-lg p-3">
                 {criteriaData.map((criteria) => (
                   <button
@@ -288,14 +288,16 @@ export default function CriteriaPage() {
                               downloadUrl:
                                 signedUrls[answers[question.id]?.evidence!] ??
                                 null,
-                              description:
-                                "Evidence stored in Supabase. Uploading a new file will replace it.",
                             }
                           : undefined
                       }
                       onRemoveExisting={
                         answers[question.id]?.evidence
-                          ? () => handleRemoveEvidence(question.id)
+                          ? () =>
+                              handleRemoveEvidence(
+                                question.id,
+                                answers[question.id]?.evidence ?? null
+                              )
                           : undefined
                       }
                     />

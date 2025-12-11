@@ -44,6 +44,7 @@ export function useCriteriaPage() {
   const [uploadingQuestionId, setUploadingQuestionId] = useState<string | null>(
     null
   );
+  const [dirtyQuestions, setDirtyQuestions] = useState<Set<string>>(new Set());
   const getSignedUrl = useCallback(
     async (path?: string): Promise<string | null> => {
       if (!path) return null;
@@ -62,6 +63,24 @@ export function useCriteriaPage() {
   );
   const CURRENT_CRITERIA_KEY = "criteriaPage.currentCriteria";
 
+  const markQuestionDirty = useCallback((questionId: string) => {
+    setDirtyQuestions((prev) => {
+      if (prev.has(questionId)) return prev;
+      const next = new Set(prev);
+      next.add(questionId);
+      return next;
+    });
+  }, []);
+
+  const markQuestionClean = useCallback((questionId: string) => {
+    setDirtyQuestions((prev) => {
+      if (!prev.has(questionId)) return prev;
+      const next = new Set(prev);
+      next.delete(questionId);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const stored = localStorage.getItem(CURRENT_CRITERIA_KEY);
     if (stored) {
@@ -72,7 +91,10 @@ export function useCriteriaPage() {
     }
     let ignore = false;
     const load = async () => {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (ignore) return;
       const email = user?.email ?? "";
       if (!user || !email) {
@@ -87,7 +109,17 @@ export function useCriteriaPage() {
       const savedAnswers = localStorage.getItem(answersKey);
       if (savedAnswers) {
         try {
-          setAnswers(JSON.parse(savedAnswers));
+          const parsed = JSON.parse(savedAnswers) as Answer;
+          setAnswers(parsed);
+          setDirtyQuestions((prev) => {
+            const next = new Set(prev);
+            Object.entries(parsed).forEach(([questionId, answer]) => {
+              if (answer?.optionId) {
+                next.add(questionId);
+              }
+            });
+            return next;
+          });
         } catch (error) {
           console.warn("Failed to parse cached questionnaire answers", error);
           localStorage.removeItem(answersKey);
@@ -281,6 +313,16 @@ export function useCriteriaPage() {
             // Merge with localStorage data, giving DB priority
             return { ...prev, ...restored };
           });
+          if (Object.keys(restored).length) {
+            setDirtyQuestions((prev) => {
+              if (!prev.size) return prev;
+              const next = new Set(prev);
+              Object.keys(restored).forEach((questionId) =>
+                next.delete(questionId)
+              );
+              return next;
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to load saved answers", error);
@@ -323,12 +365,9 @@ export function useCriteriaPage() {
 
       console.log("[saveAnswer] Payload:", payload);
 
-      const { data, error } = await supabase.functions.invoke(
-        "submit-answer",
-        {
-          body: payload,
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("submit-answer", {
+        body: payload,
+      });
 
       console.log("[saveAnswer] Response:", { data, error });
 
@@ -419,17 +458,22 @@ export function useCriteriaPage() {
 
       const evidenceNotes = answers[questionId]?.evidence ?? null;
 
-      void saveAnswer(questionId, optionId, evidenceNotes).catch((error) => {
-        console.error("[handleAnswer] Failed to save answer", error);
-        setStatusLevel("error");
-        setStatusMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to save answer. Please try again."
-        );
-      });
+      markQuestionDirty(questionId);
+      void saveAnswer(questionId, optionId, evidenceNotes)
+        .then(() => {
+          markQuestionClean(questionId);
+        })
+        .catch((error) => {
+          console.error("[handleAnswer] Failed to save answer", error);
+          setStatusLevel("error");
+          setStatusMessage(
+            error instanceof Error
+              ? error.message
+              : "Failed to save answer. Please try again."
+          );
+        });
     },
-    [answers, saveAnswer]
+    [answers, markQuestionClean, markQuestionDirty, saveAnswer]
   );
 
   const persistAnswers = useCallback(
@@ -438,12 +482,13 @@ export function useCriteriaPage() {
 
       const source = override ?? answers;
 
-      const entries = Object.entries(source).filter(([, answer]) =>
-        Boolean(answer?.optionId)
+      const entries = Object.entries(source).filter(
+        ([questionId, answer]) =>
+          dirtyQuestions.has(questionId) && Boolean(answer?.optionId)
       );
 
       if (!entries.length) {
-        console.log("[persistAnswers] No complete answers to save");
+        console.log("[persistAnswers] No dirty answers to save");
         return;
       }
 
@@ -455,18 +500,15 @@ export function useCriteriaPage() {
         const optionId = answer?.optionId;
         if (!optionId) continue;
         try {
-          await saveAnswer(
-            questionId,
-            optionId,
-            answer?.evidence ?? null
-          );
+          await saveAnswer(questionId, optionId, answer?.evidence ?? null);
+          markQuestionClean(questionId);
         } catch (err) {
           console.error("[persistAnswers] Failed while saving", err);
           throw err;
         }
       }
     },
-    [answers, saveAnswer, submissionId]
+    [answers, dirtyQuestions, markQuestionClean, saveAnswer, submissionId]
   );
 
   const handleNext = useCallback(async () => {
@@ -567,7 +609,9 @@ export function useCriteriaPage() {
           );
         }
 
+        markQuestionDirty(questionId);
         await saveAnswer(questionId, optionId, payload.path);
+        markQuestionClean(questionId);
         setStatusLevel("info");
         setStatusMessage("Evidence uploaded.");
       } catch (error) {
@@ -580,13 +624,24 @@ export function useCriteriaPage() {
         setUploadingQuestionId(null);
       }
     },
-    [answers, saveAnswer, submissionId, universityId]
+    [
+      answers,
+      markQuestionClean,
+      markQuestionDirty,
+      saveAnswer,
+      submissionId,
+      universityId,
+    ]
   );
 
   const handleRemoveEvidence = useCallback(
-    async (questionId: string) => {
-      const path = answers[questionId]?.evidence;
-      if (!submissionId || !path) return;
+    async (questionId: string, explicitPath?: string | null) => {
+      const path = explicitPath ?? answers[questionId]?.evidence;
+      if (!submissionId || !path) {
+        setStatusMessage("No evidence to remove.");
+        setStatusLevel("error");
+        return;
+      }
 
       try {
         const params = new URLSearchParams({
@@ -610,7 +665,9 @@ export function useCriteriaPage() {
 
         const optionId = updated[questionId]?.optionId ?? null;
         if (optionId) {
+          markQuestionDirty(questionId);
           await saveAnswer(questionId, optionId, null);
+          markQuestionClean(questionId);
         } else {
           console.warn(
             `[handleRemoveEvidence] No option selected for question ${questionId}; skipping submit-answer call.`
@@ -624,7 +681,7 @@ export function useCriteriaPage() {
         );
       }
     },
-    [answers, saveAnswer, submissionId]
+    [answers, markQuestionClean, markQuestionDirty, saveAnswer, submissionId]
   );
 
   const handleEvidenceSelect = useCallback(

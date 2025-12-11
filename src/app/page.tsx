@@ -60,7 +60,7 @@ export default function LandingPage() {
                   Explore the 2025 Ranking →
                 </Link>
                 <Link
-                  href="/authentication/register"
+                  href="#"
                   onClick={handleParticipateClick}
                   className="inline-flex items-center justify-center bg-white border-3 border-[#0047AB] text-[#0047AB] hover:bg-gradient-to-r hover:from-[#0047AB] hover:to-[#0099ED] hover:text-white px-8 py-4 rounded-xl transition-all duration-300 font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-1 transform"
                 >

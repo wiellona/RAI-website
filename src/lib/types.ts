@@ -36,13 +36,22 @@ export type Filters = {
   minScore?: number;
 };
 
+export type SubmissionStatus =
+  | "draft"
+  | "submitted"
+  | "on_review"
+  | "completed"
+  | "approved"
+  | "rejected"
+  | "pending";
+
 export interface Submission {
   id: string;
   university_id: string;
   questionnaire_id: string;
   submitted_by_user_id: string;
   submitted_at: string;
-  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'pending';
+  status: SubmissionStatus;
   // Related data from joins
   university?: {
     name: string;
@@ -106,4 +115,3 @@ export interface UniversityAnswerDetail {
   submittedAt: string;
   answers: Answer[];
 }
-

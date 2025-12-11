@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
-import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 interface SectionStatus {
   id: number;
@@ -26,7 +25,6 @@ interface ReviewDataResponse {
 
 export default function ReviewPage() {
   const router = useRouter();
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [sections, setSections] = useState<SectionStatus[]>([]);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
@@ -104,34 +102,27 @@ export default function ReviewPage() {
     setStatusMessage("Processing your submission...");
     setStatusLevel("info");
 
-    const payload = { submission_id: submissionId };
-    console.log("[handleFinalSubmit] Payload:", payload);
-
     try {
-      const { data, error: edgeFunctionError } =
-        await supabase.functions.invoke("finalize-submission", {
-          body: payload,
-        });
-
-      console.log("[handleFinalSubmit] Response:", {
-        data,
-        error: edgeFunctionError,
+      const response = await fetch("/api/review-data", {
+        method: "POST",
+        cache: "no-store",
       });
 
-      if (edgeFunctionError) {
-        throw new Error(
-          edgeFunctionError.message ||
-            "Failed to finalize submission on the server."
-        );
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to submit questionnaire.");
       }
 
       setStatusLevel("info");
       setStatusMessage(
-        "✅ Submission successful! Redirecting you to the live rankings..."
+        "✅ Submission received! Your responses are now under review."
       );
 
       setTimeout(() => {
-        router.push("/ranking");
+        router.push("/questionnaire/submission");
       }, 1500);
     } catch (error) {
       console.error(
@@ -146,7 +137,7 @@ export default function ReviewPage() {
       );
       setIsSubmitting(false);
     }
-  }, [router, submissionId, supabase]);
+  }, [router, submissionId]);
 
   if (loading) {
     return (

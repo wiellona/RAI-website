@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
     const { error: updateError } = await supabase
       .from("Submissions")
       .update({
-        status: "submitted",
+        status: "on_review",
         submitted_at: new Date().toISOString(),
       })
       .eq("id", payload.submissionId);

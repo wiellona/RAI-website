@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import { useParticipateNavigation } from "@/hooks/useNavigation";
@@ -10,6 +10,10 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const supabase = getSupabaseBrowserClient();
   const { handleParticipateClick } = useParticipateNavigation();
+
+  const onParticipateClick = async (event: MouseEvent<HTMLAnchorElement>) => {
+    await handleParticipateClick(event);
+  };
 
   useEffect(() => {
     const update = () =>
@@ -82,17 +86,18 @@ export default function Navbar() {
             >
               The Ranking
             </Link>
-            <Link
+            {/* <Link
               href="/ranking/automated"
               className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
               Automated Ranking
-            </Link>
+            </Link> */}
             <Link
-              href="/authentication/register"
+              href="#"
+              onClick={onParticipateClick}
               className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
-              Register
+              Participate
             </Link>
 
             {/* Desktop Login/Logout Button */}
@@ -162,11 +167,14 @@ export default function Navbar() {
               Automated Ranking
             </Link>
             <Link
-              href="/authentication/register"
+              href="#"
+              onClick={(event) => {
+                onParticipateClick(event);
+                setIsMobileMenuOpen(false);
+              }}
               className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
-              Register
+              Participate
             </Link>
 
             {/* Mobile Login/Logout Button */}
