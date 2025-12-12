@@ -23,6 +23,14 @@ interface ReviewDataResponse {
   error?: string;
 }
 
+const LOCKED_STATUSES = new Set([
+  "submitted",
+  "on_review",
+  "completed",
+  "approved",
+  "pending",
+]);
+
 export default function ReviewPage() {
   const router = useRouter();
   const [sections, setSections] = useState<SectionStatus[]>([]);
@@ -58,6 +66,14 @@ export default function ReviewPage() {
         }
         if (cancelled) return;
 
+        if (
+          payload.submissionStatus &&
+          LOCKED_STATUSES.has(payload.submissionStatus)
+        ) {
+          router.replace("/questionnaire/submission");
+          return;
+        }
+
         setSubmissionId(payload.submissionId);
         setSections(payload.sections ?? []);
         setCompletedCount(payload.completedCount ?? 0);
@@ -87,7 +103,7 @@ export default function ReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   const handleFinalSubmit = useCallback(async () => {
     if (!submissionId) {

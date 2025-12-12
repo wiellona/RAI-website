@@ -5,6 +5,7 @@ import {
   type UICriteria,
 } from "@/app/api/questionnaries/questionnaire";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import type { SubmissionStatus } from "@/lib/types";
 
 export interface Answer {
   [key: string]: {
@@ -34,6 +35,8 @@ export function useCriteriaPage() {
   const [answers, setAnswers] = useState<Answer>({});
   const [questionnaireId, setQuestionnaireId] = useState<string | null>(null);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [submissionStatus, setSubmissionStatus] =
+    useState<SubmissionStatus | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [universityId, setUniversityId] = useState<string | null>(null);
   const [institutionName, setInstitutionName] = useState("Example University");
@@ -62,6 +65,10 @@ export function useCriteriaPage() {
     [supabase]
   );
   const CURRENT_CRITERIA_KEY = "criteriaPage.currentCriteria";
+  const EDITABLE_STATUSES = useMemo(
+    () => new Set<SubmissionStatus>(["draft", "rejected"]),
+    []
+  );
 
   const markQuestionDirty = useCallback((questionId: string) => {
     setDirtyQuestions((prev) => {
@@ -199,7 +206,7 @@ export function useCriteriaPage() {
       try {
         const { data, error } = await supabase
           .from("Submissions")
-          .select("id")
+          .select("id, status")
           .eq("university_id", universityId)
           .eq("questionnaire_id", questionnaireId)
           .limit(1)
@@ -212,7 +219,19 @@ export function useCriteriaPage() {
         }
 
         if (data?.id) {
+          const status = (data.status as SubmissionStatus | null) ?? "draft";
           setSubmissionId(data.id);
+          setSubmissionStatus(status);
+
+          if (!EDITABLE_STATUSES.has(status)) {
+            setStatusLevel("info");
+            setStatusMessage(
+              "Pengisian kuisioner sudah dikirim. Mengarahkan ke halaman status."
+            );
+            router.push("/questionnaire/submission");
+            return;
+          }
+
           return;
         }
 
@@ -231,6 +250,7 @@ export function useCriteriaPage() {
 
         if (!cancelled) {
           setSubmissionId(inserted.id);
+          setSubmissionStatus("draft");
         }
       } catch (error) {
         console.error("Failed to prepare questionnaire submission", error);
@@ -248,7 +268,14 @@ export function useCriteriaPage() {
     return () => {
       cancelled = true;
     };
-  }, [currentUserId, questionnaireId, supabase, universityId]);
+  }, [
+    EDITABLE_STATUSES,
+    currentUserId,
+    questionnaireId,
+    router,
+    supabase,
+    universityId,
+  ]);
 
   const optionLookup = useMemo(() => {
     const lookup: Record<string, Record<string, number>> = {};
@@ -741,7 +768,9 @@ export function useCriteriaPage() {
     handleEvidenceSelect,
     handleNext,
     handleSaveAndExit,
-    isSubmissionReady: Boolean(submissionId),
+    isSubmissionReady:
+      Boolean(submissionId) &&
+      (submissionStatus === null || EDITABLE_STATUSES.has(submissionStatus)),
     institutionName,
     isCriteriaCompleted,
     loading,

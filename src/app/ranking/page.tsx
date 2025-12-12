@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import Header from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
-import { getPublicUrl } from "@/utils/storage";
-import { useCallback } from "react";
 
 interface UniversityRank {
   id: string;
@@ -100,10 +98,6 @@ export default function RankingPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [automatedData, setAutomatedData] = useState<UniversityCrawlData[]>([]);
 
-  const PUBLICATIONS_BUCKET = "publication_evidences";
-  const ASSETS_BUCKET = "asset_evidences";
-  const EVIDENCE_BUCKET = "evidence_uploads";
-
   useEffect(() => {
     async function fetchRankings() {
       try {
@@ -160,56 +154,28 @@ export default function RankingPage() {
     fetchRankings();
   }, []);
 
-  useEffect(() => {
-    let ignore = false;
+  const ensureAutomatedData = async () => {
+    if (automatedData.length > 0) return automatedData;
 
-    const fetchAutomatedData = async () => {
-      try {
-        const response = await fetch("/api/automated-ranking", {
-          cache: "no-store",
-        });
-        if (!response.ok) {
-          throw new Error("Failed to fetch automated ranking data");
-        }
-        const payload = (await response.json()) as {
-          data?: UniversityCrawlData[];
-        };
-        if (!ignore) {
-          setAutomatedData(payload.data ?? []);
-        }
-      } catch (error) {
-        if (!ignore) {
-          console.error("Failed to load automated ranking snapshot", error);
-          setAutomatedData([]);
-        }
+    try {
+      const response = await fetch("/api/automated-ranking", {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch automated ranking data");
       }
-    };
-
-    fetchAutomatedData();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!selectedUni) {
-      setSelectedUniversity(null);
-      return;
+      const payload = (await response.json()) as {
+        data?: UniversityCrawlData[];
+      };
+      const data = payload.data ?? [];
+      setAutomatedData(data);
+      return data;
+    } catch (error) {
+      console.error("Failed to load automated ranking snapshot", error);
+      setAutomatedData([]);
+      return [];
     }
-
-    const normalizedTarget = normalizeName(selectedUni.university_name);
-    const match = automatedData.find((item) => {
-      const nameMatch =
-        normalizeName(item.university_name) === normalizedTarget;
-      const normalizedMatch = item.university_name_normalized
-        ? normalizeName(item.university_name_normalized) === normalizedTarget
-        : false;
-      return nameMatch || normalizedMatch;
-    });
-
-    setSelectedUniversity(match ?? null);
-  }, [automatedData, selectedUni]);
+  };
 
   const handleRowClick = async (uni: UniversityRank) => {
     setSelectedUni(uni);
@@ -221,6 +187,20 @@ export default function RankingPage() {
       console.log(
         `[Ranking] Loading details for university: ${uni.university_id}`
       );
+
+      const automated = await ensureAutomatedData();
+
+      const normalizedTarget = normalizeName(uni.university_name);
+      const match = automated.find((item) => {
+        const nameMatch =
+          normalizeName(item.university_name) === normalizedTarget;
+        const normalizedMatch = item.university_name_normalized
+          ? normalizeName(item.university_name_normalized) === normalizedTarget
+          : false;
+        return nameMatch || normalizedMatch;
+      });
+
+      setSelectedUniversity(match ?? null);
 
       // Step 1: Get the most recent completed submission
       const { data: subData, error: subError } =
@@ -300,21 +280,6 @@ export default function RankingPage() {
     setSelectedUni(null);
     setSelectedUniversity(null);
   };
-
-  const openDocument = useCallback(async (publicUrl?: string | null) => {
-    if (!publicUrl) return;
-    try {
-      const response = await fetch(publicUrl);
-      if (!response.ok) throw new Error("Unable to fetch document");
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      window.open(objectUrl, "_blank", "noopener");
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
-    } catch (error) {
-      console.error("Failed to open document", error);
-      alert("Sorry, we couldn't open that file. Please try again.");
-    }
-  }, []);
 
   const breakdownMetrics = [
     {

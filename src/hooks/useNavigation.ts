@@ -35,12 +35,20 @@ export function useParticipateNavigation() {
       }
 
       const status = submission?.status ?? "draft";
+      const lockedStatuses = new Set([
+        "submitted",
+        "on_review",
+        "completed",
+        "approved",
+        "pending",
+      ]);
 
-      if (status === "completed") {
+      if (lockedStatuses.has(status)) {
         router.push("/questionnaire/submission");
         return;
       }
 
+      // Allow editing only for draft or rejected submissions
       router.push("/questionnaire/general-info");
     },
     [router, supabase]

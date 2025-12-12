@@ -461,7 +461,7 @@ export default function RegistrationPage() {
                     value={formData.address}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-[#CD5C5C] focus:border-[#CD5C5C] text-gray-900 outline-none"
+                    className="w-full px-4 py-2 border-2 border-[#0047AB]/20 rounded-xl focus:ring-4 focus:ring-[#0047AB]/20 focus:border-[#0047AB] text-[#000080] outline-none transition-all duration-300 bg-gradient-to-r from-white to-[#f8f9ff] font-medium"
                     required
                   ></textarea>
                 </div>

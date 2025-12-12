@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
 import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import type { SubmissionStatus } from "@/lib/types";
 
 type StatusMessage = {
   type: "success" | "error";
@@ -35,6 +36,14 @@ const defaultFormState: GeneralInfoForm = {
   numberOfAssets: "",
 };
 
+const LOCKED_STATUSES = new Set<SubmissionStatus>([
+  "submitted",
+  "on_review",
+  "completed",
+  "approved",
+  "pending",
+]);
+
 const formatDateForInput = (value?: string | null) => {
   if (!value) return "";
   const date = new Date(value);
@@ -54,6 +63,7 @@ export default function GeneralInfoPage() {
     const loadInitialData = async () => {
       setLoading(true);
       setStatus(null);
+      let universityId: string | null = null;
 
       try {
         const [{ data: userData }, response] = await Promise.all([
@@ -66,6 +76,8 @@ export default function GeneralInfoPage() {
         if (response.ok) {
           const payload = await response.json();
           const record = payload.data;
+          universityId =
+            record?.id ?? record?.university_id ?? record?.universityId ?? null;
           setFormData({
             universityName: record?.name ?? "",
             dateEstablishment: formatDateForInput(
@@ -95,6 +107,30 @@ export default function GeneralInfoPage() {
           });
           setFormData((prev) => ({ ...prev, emailAddress: userEmail }));
         }
+
+        if (universityId) {
+          const { data: submissionRow, error: submissionError } = await supabase
+            .from("Submissions")
+            .select("status")
+            .eq("university_id", universityId)
+            .order("submitted_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (submissionError && submissionError.code !== "PGRST116") {
+            console.error(
+              "Failed to verify submission status before editing",
+              submissionError
+            );
+          } else {
+            const status =
+              (submissionRow?.status as SubmissionStatus | null) ?? null;
+            if (status && LOCKED_STATUSES.has(status)) {
+              router.replace("/questionnaire/submission");
+              return;
+            }
+          }
+        }
       } catch (error) {
         setStatus({
           type: "error",
@@ -107,7 +143,7 @@ export default function GeneralInfoPage() {
     };
 
     void loadInitialData();
-  }, [supabase]);
+  }, [router, supabase]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
