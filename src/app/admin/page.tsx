@@ -60,10 +60,10 @@ function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#5C2E2E]">Loading Admin Dashboard...</h1>
+            <h1 className="text-2xl font-semibold text-[#000080]">Loading Admin Dashboard...</h1>
           </div>
         </Container>
       </div>
@@ -71,9 +71,9 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen py-12">
+    <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-12">
       <Container>
-        <h1 className="text-4xl font-bold text-center my-8 text-[#5C2E2E]">Admin Dashboard</h1>
+        <h1 className="text-4xl font-bold text-center my-8 text-[#000080]">Admin Dashboard</h1>
         <p className="text-center text-gray-600 mb-8">
           View and manage university submissions, rankings, and user roles.
         </p>

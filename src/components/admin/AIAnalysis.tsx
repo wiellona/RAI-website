@@ -17,10 +17,10 @@ function AnalysisModal({ isOpen, onClose, universityName, analysis }: AnalysisMo
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-hidden border">
-        <div className="bg-gradient-to-r from-[#C84B4B] to-[#A83A3A] p-6 text-white">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-hidden border-2 border-[#0047AB]/30">
+        <div className="bg-gradient-to-r from-[#000080] to-[#0047AB] p-6 text-white">
           <h2 className="text-2xl font-bold">AI Analysis & Recommendations</h2>
-          <p className="text-red-100 mt-1">{universityName}</p>
+          <p className="text-blue-100 mt-1">{universityName}</p>
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[calc(85vh-160px)]">
@@ -32,7 +32,7 @@ function AnalysisModal({ isOpen, onClose, universityName, analysis }: AnalysisMo
         <div className="p-4 bg-gray-50 border-t flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-[#C84B4B] text-white rounded-lg hover:bg-[#A83A3A] transition-colors"
+            className="px-6 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg hover:from-[#0099ED] hover:to-[#0047AB] transition-colors"
           >
             Close
           </button>
@@ -97,8 +97,8 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
   };
 
   return (
-    <div className="bg-white border rounded-lg p-6 shadow-sm">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">
+    <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg p-6 shadow-sm">
+      <h2 className="text-xl font-bold mb-4 text-[#000080]">
         AI-Powered Analysis & Recommendations
       </h2>
       <p className="text-sm text-gray-600 mb-4">
@@ -116,7 +116,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
               setSelectedUniversity(e.target.value);
               setError("");
             }}
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#C84B4B] focus:border-transparent"
+            className="w-full p-2 border-2 border-[#0047AB]/30 rounded-lg focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
             disabled={isAnalyzing}
           >
             <option value="">Choose a university...</option>
@@ -130,9 +130,9 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
 
         {/* Display metrics when university is selected */}
         {selectedUni && (
-          <div className="bg-white border-2 border-[#C84B4B] rounded-lg p-6 text-center">
+          <div className="bg-gradient-to-r from-[#f0f4ff] to-white border-2 border-[#0047AB]/30 rounded-lg p-6 text-center">
             <h3 className="text-sm font-medium text-gray-600 mb-2">Overall Trust Score</h3>
-            <p className="text-5xl font-bold text-[#C84B4B] mb-1">{selectedUni.trustScore}</p>
+            <p className="text-5xl font-bold text-[#0047AB] mb-1">{selectedUni.trustScore}</p>
           </div>
         )}
 
@@ -145,7 +145,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
         <button
           onClick={handleAnalyze}
           disabled={isAnalyzing || !selectedUniversity}
-          className="w-full py-3 px-4 bg-[#C84B4B] text-white rounded-lg font-medium hover:bg-[#A83A3A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          className="w-full py-3 px-4 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg font-medium hover:from-[#0099ED] hover:to-[#0047AB] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
         >
           {isAnalyzing ? (
             <span className="flex items-center justify-center gap-2">

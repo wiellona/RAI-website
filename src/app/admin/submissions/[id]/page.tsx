@@ -82,10 +82,10 @@ function SubmissionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#5C2E2E]">Loading submission details...</h1>
+            <h1 className="text-2xl font-semibold text-[#000080]">Loading submission details...</h1>
           </div>
         </Container>
       </div>
@@ -94,14 +94,14 @@ function SubmissionDetailPage() {
 
   if (error) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-red-600">Error</h1>
             <p className="mt-2 text-gray-700">{error}</p>
             <button
               onClick={() => router.push("/admin")}
-              className="mt-4 px-6 py-2 bg-[#A84032] text-white rounded hover:bg-[#8B3528] transition-colors"
+              className="mt-4 px-6 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded hover:from-[#0099ED] hover:to-[#0047AB] transition-colors"
             >
               Back to Admin Dashboard
             </button>
@@ -113,13 +113,13 @@ function SubmissionDetailPage() {
 
   if (!submission) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-red-600">Submission not found</h1>
             <button
               onClick={() => router.push("/admin")}
-              className="mt-4 px-6 py-2 bg-[#A84032] text-white rounded hover:bg-[#8B3528] transition-colors"
+              className="mt-4 px-6 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded hover:from-[#0099ED] hover:to-[#0047AB] transition-colors"
             >
               Back to Admin Dashboard
             </button>
@@ -130,25 +130,25 @@ function SubmissionDetailPage() {
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen py-8">
+    <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-8">
       <Container>
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-6">
             <button
               onClick={() => router.push("/admin")}
-              className="text-[#5C2E2E] hover:text-[#A84032] mb-4 flex items-center gap-2"
+              className="text-[#000080] hover:text-[#0047AB] mb-4 flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Back to Dashboard
             </button>
-            <h1 className="text-4xl font-bold text-[#5C2E2E]">Submission Details</h1>
+            <h1 className="text-4xl font-bold text-[#000080]">Submission Details</h1>
           </div>
 
         {/* Submission Metadata */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg shadow-sm p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Submission ID</h3>
@@ -185,8 +185,8 @@ function SubmissionDetailPage() {
 
         {/* University Information */}
         {submission.university && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-6">
-            <h2 className="text-2xl font-bold text-[#5C2E2E] mb-6">University Information</h2>
+          <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg shadow-sm p-8 mb-6">
+            <h2 className="text-2xl font-bold text-[#000080] mb-6">University Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">University Name</h3>
@@ -197,7 +197,7 @@ function SubmissionDetailPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Website</h3>
                   <p className="text-lg text-gray-900">
-                    <a href={submission.university.website} target="_blank" rel="noopener noreferrer" className="text-[#A84032] hover:underline">
+                    <a href={submission.university.website} target="_blank" rel="noopener noreferrer" className="text-[#0047AB] hover:underline">
                       {submission.university.website}
                     </a>
                   </p>
@@ -243,8 +243,8 @@ function SubmissionDetailPage() {
 
         {/* Contact Information */}
         {submission.university && (submission.university.pic_name || submission.university.pic_email) && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-6">
-            <h2 className="text-2xl font-bold text-[#5C2E2E] mb-6">Contact Person (PIC)</h2>
+          <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg shadow-sm p-8 mb-6">
+            <h2 className="text-2xl font-bold text-[#000080] mb-6">Contact Person (PIC)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {submission.university.pic_name && (
                 <div>
@@ -257,7 +257,7 @@ function SubmissionDetailPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">PIC Email</h3>
                   <p className="text-lg text-gray-900">
-                    <a href={`mailto:${submission.university.pic_email}`} className="text-[#A84032] hover:underline">
+                    <a href={`mailto:${submission.university.pic_email}`} className="text-[#0047AB] hover:underline">
                       {submission.university.pic_email}
                     </a>
                   </p>
@@ -277,16 +277,16 @@ function SubmissionDetailPage() {
         {/* Evidence Documents */}
         {submission.university && (submission.university.publication_evidence_path || submission.university.asset_evidence_path || submission.university.letter_path) && (
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-6">
-            <h2 className="text-2xl font-bold text-[#5C2E2E] mb-6">Evidence Documents</h2>
+            <h2 className="text-2xl font-bold text-[#000080] mb-6">Evidence Documents</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {submission.university.publication_evidence_path && (
-                <div className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="border-2 border-[#0047AB]/30 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Publication Evidence</h3>
                   <a 
                     href={submission.university.publication_evidence_path} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-[#A84032] hover:text-[#8B3528] font-medium"
+                    className="flex items-center gap-2 text-[#0047AB] hover:text-[#0099ED] font-medium"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -297,13 +297,13 @@ function SubmissionDetailPage() {
               )}
 
               {submission.university.asset_evidence_path && (
-                <div className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="border-2 border-[#0047AB]/30 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Asset Evidence</h3>
                   <a 
                     href={submission.university.asset_evidence_path} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-[#A84032] hover:text-[#8B3528] font-medium"
+                    className="flex items-center gap-2 text-[#0047AB] hover:text-[#0099ED] font-medium">
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -314,13 +314,13 @@ function SubmissionDetailPage() {
               )}
 
               {submission.university.letter_path && (
-                <div className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="border-2 border-[#0047AB]/30 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Official Letter</h3>
                   <a 
                     href={submission.university.letter_path} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-[#A84032] hover:text-[#8B3528] font-medium"
+                    className="flex items-center gap-2 text-[#0047AB] hover:text-[#0099ED] font-medium">
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -335,8 +335,8 @@ function SubmissionDetailPage() {
 
         {/* Questionnaire Information */}
         {submission.questionnaire && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-6">
-            <h2 className="text-2xl font-bold text-[#5C2E2E] mb-6">Questionnaire Information</h2>
+          <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg shadow-sm p-8 mb-6">
+            <h2 className="text-2xl font-bold text-[#000080] mb-6">Questionnaire Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Title</h3>
@@ -360,8 +360,8 @@ function SubmissionDetailPage() {
 
         {/* Submitted By Information */}
         {submission.submittedBy && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 mb-6">
-            <h2 className="text-2xl font-bold text-[#5C2E2E] mb-6">Submitted By</h2>
+          <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg shadow-sm p-8 mb-6">
+            <h2 className="text-2xl font-bold text-[#000080] mb-6">Submitted By</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Name</h3>
@@ -371,7 +371,7 @@ function SubmissionDetailPage() {
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Email</h3>
                 <p className="text-lg text-gray-900">
-                  <a href={`mailto:${submission.submittedBy.email}`} className="text-[#A84032] hover:underline">
+                  <a href={`mailto:${submission.submittedBy.email}`} className="text-[#0047AB] hover:underline">
                     {submission.submittedBy.email}
                   </a>
                 </p>
@@ -384,21 +384,21 @@ function SubmissionDetailPage() {
         <div className="flex justify-end gap-4">
           <button
             onClick={handleDecline}
-            className="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+            className="px-8 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-colors font-semibold"
           >
             Decline Submission
           </button>
           <button
             onClick={handleAccept}
-            className="px-8 py-3 bg-[#A84032] text-white rounded-lg hover:bg-[#8B3528] transition-colors font-semibold"
+            className="px-8 py-3 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg hover:from-[#0099ED] hover:to-[#0047AB] transition-colors font-semibold"
           >
             Approve Submission
           </button>
         </div>
 
         {/* Read-only Notice */}
-        <div className="mt-8 p-4 bg-[#FAF9F6] border border-[#A84032] rounded-lg">
-          <p className="text-sm text-[#5C2E2E]">
+        <div className="mt-8 p-4 bg-gradient-to-r from-[#f0f4ff] to-white border-2 border-[#0047AB]/30 rounded-lg">
+          <p className="text-sm text-[#000080]">
             <strong>Note:</strong> This is a frontend demo with mock data. No database connection required.
             Click the action buttons above to simulate approval/decline actions.
           </p>
