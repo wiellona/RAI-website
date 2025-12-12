@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import { useParticipateNavigation } from "@/hooks/useNavigation";
@@ -11,18 +11,19 @@ export default function Navbar() {
   const supabase = getSupabaseBrowserClient();
   const { handleParticipateClick } = useParticipateNavigation();
 
+  const onParticipateClick = async (event: MouseEvent<HTMLAnchorElement>) => {
+    await handleParticipateClick(event);
+  };
+
   useEffect(() => {
     const update = () =>
       setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
 
-    // initial
     update();
 
-    // listen to manual events
     window.addEventListener("storage", update);
     window.addEventListener("auth-change", update);
 
-    // listen to Supabase auth state (optional but robust)
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
@@ -42,7 +43,7 @@ export default function Navbar() {
   }, [supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut(); // end Supabase session
+    await supabase.auth.signOut();
 
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail) {
@@ -53,79 +54,74 @@ export default function Navbar() {
     localStorage.removeItem("userEmail");
     localStorage.removeItem("universityName");
 
-    window.dispatchEvent(new Event("auth-change")); // force re-check in this tab
-    setIsLoggedIn(false); // immediate UI update
+    window.dispatchEvent(new Event("auth-change"));
+    setIsLoggedIn(false);
 
     window.location.href = "/";
   };
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] border-b-2 border-[#0099ED] shadow-lg">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#5C2E2E] rounded"></div>
-            <span className="text-xl font-bold text-[#5C2E2E]">RAI</span>
+          <Link href="/" className="flex items-center space-x-2 group">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#0047AB] to-[#0099ED] rounded-lg transform group-hover:scale-110 transition-transform duration-300 shadow-lg"></div>
+            <span className="text-xl font-bold text-white group-hover:text-[#0099ED] transition-colors duration-300">
+              RAI
+            </span>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-6">
             <Link
               href="/#about"
-              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+              className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
               About
             </Link>
             <Link
               href="/ranking"
-              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+              className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
               The Ranking
             </Link>
-            <Link
+            {/* <Link
               href="/ranking/automated"
-              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
+              className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
               Automated Ranking
-            </Link>
+            </Link> */}
             <Link
-              href="/authentication/register"
-              className="text-gray-700 hover:text-[#5C2E2E] transition-colors"
-            >
-              Register
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleParticipateClick}
-              className="text-gray-700 hover:text-[#5C2E2E] transition-colors cursor-pointer"
+              href="#"
+              onClick={onParticipateClick}
+              className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
               Participate
-            </button>
+            </Link>
 
             {/* Desktop Login/Logout Button */}
             {!isLoggedIn ? (
               <Link
                 href="/authentication/login"
-                className="bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
+                className="bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-sm"
               >
                 Login
               </Link>
             ) : (
               <button
                 onClick={handleLogout}
-                className="bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
+                className="bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-sm"
               >
                 Logout
               </button>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button (Burger Icon) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-md text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-2 rounded-md text-white hover:text-[#0099ED] hover:bg-white/10 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#0099ED]"
             aria-label="Toggle menu"
           >
             <svg
@@ -148,38 +144,45 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-3 border-t border-gray-200">
+          <div className="lg:hidden py-4 space-y-2 border-t border-[#0099ED]/30 bg-[#000080]/95 backdrop-blur-lg">
             <Link
               href="/#about"
-              className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
+              className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               About
             </Link>
             <Link
               href="/ranking"
-              className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
+              className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               The Ranking
             </Link>
-            <button
-              type="button"
-              className="block px-4 py-2 text-gray-700 hover:text-[#5C2E2E] hover:bg-gray-50 rounded-md transition-colors"
-              onClick={() => {
-                handleParticipateClick();
+            <Link
+              href="/ranking/automated"
+              className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Automated Ranking
+            </Link>
+            <Link
+              href="#"
+              onClick={(event) => {
+                onParticipateClick(event);
                 setIsMobileMenuOpen(false);
               }}
+              className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
             >
               Participate
-            </button>
+            </Link>
 
             {/* Mobile Login/Logout Button */}
             <div className="px-4 pt-2">
               {!isLoggedIn ? (
                 <Link
                   href="/authentication/login"
-                  className="block w-full bg-[#A84032] hover:bg-[#8B3528] text-white text-center px-6 py-2 rounded transition-colors"
+                  className="block w-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white text-center px-6 py-2 rounded-lg transition-all duration-300 shadow-lg font-semibold"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
@@ -190,7 +193,7 @@ export default function Navbar() {
                     handleLogout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full bg-[#A84032] hover:bg-[#8B3528] text-white px-6 py-2 rounded transition-colors"
+                  className="w-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-6 py-2 rounded-lg transition-all duration-300 shadow-lg font-semibold"
                 >
                   Logout
                 </button>

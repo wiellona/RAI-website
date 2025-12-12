@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/layout/Header";
-import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 interface SectionStatus {
   id: number;
@@ -24,9 +23,16 @@ interface ReviewDataResponse {
   error?: string;
 }
 
+const LOCKED_STATUSES = new Set([
+  "submitted",
+  "on_review",
+  "completed",
+  "approved",
+  "pending",
+]);
+
 export default function ReviewPage() {
   const router = useRouter();
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [sections, setSections] = useState<SectionStatus[]>([]);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
@@ -60,6 +66,14 @@ export default function ReviewPage() {
         }
         if (cancelled) return;
 
+        if (
+          payload.submissionStatus &&
+          LOCKED_STATUSES.has(payload.submissionStatus)
+        ) {
+          router.replace("/questionnaire/submission");
+          return;
+        }
+
         setSubmissionId(payload.submissionId);
         setSections(payload.sections ?? []);
         setCompletedCount(payload.completedCount ?? 0);
@@ -89,7 +103,7 @@ export default function ReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   const handleFinalSubmit = useCallback(async () => {
     if (!submissionId) {
@@ -104,36 +118,33 @@ export default function ReviewPage() {
     setStatusMessage("Processing your submission...");
     setStatusLevel("info");
 
-    const payload = { submission_id: submissionId };
-    console.log("[handleFinalSubmit] Payload:", payload);
-
     try {
-      const { data, error: edgeFunctionError } = await supabase.functions.invoke(
-        "finalize-submission",
-        {
-          body: payload,
-        }
-      );
+      const response = await fetch("/api/review-data", {
+        method: "POST",
+        cache: "no-store",
+      });
 
-      console.log("[handleFinalSubmit] Response:", { data, error: edgeFunctionError });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
 
-      if (edgeFunctionError) {
-        throw new Error(
-          edgeFunctionError.message ||
-            "Failed to finalize submission on the server."
-        );
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to submit questionnaire.");
       }
 
       setStatusLevel("info");
       setStatusMessage(
-        "✅ Submission successful! Redirecting you to the live rankings..."
+        "✅ Submission received! Your responses are now under review."
       );
 
       setTimeout(() => {
-        router.push("/ranking");
+        router.push("/questionnaire/submission");
       }, 1500);
     } catch (error) {
-      console.error("[handleFinalSubmit] Failed to finalize submission:", error);
+      console.error(
+        "[handleFinalSubmit] Failed to finalize submission:",
+        error
+      );
       setStatusLevel("error");
       setStatusMessage(
         error instanceof Error
@@ -142,7 +153,7 @@ export default function ReviewPage() {
       );
       setIsSubmitting(false);
     }
-  }, [router, submissionId, supabase]);
+  }, [router, submissionId]);
 
   if (loading) {
     return (
@@ -189,7 +200,7 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-center text-[#5C2E2E] mb-8 cursor-pointer">
+            <h1 className="text-3xl font-bold text-center text-[#000080] mb-8 cursor-pointer">
               Review and Submit Your Questionnaire
             </h1>
 
@@ -217,7 +228,7 @@ export default function ReviewPage() {
                     </svg>
                   ) : (
                     <svg
-                      className="w-5 h-5 text-red-600 shrink-0"
+                      className="w-5 h-5 text-orange-600 shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -241,8 +252,8 @@ export default function ReviewPage() {
               ))}
             </div>
 
-            <div className="bg-[#FFF5F5] border border-[#FFE5E5] rounded-lg p-4 mb-8">
-              <p className="text-sm text-gray-700 text-center">
+            <div className="bg-gradient-to-r from-[#0047AB]/5 to-[#0099ED]/5 border-2 border-[#0047AB]/20 rounded-lg p-4 mb-8">
+              <p className="text-sm text-[#000080] text-center font-medium">
                 You have completed{" "}
                 <span className="font-bold">
                   {progressSummary.completedCount}
@@ -264,7 +275,7 @@ export default function ReviewPage() {
                 type="button"
                 onClick={handleFinalSubmit}
                 disabled={!submissionId || isSubmitting}
-                className="inline-flex items-center justify-center bg-[#A84032] hover:bg-[#8B3528] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-medium px-8 py-3 rounded-md transition-colors"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 {isSubmitting ? (
                   <>
@@ -299,7 +310,7 @@ export default function ReviewPage() {
         </div>
       </main>
 
-      <footer className="bg-[#5C2E2E] text-white py-12">
+      <footer className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white py-12">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6">
           <div>
             <p className="font-semibold text-lg">Need assistance?</p>

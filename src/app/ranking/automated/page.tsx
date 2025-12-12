@@ -99,12 +99,17 @@ export default function AutomatedRankingPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="pt-[65px] bg-gradient-to-br from-[#511715] to-[#8B3528] text-white">
+      <section className="pt-[65px] bg-gradient-to-br from-[#000080] via-[#0047AB] to-[#000080] text-white relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-10 right-10 w-96 h-96 bg-[#0099ED]/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 left-10 w-80 h-80 bg-[#0047AB]/20 rounded-full blur-3xl"></div>
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Automated RAI University Rankings
           </h1>
-          <p className="text-xl text-white/90 max-w-3xl">
+          <p className="text-xl text-white/90 max-w-3xl font-medium">
             Automated analysis of universities' AI research, assets, and
             policies through web crawling.
           </p>
@@ -112,61 +117,67 @@ export default function AutomatedRankingPage() {
       </section>
 
       {/* Rankings Table */}
-      <section className="py-12 bg-gray-50">
+      <section className="py-12 bg-gradient-to-br from-white via-[#f0f4ff] to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-            <div className="bg-[#511715] text-white p-6">
+          <div className="bg-gradient-to-br from-white via-[#f8f9ff] to-white rounded-2xl shadow-2xl overflow-hidden border-2 border-[#0047AB]/20">
+            <div className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white p-6">
               <h2 className="text-2xl font-bold">Automated Rankings</h2>
-              <p className="text-white/80 mt-1">
+              <p className="text-white/90 mt-1 font-medium">
                 Data collected through automated web crawling and analysis.
               </p>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-100 border-b border-gray-200">
+                <thead className="bg-gradient-to-r from-[#0047AB]/10 to-[#0099ED]/10 border-b-2 border-[#0047AB]/30">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#000080]">
                       Rank
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#000080]">
                       University
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Ethics & Fairness
                       <br />
-                      <span className="text-xs font-normal">(0-3,200)</span>
+                      <span className="text-xs font-semibold">(0-3,200)</span>
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Transparency & Accountability
                       <br />
-                      <span className="text-xs font-normal">(0-2,100)</span>
+                      <span className="text-xs font-semibold">(0-2,100)</span>
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Privacy & Security
                       <br />
-                      <span className="text-xs font-normal">(0-1,800)</span>
+                      <span className="text-xs font-semibold">(0-1,800)</span>
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Continuous Learning & Collaboration
                       <br />
-                      <span className="text-xs font-normal">(0-1,900)</span>
+                      <span className="text-xs font-semibold">(0-1,900)</span>
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Total Score
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center">
+                      <td
+                        colSpan={7}
+                        className="p-8 text-center text-[#000080]/60 font-medium"
+                      >
                         Loading data...
                       </td>
                     </tr>
                   ) : crawlData.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-gray-500">
+                      <td
+                        colSpan={7}
+                        className="p-8 text-center text-[#000080]/60 font-medium"
+                      >
                         No automated ranking data available yet.
                       </td>
                     </tr>
@@ -175,39 +186,39 @@ export default function AutomatedRankingPage() {
                       <tr
                         key={uni.id}
                         onClick={() => handleRowClick(uni)}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="hover:bg-gradient-to-r hover:from-[#0047AB]/5 hover:to-[#0099ED]/5 cursor-pointer transition-all duration-300 border-b border-[#0047AB]/10"
                       >
-                        <td className="px-6 py-4 font-bold text-gray-900">
+                        <td className="px-6 py-4 font-bold text-[#0047AB] text-lg">
                           #{uni.rank}
                         </td>
-                        <td className="px-6 py-4 text-gray-900 font-medium">
+                        <td className="px-6 py-4 text-[#000080] font-semibold">
                           {uni.university_name}
                         </td>
-                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                        <td className="px-6 py-4 text-center font-bold text-[#000080]">
                           {uni.publications_grade.toLocaleString("en-US", {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
                           })}
                         </td>
-                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                        <td className="px-6 py-4 text-center font-bold text-[#000080]">
                           {uni.assets_grade.toLocaleString("en-US", {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
                           })}
                         </td>
-                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                        <td className="px-6 py-4 text-center font-bold text-[#000080]">
                           {uni.policies_grade.toLocaleString("en-US", {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
                           })}
                         </td>
-                        <td className="px-6 py-4 text-center font-bold text-gray-900">
+                        <td className="px-6 py-4 text-center font-bold text-[#000080]">
                           {uni.divisions_grade.toLocaleString("en-US", {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
                           })}
                         </td>
-                        <td className="px-6 py-4 text-center font-bold text-[#c5372c] text-lg">
+                        <td className="px-6 py-4 text-center font-bold text-[#0047AB] text-lg">
                           {uni.total_score.toLocaleString("en-US", {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
@@ -226,30 +237,33 @@ export default function AutomatedRankingPage() {
       {/* Detail Modal */}
       {isModalOpen && selectedUniversity && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-gradient-to-br from-white via-[#f8f9ff] to-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#0047AB]/30"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="bg-[#511715] text-white p-6 flex justify-between sticky top-0">
+            <div className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white p-6 flex justify-between sticky top-0 rounded-t-2xl">
               <div>
                 <h3 className="text-2xl font-bold">
                   {selectedUniversity.university_name}
                 </h3>
-                <p className="opacity-90 text-sm mt-1">
+                <p className="opacity-90 text-sm mt-1 font-medium">
                   Analysis completed:{" "}
                   {formatDate(selectedUniversity.analysis_timestamp)}
                 </p>
                 {selectedUniversity.duration_seconds && (
-                  <p className="opacity-90 text-sm">
+                  <p className="opacity-90 text-sm font-medium">
                     Duration: {selectedUniversity.duration_seconds.toFixed(2)}s
                   </p>
                 )}
               </div>
-              <button onClick={closeModal} className="text-2xl">
+              <button
+                onClick={closeModal}
+                className="text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 hover:text-[#0099ED] transition-colors"
+              >
                 &times;
               </button>
             </div>

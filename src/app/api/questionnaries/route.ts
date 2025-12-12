@@ -166,7 +166,7 @@ export async function GET() {
       .map((question) => question.id)
       .filter((id): id is string => Boolean(id));
 
-    const optionsByQuestion = new Map<string, ApiQuestionOption[]>();
+    const optionsByQuestion = new Map<string, RawOption[]>();
 
     if (questionIds.length) {
       const { data: optionRows, error: optionError } = await supabase
@@ -191,11 +191,7 @@ export async function GET() {
         if (!option.question_id) continue;
 
         const bucket = optionsByQuestion.get(option.question_id) ?? [];
-        bucket.push({
-          id: option.id,
-          label: option.text ?? "Untitled option",
-          value: toNumber(option.value, 0),
-        });
+        bucket.push(option);
         optionsByQuestion.set(option.question_id, bucket);
       }
     }
@@ -225,7 +221,19 @@ export async function GET() {
         );
 
         const formattedQuestions = categoryQuestions.map((question) => {
-          const options = optionsByQuestion.get(question.id);
+          const options = optionsByQuestion
+            .get(question.id)
+            ?.slice()
+            .sort((a, b) =>
+              toOrderKey(a.sort_index) === toOrderKey(b.sort_index)
+                ? (a.created_at ?? "").localeCompare(b.created_at ?? "")
+                : toOrderKey(a.sort_index) - toOrderKey(b.sort_index)
+            )
+            .map<ApiQuestionOption>((option) => ({
+              id: option.id,
+              label: option.text ?? "Untitled option",
+              value: toNumber(option.value, 0),
+            }));
           const score = toNumber(question.max_score, 0);
 
           return {

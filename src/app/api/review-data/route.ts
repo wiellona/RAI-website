@@ -81,10 +81,13 @@ async function buildReviewData(
   req: Request,
   supabase: SupabaseClient
 ): Promise<ReviewDataPayload> {
-  const questionnaireResponse = await fetchInternalJson<QuestionnaireResponse>(
-    req,
-    "/api/questionnaries"
-  );
+  const [questionnaireResponse, generalInfo] = await Promise.all([
+    fetchInternalJson<QuestionnaireResponse>(req, "/api/questionnaries"),
+    fetchInternalJson<{
+      data?: { id?: string; university_id?: string; universityId?: string };
+    }>(req, "/api/general-info"),
+  ]);
+
   const criteria = questionnaireResponse.data ?? [];
   const questionnaireId = questionnaireResponse.questionnaireId;
   if (!questionnaireId) {
@@ -93,10 +96,6 @@ async function buildReviewData(
   if (criteria.length === 0) {
     throw new ApiError("No criteria were found for this questionnaire.", 404);
   }
-
-  const generalInfo = await fetchInternalJson<{
-    data?: { id?: string; university_id?: string; universityId?: string };
-  }>(req, "/api/general-info");
 
   const universityId =
     generalInfo?.data?.university_id ??
@@ -134,11 +133,11 @@ async function buildReviewData(
   }
 
   const questionToCriterion = new Map<string, UICriteria["id"]>();
-  criteria.forEach((criterion) =>
-    criterion.questions.forEach((question) =>
-      questionToCriterion.set(question.id, criterion.id)
-    )
-  );
+  for (const criterion of criteria) {
+    for (const question of criterion.questions) {
+      questionToCriterion.set(question.id, criterion.id);
+    }
+  }
 
   const answeredCountByCriterion = new Map<number, number>();
   (answers ?? []).forEach((answer) => {
@@ -216,26 +215,27 @@ export async function POST(req: NextRequest) {
     if (!user) throw new ApiError("Not authenticated.", 401);
 
     const payload = await buildReviewData(req, supabase);
+    // Optional: enforce completion before final submit
     // if (!payload.allCompleted) {
-    //   throw new ApiError(
-    //     "Please complete every section before submitting.",
-    //     400
-    //   );
+    //   throw new ApiError("Please complete every section before submitting.", 400);
     // }
 
-    const { error: updateError } = await supabase
-      .from("Submissions")
-      .update({
-        status: "submitted",
-        submitted_at: new Date().toISOString(),
-      })
-      .eq("id", payload.submissionId);
+    // Trigger Supabase Edge Function to finalize submission and recalc rankings
+    const { data: finalizeData, error: finalizeError } =
+      await supabase.functions.invoke("finalize-submission", {
+        body: { submission_id: payload.submissionId },
+      });
 
-    if (updateError) {
-      throw new ApiError(updateError.message, 500);
+    if (finalizeError) {
+      throw new ApiError(finalizeError.message, 500);
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message:
+        (finalizeData as { message?: string } | null)?.message ??
+        "Submission finalized and rankings updated.",
+    });
   } catch (error) {
     console.error("[POST /api/review-data]", error);
     if (error instanceof ApiError) {
