@@ -3,7 +3,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { fetchUniversityBySlug } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
-import { UNIVERSITIES } from "@/lib/mockData";
+import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 export default async function UniversityDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -90,5 +90,15 @@ export default async function UniversityDetail({ params }: { params: Promise<{ s
 }
 
 export async function generateStaticParams() {
-  return UNIVERSITIES.map((u) => ({ slug: u.slug }));
+  try {
+    const supabase = getSupabaseServerClient();
+    const { data: universities } = await supabase
+      .from('Universities')
+      .select('slug');
+    
+    return (universities || []).map((u: any) => ({ slug: u.slug }));
+  } catch (error) {
+    console.error('Failed to generate static params:', error);
+    return [];
+  }
 }

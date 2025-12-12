@@ -9,7 +9,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("Universities")
       .select("*")
-      .order('"rank"', { ascending: true });
+      .order('rank', { ascending: true });
 
     if (error) {
       throw error;
