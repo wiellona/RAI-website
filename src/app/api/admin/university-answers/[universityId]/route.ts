@@ -71,6 +71,7 @@ export async function GET(
         selected_option_id,
         evidence_notes,
         score,
+        is_approved,
         Questions (
           id,
           text,
@@ -120,21 +121,43 @@ export async function GET(
     }
 
     // Transform answers to include category name as dimension
-    const transformedAnswers = (answers || []).map(answer => ({
-      id: answer.id,
-      submission_id: answer.submission_id,
-      question_id: answer.question_id,
-      selected_option_id: answer.selected_option_id,
-      evidence_notes: answer.evidence_notes,
-      score: answer.score,
-      Questions: {
-        question_text: answer.Questions?.text || '',
-        dimension: answer.Questions?.Categories?.name || 'Unknown'
-      },
-      Options: {
-        option_text: answer.Options?.text || ''
-      }
-    }));
+    const transformedAnswers = (answers || []).map(answer => {
+      const questionRelation = Array.isArray(answer.Questions)
+        ? answer.Questions[0]
+        : answer.Questions;
+      const optionRelation = Array.isArray(answer.Options)
+        ? answer.Options[0]
+        : answer.Options;
+
+      const dimensionName = (() => {
+        const categories = questionRelation?.Categories;
+        if (Array.isArray(categories)) {
+          return categories[0]?.name || 'Unknown';
+        }
+        if (categories && typeof categories === 'object' && 'name' in categories) {
+          const name = (categories as { name?: string | null }).name;
+          return name || 'Unknown';
+        }
+        return 'Unknown';
+      })();
+
+      return {
+        id: answer.id,
+        submission_id: answer.submission_id,
+        question_id: answer.question_id,
+        selected_option_id: answer.selected_option_id,
+        evidence_notes: answer.evidence_notes,
+        score: answer.score,
+        is_approved: answer.is_approved,
+        Questions: {
+          question_text: questionRelation?.text || '',
+          dimension: dimensionName
+        },
+        Options: {
+          option_text: optionRelation?.text || ''
+        }
+      };
+    });
 
     const result = {
       universityId: submission.university_id,
@@ -152,10 +175,68 @@ export async function GET(
     };
 
     return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch answers';
     console.error('Error fetching university answers:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch answers' },
+      { error: message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ universityId: string }> }
+) {
+  try {
+    const supabase = getSupabaseServerClient();
+    const { universityId } = await params;
+
+    if (!universityId) {
+      return NextResponse.json(
+        { error: 'University ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { approvals } = body as { approvals?: Record<string, boolean> };
+
+    if (!approvals || typeof approvals !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid approvals payload' },
+        { status: 400 }
+      );
+    }
+
+    const updates = Object.entries(approvals).map(([answerId, isApproved]) =>
+      supabase
+        .from('Answers')
+        .update({ is_approved: !!isApproved })
+        .eq('id', answerId)
+    );
+
+    const results = await Promise.all(updates);
+    const failed = results.filter(result => result.error);
+
+    if (failed.length > 0) {
+      console.error('Failed to update some approvals:', failed.map(item => item.error));
+      return NextResponse.json(
+        { error: 'Failed to update approvals' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: 'Approvals updated successfully' },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update approvals';
+    console.error('Error updating approvals:', error);
+    return NextResponse.json(
+      { error: message },
       { status: 500 }
     );
   }

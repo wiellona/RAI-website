@@ -84,13 +84,21 @@ export interface Answer {
   question_id: string;
   selected_option_id: string;
   evidence_notes: string | null;
-  score: number;
+  score: number | string;
+  is_approved?: boolean | null;
   // Related data from joins
   question?: {
     question_text: string;
     dimension: string;
   };
   option?: {
+    option_text: string;
+  };
+  Questions?: {
+    question_text: string;
+    dimension: string;
+  };
+  Options?: {
     option_text: string;
   };
   submission?: {

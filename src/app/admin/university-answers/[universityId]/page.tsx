@@ -117,7 +117,7 @@ export default function UniversityAnswersPage() {
         />
 
         {/* Questionnaire Answers Component */}
-        <QuestionnaireAnswers answers={data.answers} />
+        <QuestionnaireAnswers answers={data.answers} universityId={data.universityId} />
       </Container>
     </div>
   );
