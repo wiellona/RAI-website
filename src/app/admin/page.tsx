@@ -85,24 +85,17 @@ function AdminDashboard() {
             onAccept={handleAcceptSubmission}
             onReject={handleRejectSubmission}
           />
-
+          {/* Complete Rankings */}
+          <ManageRankings rankings={rankings} />
+          <NotFull rankings={rankings} />
           <AIAnalysis rankings={rankings} />
-
           <UserManagement users={users} onUpdateRole={handleUpdateUserRole} />
 
           {/* Incomplete Universities */}
-          <NotFull rankings={rankings} />
 
-          {/* Complete Rankings */}
-          <ManageRankings rankings={rankings} />
         </div>
 
-        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Admin Notice:</strong> This dashboard provides read-only access to database values. 
-            Rankings and metrics are displayed as stored in the database and cannot be directly edited through this interface.
-          </p>
-        </div>
+        
       </Container>
     </div>
   );
