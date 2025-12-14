@@ -228,6 +228,26 @@ export async function PATCH(
       );
     }
 
+    // Cari submission_id dari salah satu jawaban yang baru diperbarui
+    const { data: submissionRow, error: submissionLookupError } = await supabase
+      .from("Answers")
+      .select("submission_id")
+      .in("id", Object.keys(approvals))
+      .limit(1)
+      .maybeSingle();
+
+    if (submissionLookupError) {
+      console.error("Failed to fetch submission_id for finalize-submission:", submissionLookupError);
+    } else if (submissionRow?.submission_id) {
+      const { error: finalizeError } = await supabase.functions.invoke("finalize-submission", {
+        body: { submission_id: submissionRow.submission_id },
+      });
+
+      if (finalizeError) {
+        console.error("Failed to invoke finalize-submission:", finalizeError);
+      }
+    }
+
     return NextResponse.json(
       { message: 'Approvals updated successfully' },
       { status: 200 }

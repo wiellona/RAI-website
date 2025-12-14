@@ -9,7 +9,7 @@ interface NotFullProps {
 export default function NotFull({ rankings }: NotFullProps) {
     // Helper function to format score display
     const formatScore = (score: number | null): string => {
-        return score === null ? 'NULL' : score.toFixed(2);
+        return score === null ? '0' : score.toFixed(2);
     };
 
     // Helper function to format timestamp
