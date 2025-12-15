@@ -25,10 +25,10 @@ function ReviewerDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff] min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#5C2E2E]">Loading Reviewer Dashboard...</h1>
+            <h1 className="text-2xl font-semibold text-[#000080]">Loading Reviewer Dashboard...</h1>
           </div>
         </Container>
       </div>
@@ -36,10 +36,10 @@ function ReviewerDashboard() {
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen py-12">
+    <div className="bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff] min-h-screen py-12">
       <Container>
-        <h1 className="text-4xl font-bold text-center my-8 text-[#5C2E2E]">Reviewer Dashboard</h1>
-        <p className="text-center text-gray-600 mb-8">
+        <h1 className="text-4xl font-bold text-center my-8 text-[#000080]">Reviewer Dashboard</h1>
+        <p className="text-center text-[#000080]/70 mb-8">
           Review university rankings and validate incomplete submissions.
         </p>
       
@@ -56,8 +56,8 @@ function ReviewerDashboard() {
           <ManageRankings rankings={rankings} />
         </div>
 
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="mt-8 p-4 bg-[#e6f0ff] border border-[#000080]/30 rounded-lg">
+          <p className="text-sm text-[#000080]">
             <strong>Reviewer Notice:</strong> You can view all university rankings and their completion status. 
             Click the "?" icon to view detailed questionnaire answers and evidence.
           </p>
