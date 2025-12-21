@@ -33,6 +33,7 @@ export default function SubmissionPage() {
 
   useEffect(() => {
     let cancelled = false;
+    let intervalId: NodeJS.Timeout | null = null;
     const supabase = getSupabaseBrowserClient();
 
     const fetchStatus = async () => {
@@ -93,6 +94,19 @@ export default function SubmissionPage() {
           universityName: universityData.name,
         });
 
+        // ✅ Stop polling if status is final (approved, draft, or rejected)
+        if (
+          latestStatus &&
+          (APPROVED_STATUSES.has(latestStatus) ||
+            latestStatus === "draft" ||
+            latestStatus === "rejected")
+        ) {
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
+
         if (latestStatus && APPROVED_STATUSES.has(latestStatus)) {
           const { data: rankingData, error: rankingError } = await supabase
             .from("UniversityRankings")
@@ -133,12 +147,19 @@ export default function SubmissionPage() {
       }
     };
 
+    // Initial fetch
     fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
+
+    // ✅ OPTIMIZED: Polling every 30 seconds (was 3 seconds) - only for under review status
+    intervalId = setInterval(() => {
+      fetchStatus();
+    }, 30000); // Changed from 3000ms to 30000ms for better performance
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
   }, []);
 
