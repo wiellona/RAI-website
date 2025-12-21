@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { type DbUniversity } from "@/lib/dbMappers";
-import type { University } from "@/lib/types";
+import type { University, RAIDimensions } from "@/lib/types";
 
 export async function GET() {
   try {
@@ -108,8 +108,10 @@ export async function GET() {
       // Find ranking for this university
       const ranking = rankings?.find(r => r.university_id === dbUni.id);
       
-      // Build metrics from CategoryScores
-      const metrics = {
+      // 7a. Jika metrics final sudah disimpan di kolom metrics (JSON), gunakan itu.
+      const storedMetrics = (dbUni as any).metrics as Partial<RAIDimensions> | null | undefined;
+
+      const metrics: RAIDimensions = {
         collaboration: null as number | null,
         privacy: null as number | null,
         accountability: null as number | null,
@@ -120,7 +122,19 @@ export async function GET() {
         continuousLearning: null as number | null,
       };
 
-      if (submission && categoryScores) {
+      let hasStored = false;
+      if (storedMetrics && typeof storedMetrics === "object") {
+        (Object.keys(metrics) as (keyof RAIDimensions)[]).forEach((key) => {
+          const value = storedMetrics[key];
+          if (typeof value === "number") {
+            metrics[key] = value;
+            hasStored = true;
+          }
+        });
+      }
+
+      // 7b. Jika belum ada metrics final di DB, fallback ke hitung dari CategoryScores
+      if (!hasStored && submission && categoryScores) {
         const scores = categoryScores.filter(cs => cs.submission_id === submission.id);
         
         console.log(`[api/rankings] Processing ${scores.length} scores for university "${dbUni.name}"`);

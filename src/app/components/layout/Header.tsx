@@ -2,6 +2,7 @@
 
 import { MouseEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import { useParticipateNavigation } from "@/hooks/useNavigation";
 
@@ -25,7 +26,7 @@ export default function Navbar() {
     window.addEventListener("auth-change", update);
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
         if (session) {
           localStorage.setItem("isLoggedIn", "true");
         } else {

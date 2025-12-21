@@ -48,12 +48,12 @@ export default function ApprovalActions({
   };
 
   return (
-    <div className="card p-6 mb-6">
-      <h2 className="text-2xl font-semibold mb-4 text-[#5C2E2E]">Data Approval</h2>
+    <div className="card p-6 mb-6 border-2 border-[#0047AB]/20">
+      <h2 className="text-2xl font-semibold mb-4 text-[#000080]">Data Approval</h2>
       
       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4">
         <div>
-          <p className="font-semibold text-[#5C2E2E]">Current Status:</p>
+          <p className="font-semibold text-[#000080]">Current Status:</p>
           <p className={`text-lg font-bold ${isDataApproved ? 'text-green-600' : 'text-red-600'}`}>
             {isDataApproved ? '✓ APPROVED' : '✗ NOT APPROVED'}
           </p>
@@ -76,7 +76,7 @@ export default function ApprovalActions({
           className={`flex-1 py-3 px-6 rounded font-semibold transition-colors ${
             isDataApproved
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-[#5C2E2E] text-white hover:bg-[#7C3E3E]'
+              : 'bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white hover:from-[#0099ED] hover:to-[#0047AB]'
           }`}
         >
           {isProcessing ? 'Processing...' : '✓ Approve Data'}

@@ -3,11 +3,11 @@ import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { universityId: string } }
+  { params }: { params: Promise<{ universityId: string }> }
 ) {
   try {
     const supabase = getSupabaseServerClient();
-    const universityId = params.universityId;
+    const { universityId } = await params;
 
     // Get all approved submissions for this university
     const { data: submissions, error: submissionError } = await supabase

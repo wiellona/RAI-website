@@ -1,5 +1,5 @@
-import { UNIVERSITIES, mockSubmissions, mockUsers } from "@/lib/mockData";
-import type { University, Submission, User, UserRole } from "@/lib/types";
+import { UNIVERSITIES, mockSubmissions, mockUsers } from "../mockData";
+import type { University, Submission, User, UserRole } from "../types";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

@@ -59,10 +59,10 @@ function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff] min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#5C2E2E]">Loading Admin Dashboard...</h1>
+            <h1 className="text-2xl font-semibold text-[#000080]">Loading Admin Dashboard...</h1>
           </div>
         </Container>
       </div>
@@ -70,10 +70,10 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen py-12">
+    <div className="bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff] min-h-screen py-12">
       <Container>
-        <h1 className="text-4xl font-bold text-center my-8 text-[#5C2E2E]">Admin Dashboard</h1>
-        <p className="text-center text-gray-600 mb-8">
+        <h1 className="text-4xl font-bold text-center my-8 text-[#000080]">Admin Dashboard</h1>
+        <p className="text-center text-[#000080]/70 mb-8">
           View and manage university submissions, rankings, and user roles.
         </p>
       
@@ -84,24 +84,17 @@ function AdminDashboard() {
             onAccept={handleAcceptSubmission}
             onReject={handleRejectSubmission}
           />
-
+          {/* Complete Rankings */}
+          <ManageRankings rankings={rankings} />
+          <NotFull rankings={rankings} />
           <AIAnalysis rankings={rankings} />
-
           <UserManagement users={users} onUpdateRole={handleUpdateUserRole} />
 
           {/* Incomplete Universities */}
-          <NotFull rankings={rankings} />
 
-          {/* Complete Rankings */}
-          <ManageRankings rankings={rankings} />
         </div>
 
-        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Admin Notice:</strong> This dashboard provides read-only access to database values. 
-            Rankings and metrics are displayed as stored in the database and cannot be directly edited through this interface.
-          </p>
-        </div>
+        
       </Container>
     </div>
   );
