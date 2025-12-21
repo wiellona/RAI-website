@@ -45,28 +45,27 @@ interface RankedUniversity extends UniversityData {
 }
 
 /**
- * Calculate grade based on percentile ranking
- * E (4.0): Top 20% of scores
- * D (3.0): 60% – 80%
- * C (2.0): 40% – 60%
- * B (1.0): 20% – 40%
- * A (0.0): Bottom 20%
+ * Calculate score based on percentile ranking
+ * Scale: 0 - maxScore for each column
+ * Total possible score: 10,000 (Ethics & Fairness: 3,200 + Transparency & Accountability: 2,100 + Privacy & Security: 1,800 + Continuous Learning & Collaboration: 1,900)
  */
-function calculateGrade(value: number, sortedValues: number[]): number {
+function calculateScore(
+  value: number,
+  sortedValues: number[],
+  maxScore: number
+): number {
   const n = sortedValues.length;
   if (n === 0) return 0;
-  if (n === 1) return 4.0; // Single entry gets top grade
+  if (n === 1) return maxScore; // Single entry gets top score
 
   // Find the position of this value in the sorted array
   const position = sortedValues.indexOf(value);
   const percentile = (position / (n - 1)) * 100;
 
-  // Assign grade based on percentile
-  if (percentile >= 80) return 4.0; // E - Top 20%
-  if (percentile >= 60) return 3.0; // D - 60-80%
-  if (percentile >= 40) return 2.0; // C - 40-60%
-  if (percentile >= 20) return 1.0; // B - 20-40%
-  return 0.0; // A - Bottom 20%
+  // Linear scale from 0.000 to maxScore based on percentile
+  // 0th percentile (worst) = 0.000
+  // 100th percentile (best) = maxScore
+  return (percentile / 100) * maxScore;
 }
 
 export async function GET(request: NextRequest) {
@@ -151,17 +150,24 @@ export async function GET(request: NextRequest) {
       .map((d) => d.total_divisions)
       .sort((a, b) => a - b);
 
-    // Calculate grades for each university
+    // Calculate scores for each university with new max points (total 0-10,000)
+    // Ethics & Fairness: 3,200, Transparency & Accountability: 2,100, Privacy & Security: 1,800, Continuous Learning & Collaboration: 1,900
     const rankedData: RankedUniversity[] = formattedData.map((uni) => {
-      const publications_grade = calculateGrade(
+      const publications_grade = calculateScore(
         uni.total_publications,
-        publicationsValues
+        publicationsValues,
+        3200
       );
-      const assets_grade = calculateGrade(uni.total_assets, assetsValues);
-      const policies_grade = calculateGrade(uni.total_policies, policiesValues);
-      const divisions_grade = calculateGrade(
+      const assets_grade = calculateScore(uni.total_assets, assetsValues, 2100);
+      const policies_grade = calculateScore(
+        uni.total_policies,
+        policiesValues,
+        1800
+      );
+      const divisions_grade = calculateScore(
         uni.total_divisions,
-        divisionsValues
+        divisionsValues,
+        1900
       );
 
       const total_score =
