@@ -22,7 +22,10 @@ export function useAuthProfile() {
 
     const load = async () => {
       // ✅ FIXED: Use getUser() instead of getSession()
-      const { data: { user: authUser }, error } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error,
+      } = await supabase.auth.getUser();
       if (ignore) return;
 
       setUser(authUser ?? null);

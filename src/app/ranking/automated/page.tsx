@@ -47,13 +47,6 @@ interface UniversityCrawlData {
   updated_at: string;
 }
 
-const gradeToLetter = (grade: number): string => {
-  if (grade === 4.0) return "E";
-  if (grade === 3.0) return "D";
-  if (grade === 2.0) return "C";
-  if (grade === 1.0) return "B";
-  return "A";
-};
 export default function AutomatedRankingPage() {
   const [crawlData, setCrawlData] = useState<UniversityCrawlData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,24 +138,24 @@ export default function AutomatedRankingPage() {
                       University
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
-                      Publications
+                      Ethics & Fairness
                       <br />
-                      <span className="text-xs font-semibold">(0-4)</span>
+                      <span className="text-xs font-semibold">(0-3,200)</span>
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
-                      Models & Datasets
+                      Transparency & Accountability
                       <br />
-                      <span className="text-xs font-semibold">(0-4)</span>
+                      <span className="text-xs font-semibold">(0-2,100)</span>
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
-                      Policies
+                      Privacy & Security
                       <br />
-                      <span className="text-xs font-semibold">(0-4)</span>
+                      <span className="text-xs font-semibold">(0-1,800)</span>
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
-                      Divisions
+                      Continuous Learning & Collaboration
                       <br />
-                      <span className="text-xs font-semibold">(0-4)</span>
+                      <span className="text-xs font-semibold">(0-1,900)</span>
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Total Score
@@ -202,19 +195,34 @@ export default function AutomatedRankingPage() {
                           {uni.university_name}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#000080]">
-                          {uni.publications_grade.toFixed(1)}
+                          {uni.publications_grade.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#000080]">
-                          {uni.assets_grade.toFixed(1)}
+                          {uni.assets_grade.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#000080]">
-                          {uni.policies_grade.toFixed(1)}
+                          {uni.policies_grade.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#000080]">
-                          {uni.divisions_grade.toFixed(1)}
+                          {uni.divisions_grade.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#0047AB] text-lg">
-                          {uni.total_score.toFixed(1)}
+                          {uni.total_score.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
                         </td>
                       </tr>
                     ))
@@ -263,48 +271,75 @@ export default function AutomatedRankingPage() {
             {/* Modal Body */}
             <div className="p-6">
               {/* Ranking Score Breakdown */}
-              <h4 className="text-lg font-semibold mb-4">
-                Score Breakdown (Total:{" "}
-                {selectedUniversity.total_score.toFixed(1)})
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-sm text-gray-600">Publications Grade</p>
-                  <p className="text-3xl font-bold text-blue-700">
-                    {gradeToLetter(selectedUniversity.publications_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.publications_grade.toFixed(1)} points
-                  </p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <p className="text-sm text-gray-600">
-                    Models & Datasets Grade
-                  </p>
-                  <p className="text-3xl font-bold text-green-700">
-                    {gradeToLetter(selectedUniversity.assets_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.assets_grade.toFixed(1)} points
-                  </p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <p className="text-sm text-gray-600">Policies Grade</p>
-                  <p className="text-3xl font-bold text-purple-700">
-                    {gradeToLetter(selectedUniversity.policies_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.policies_grade.toFixed(1)} points
-                  </p>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <p className="text-sm text-gray-600">Divisions Grade</p>
-                  <p className="text-3xl font-bold text-orange-700">
-                    {gradeToLetter(selectedUniversity.divisions_grade)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedUniversity.divisions_grade.toFixed(1)} points
-                  </p>
+              <div className="mb-6">
+                <h4 className="text-base font-semibold text-gray-900 mb-3">
+                  Score Breakdown
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    Total:{" "}
+                    {selectedUniversity.total_score.toLocaleString("en-US", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}{" "}
+                    / 10,000
+                  </span>
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Ethics & Fairness
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.publications_grade.toLocaleString(
+                          "en-US",
+                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 3,200</p>
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Transparency & Accountability
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.assets_grade.toLocaleString(
+                          "en-US",
+                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 2,100</p>
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Privacy & Security
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.policies_grade.toLocaleString(
+                          "en-US",
+                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 1,800</p>
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Continuous Learning & Collaboration
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {selectedUniversity.divisions_grade.toLocaleString(
+                          "en-US",
+                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-500">/ 1,900</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -315,7 +350,7 @@ export default function AutomatedRankingPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="bg-white p-4 rounded-md border border-gray-200">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Publications
+                      Ethics & Fairness
                     </p>
                     <p className="text-2xl font-semibold text-gray-900 mt-2">
                       {selectedUniversity.total_publications}
@@ -339,7 +374,7 @@ export default function AutomatedRankingPage() {
                   </div>
                   <div className="bg-white p-4 rounded-md border border-gray-200">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Policies
+                      Privacy & Security
                     </p>
                     <p className="text-2xl font-semibold text-gray-900 mt-2">
                       {selectedUniversity.total_policies}
@@ -347,7 +382,7 @@ export default function AutomatedRankingPage() {
                   </div>
                   <div className="bg-white p-4 rounded-md border border-gray-200">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Divisions
+                      Continuous Learning & Collaboration
                     </p>
                     <p className="text-2xl font-semibold text-gray-900 mt-2">
                       {selectedUniversity.total_divisions}
@@ -432,7 +467,7 @@ export default function AutomatedRankingPage() {
                         className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
                       >
                         <span>📄</span>
-                        <span>Publications CSV</span>
+                        <span>Ethics & Fairness CSV</span>
                       </a>
                     )}
                     {selectedUniversity.huggingface_csv_url && (
@@ -465,7 +500,7 @@ export default function AutomatedRankingPage() {
                         className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium text-gray-700"
                       >
                         <span>📋</span>
-                        <span>Policies CSV</span>
+                        <span>Privacy & Security CSV</span>
                       </a>
                     )}
                     {selectedUniversity.organigram_csv_url && (
