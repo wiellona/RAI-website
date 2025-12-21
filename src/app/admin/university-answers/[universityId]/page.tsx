@@ -6,6 +6,7 @@ import Container from "@/components/Container";
 import SubmissionDocuments from "@/components/admin/SubmissionDocuments";
 import CrawlingDocuments from "@/components/admin/CrawlingDocuments";
 import QuestionnaireAnswers from "@/components/admin/QuestionnaireAnswers";
+import AIRankingScores from "@/components/admin/AIRankingScores";
 import { UniversityAnswerDetail } from "@/lib/types";
 
 export default function UniversityAnswersPage() {
@@ -109,6 +110,13 @@ export default function UniversityAnswersPage() {
           assetEvidencePath={data.submissionDocuments?.assetEvidencePath || null}
           publicationEvidencePath={data.submissionDocuments?.publicationEvidencePath || null}
         />
+
+        {/* AI Ranking Scores Component */}
+        {data.aiRankingScores && (
+          <div className="mb-6">
+            <AIRankingScores scores={data.aiRankingScores} />
+          </div>
+        )}
 
         {/* Crawling Documents Component */}
         <CrawlingDocuments

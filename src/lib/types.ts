@@ -107,11 +107,44 @@ export interface Answer {
   };
 }
 
+export interface AIRankingScores {
+  // 8 Detailed Category Scores
+  category1_score: number; // Ethics in AI (from publications) - max 2000
+  category2_score: number; // Fairness (from publications) - max 1200
+  category3_score: number; // Transparency (from assets) - max 1300
+  category4_score: number; // Accountability (from assets) - max 1800
+  category5_score: number; // Privacy (from policies) - max 600
+  category6_score: number; // Security (from policies) - max 1200
+  category7_score: number; // Continuous Learning (from divisions) - max 800
+  category8_score: number; // Collaboration (from divisions) - max 1100
+  
+  // Legacy grouped scores (for backward compatibility)
+  publications_grade: number; // category1 + category2
+  assets_grade: number; // category3 + category4
+  policies_grade: number; // category5 + category6
+  divisions_grade: number; // category7 + category8
+  
+  total_score: number;
+  rank: number;
+  
+  // Raw data
+  total_publications: number;
+  total_models: number;
+  total_datasets: number;
+  total_policies: number;
+  total_divisions: number;
+  total_assets: number;
+}
+
 export interface UniversityAnswerDetail {
   universityId: string;
   universityName: string;
   submissionId: string;
   submittedAt: string;
   answers: Answer[];
+  crawlingData?: any;
+  submissionDocuments?: any;
+  isDataApproved?: boolean;
+  aiRankingScores?: AIRankingScores | null;
 }
 

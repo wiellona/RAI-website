@@ -107,6 +107,8 @@ export async function GET(
         total_publications,
         total_huggingface_models,
         total_huggingface_datasets,
+        total_github_models,
+        total_github_datasets,
         total_policies,
         total_divisions,
         status,
@@ -118,6 +120,128 @@ export async function GET(
 
     if (crawlingError) {
       console.error('Crawling error:', crawlingError);
+    }
+
+    // Calculate AI ranking scores if crawling data exists
+    let aiRankingScores = null;
+    if (crawlingData && crawlingData.length > 0) {
+      const currentData = crawlingData[0];
+      
+      // Get all universities' crawling data for ranking calculation
+      const { data: allCrawlingData } = await supabase
+        .from('university_crawling')
+        .select(`
+          total_publications,
+          total_huggingface_models,
+          total_huggingface_datasets,
+          total_github_models,
+          total_github_datasets,
+          total_policies,
+          total_divisions
+        `);
+
+      if (allCrawlingData && allCrawlingData.length > 0) {
+        // Calculate total assets for all universities
+        const dataWithAssets = allCrawlingData.map(item => {
+          const total_models = (item.total_huggingface_models || 0) + (item.total_github_models || 0);
+          const total_datasets = (item.total_huggingface_datasets || 0) + (item.total_github_datasets || 0);
+          return {
+            total_publications: item.total_publications || 0,
+            total_models,
+            total_datasets,
+            total_assets: total_models + total_datasets,
+            total_policies: item.total_policies || 0,
+            total_divisions: item.total_divisions || 0
+          };
+        });
+
+        // Sort values for percentile calculation
+        const publicationsValues = dataWithAssets.map(d => d.total_publications).sort((a, b) => a - b);
+        const assetsValues = dataWithAssets.map(d => d.total_assets).sort((a, b) => a - b);
+        const policiesValues = dataWithAssets.map(d => d.total_policies).sort((a, b) => a - b);
+        const divisionsValues = dataWithAssets.map(d => d.total_divisions).sort((a, b) => a - b);
+
+        // Calculate current university's metrics
+        const total_models = (currentData.total_huggingface_models || 0) + (currentData.total_github_models || 0);
+        const total_datasets = (currentData.total_huggingface_datasets || 0) + (currentData.total_github_datasets || 0);
+        const total_assets = total_models + total_datasets;
+        const total_publications = currentData.total_publications || 0;
+        const total_policies = currentData.total_policies || 0;
+        const total_divisions = currentData.total_divisions || 0;
+
+        // Calculate scores using percentile ranking (same as automated-ranking route)
+        const calculateScore = (value: number, sortedValues: number[], maxScore: number): number => {
+          const n = sortedValues.length;
+          if (n === 0) return 0;
+          if (n === 1) return maxScore;
+          const position = sortedValues.indexOf(value);
+          const percentile = (position / (n - 1)) * 100;
+          return (percentile / 100) * maxScore;
+        };
+
+        // Calculate 8 detailed category scores
+        // Publications split into 2 categories
+        const category1_score = calculateScore(total_publications, publicationsValues, 2000); // Ethics in AI
+        const category2_score = calculateScore(total_publications, publicationsValues, 1200); // Fairness
+        
+        // Assets split into 2 categories
+        const category3_score = calculateScore(total_assets, assetsValues, 1300); // Transparency
+        const category4_score = calculateScore(total_assets, assetsValues, 1800); // Accountability
+        
+        // Policies split into 2 categories
+        const category5_score = calculateScore(total_policies, policiesValues, 600); // Privacy
+        const category6_score = calculateScore(total_policies, policiesValues, 1200); // Security
+        
+        // Divisions split into 2 categories
+        const category7_score = calculateScore(total_divisions, divisionsValues, 800); // Continuous Learning
+        const category8_score = calculateScore(total_divisions, divisionsValues, 1100); // Collaboration
+
+        // Calculate grouped scores for backward compatibility
+        const publications_grade = category1_score + category2_score;
+        const assets_grade = category3_score + category4_score;
+        const policies_grade = category5_score + category6_score;
+        const divisions_grade = category7_score + category8_score;
+        
+        const total_score = publications_grade + assets_grade + policies_grade + divisions_grade;
+
+        // Calculate rank
+        const allScores = dataWithAssets.map(item => {
+          const cat1 = calculateScore(item.total_publications, publicationsValues, 2000);
+          const cat2 = calculateScore(item.total_publications, publicationsValues, 1200);
+          const cat3 = calculateScore(item.total_assets, assetsValues, 1300);
+          const cat4 = calculateScore(item.total_assets, assetsValues, 1800);
+          const cat5 = calculateScore(item.total_policies, policiesValues, 600);
+          const cat6 = calculateScore(item.total_policies, policiesValues, 1200);
+          const cat7 = calculateScore(item.total_divisions, divisionsValues, 800);
+          const cat8 = calculateScore(item.total_divisions, divisionsValues, 1100);
+          return cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + cat8;
+        }).sort((a, b) => b - a);
+
+        const rank = allScores.findIndex(score => score === total_score) + 1;
+
+        aiRankingScores = {
+          category1_score: Math.round(category1_score * 100) / 100,
+          category2_score: Math.round(category2_score * 100) / 100,
+          category3_score: Math.round(category3_score * 100) / 100,
+          category4_score: Math.round(category4_score * 100) / 100,
+          category5_score: Math.round(category5_score * 100) / 100,
+          category6_score: Math.round(category6_score * 100) / 100,
+          category7_score: Math.round(category7_score * 100) / 100,
+          category8_score: Math.round(category8_score * 100) / 100,
+          publications_grade: Math.round(publications_grade * 100) / 100,
+          assets_grade: Math.round(assets_grade * 100) / 100,
+          policies_grade: Math.round(policies_grade * 100) / 100,
+          divisions_grade: Math.round(divisions_grade * 100) / 100,
+          total_score: Math.round(total_score * 100) / 100,
+          rank,
+          total_publications,
+          total_models,
+          total_datasets,
+          total_policies,
+          total_divisions,
+          total_assets
+        };
+      }
     }
 
     // Transform answers to include category name as dimension
@@ -171,7 +295,8 @@ export async function GET(
         assetEvidencePath: university.asset_evidence_path,
         publicationEvidencePath: university.publication_evidence_path
       } : null,
-      isDataApproved: university?.is_data_approved || false
+      isDataApproved: university?.is_data_approved || false,
+      aiRankingScores
     };
 
     return NextResponse.json(result, { status: 200 });
