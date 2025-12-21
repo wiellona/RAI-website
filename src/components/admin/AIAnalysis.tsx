@@ -10,7 +10,12 @@ interface AnalysisModalProps {
   analysis: string;
 }
 
-function AnalysisModal({ isOpen, onClose, universityName, analysis }: AnalysisModalProps) {
+function AnalysisModal({
+  isOpen,
+  onClose,
+  universityName,
+  analysis,
+}: AnalysisModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -20,7 +25,7 @@ function AnalysisModal({ isOpen, onClose, universityName, analysis }: AnalysisMo
           <h2 className="text-2xl font-bold">AI Analysis & Recommendations</h2>
           <p className="text-purple-100 mt-1">{universityName}</p>
         </div>
-        
+
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
           <div className="prose prose-sm max-w-none">
             <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
@@ -28,7 +33,7 @@ function AnalysisModal({ isOpen, onClose, universityName, analysis }: AnalysisMo
             </div>
           </div>
         </div>
-        
+
         <div className="p-4 bg-gray-50 border-t flex justify-end">
           <button
             onClick={onClose}
@@ -55,7 +60,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
   const [error, setError] = useState("");
 
   // Get selected university data
-  const selectedUni = rankings.find(u => u.id === selectedUniversity);
+  const selectedUni = rankings.find((u) => u.id === selectedUniversity);
 
   const handleAnalyze = async () => {
     if (!selectedUniversity) {
@@ -85,7 +90,19 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
       setUniversityName(data.universityName);
       setShowModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
+      // Check if it's the "service unavailable" error from disabled AI feature
+      if (
+        errorMessage.includes("unavailable") ||
+        errorMessage.includes("503")
+      ) {
+        setError(
+          "AI analysis feature is currently unavailable. This feature requires Gemini AI integration."
+        );
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -96,8 +113,19 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
       <h2 className="text-xl font-bold mb-4 text-gray-800">
         AI-Powered Analysis & Recommendations
       </h2>
+
+      {/* Feature Status Banner */}
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p className="text-sm text-yellow-800">
+          <strong>⚠️ Feature Currently Unavailable:</strong> AI analysis
+          requires Gemini AI API integration. This feature is temporarily
+          disabled.
+        </p>
+      </div>
+
       <p className="text-sm text-gray-600 mb-4">
-        Select a university to view metrics and get AI-powered insights using Gemini AI
+        Select a university to view metrics and get AI-powered insights using
+        Gemini AI
       </p>
 
       <div className="space-y-4">
@@ -126,8 +154,12 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
         {/* Display metrics when university is selected */}
         {selectedUni && (
           <div className="bg-white border-2 border-[#C84B4B] rounded-lg p-6 text-center">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Overall Trust Score</h3>
-            <p className="text-5xl font-bold text-[#C84B4B] mb-1">{selectedUni.trustScore}</p>
+            <h3 className="text-sm font-medium text-gray-600 mb-2">
+              Overall Trust Score
+            </h3>
+            <p className="text-5xl font-bold text-[#C84B4B] mb-1">
+              {selectedUni.trustScore}
+            </p>
             <span className="text-gray-500 text-sm">/100</span>
           </div>
         )}
