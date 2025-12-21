@@ -1,73 +1,90 @@
 "use client";
-import { useEffect, useState } from "react";
-import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
-export interface Profile {
-  id: string;
-  name: string;
-  role: "user" | "reviewer" | "admin";
-  is_approved: boolean;
-  created_at: string;
-}
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthProfile } from "@/hooks/useAuthProfile";
 
-export function useAuthProfile() {
-  const supabase = getSupabaseBrowserClient();
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+export default function PendingApprovalPage() {
+  const { user, profile, loading } = useAuthProfile();
+  const router = useRouter();
 
   useEffect(() => {
-    let ignore = false;
+    if (loading) return;
 
-    const load = async () => {
-      // ✅ FIXED: Use getUser() instead of getSession()
-      const {
-        data: { user: authUser },
-        error,
-      } = await supabase.auth.getUser();
-      if (ignore) return;
+    if (!user) {
+      router.push("/authentication/login");
+      return;
+    }
 
-      setUser(authUser ?? null);
+    if (profile?.is_approved) {
+      router.push("/");
+      return;
+    }
+  }, [user, profile, loading, router]);
 
-      if (authUser) {
-        const { data: profileData } = await supabase
-          .from("Profiles")
-          .select("id,name,role,is_approved")
-          .eq("id", authUser.id)
-          .single();
-
-        if (!ignore) setProfile((profileData as Profile) ?? null);
-      } else {
-        setProfile(null);
-      }
-      if (!ignore) setLoading(false);
-    };
-
-    load();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null);
-        setProfile(null);
-        if (session?.user) {
-          supabase
-            .from("Profiles")
-            .select("id,name,role,is_approved")
-            .eq("id", session.user.id)
-            .single()
-            .then(({ data }: { data: any }) =>
-              setProfile((data as Profile) ?? null)
-            );
-        }
-      }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FAF9F6] to-white">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#6B2C2C] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#6B2C2C] font-medium">Loading...</p>
+        </div>
+      </div>
     );
+  }
 
-    return () => {
-      ignore = true;
-      listener.subscription.unsubscribe();
-    };
-  }, [supabase]);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FAF9F6] to-white px-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-2xl p-8 border-2 border-[#6B2C2C]/20">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-[#C19A6B] to-[#8B7355] rounded-full mx-auto mb-6 flex items-center justify-center">
+            <svg
+              className="w-10 h-10 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
 
-  return { user, profile, loading };
+          <h1 className="text-3xl font-bold text-[#6B2C2C] mb-4">
+            Pending Approval
+          </h1>
+
+          <p className="text-gray-600 mb-6">
+            Your account is currently awaiting approval from an administrator.
+          </p>
+
+          <div className="bg-[#C19A6B]/10 border-2 border-[#C19A6B]/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-700">
+              <strong>Account Email:</strong> {user?.email}
+            </p>
+            {profile?.name && (
+              <p className="text-sm text-gray-700 mt-2">
+                <strong>Name:</strong> {profile.name}
+              </p>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-500 mb-6">
+            You will receive an email notification once your account has been
+            approved.
+          </p>
+
+          <button
+            onClick={() => router.push("/authentication/login")}
+            className="w-full bg-gradient-to-r from-[#6B2C2C] to-[#8B4513] hover:from-[#8B4513] hover:to-[#6B2C2C] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

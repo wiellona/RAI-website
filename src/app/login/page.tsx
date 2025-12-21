@@ -1,15 +1,9 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "../../hooks/useAuth";
+import { Suspense, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 function LoginForm() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const auth = useAuth();
   const router = useRouter();
 
   useEffect(() => {
