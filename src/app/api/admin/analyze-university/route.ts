@@ -1,8 +1,18 @@
+// ⚠️ FEATURE DISABLED - Gemini AI analysis feature commented out for deployment
+// Requires: npm install @google/generative-ai
+
 import { NextResponse } from "next/server";
-import { analyzeUniversityMetrics } from "@/lib/geminiAI";
+// import { analyzeUniversityMetrics } from "@/lib/geminiAI";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 export async function POST(request: Request) {
+  // Feature temporarily disabled
+  return NextResponse.json(
+    { error: "AI analysis feature is currently unavailable" },
+    { status: 503 }
+  );
+
+  /* Original code - commented out for deployment
   try {
     const body = await request.json();
     const { universityId } = body;
@@ -60,4 +70,5 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+  */
 }
