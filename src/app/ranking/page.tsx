@@ -256,10 +256,12 @@ export default function RankingPage() {
               ? item.Categories.order
               : 999, // Put unordered categories at the end
         }))
-        .sort((a, b) => {
+        .sort((a: ScoreBreakdown, b: ScoreBreakdown) => {
           // Primary sort: by category order
-          if (a.category_order !== b.category_order) {
-            return a.category_order - b.category_order;
+          const orderA = a.category_order ?? 999;
+          const orderB = b.category_order ?? 999;
+          if (orderA !== orderB) {
+            return orderA - orderB;
           }
           // Secondary sort: alphabetically if same order
           return a.category_name.localeCompare(b.category_name);

@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../../hooks/useAuth";
 
-export default function LoginPage() {
+function LoginForm() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const auth = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     // ✅ FIXED: Redirect to the proper login page immediately
-    router.replace('/authentication/login');
+    router.replace("/authentication/login");
   }, [router]);
 
   return (
@@ -18,5 +24,13 @@ export default function LoginPage() {
         <p className="text-[#6B2C2C]">Redirecting to login...</p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

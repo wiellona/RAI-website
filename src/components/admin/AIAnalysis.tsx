@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { University } from "@/lib/types";
 
 interface AnalysisModalProps {
@@ -20,24 +22,22 @@ function AnalysisModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-hidden border-2 border-[#0047AB]/30">
+        <div className="bg-gradient-to-r from-[#000080] to-[#0047AB] p-6 text-white">
           <h2 className="text-2xl font-bold">AI Analysis & Recommendations</h2>
-          <p className="text-purple-100 mt-1">{universityName}</p>
+          <p className="text-blue-100 mt-1">{universityName}</p>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
-          <div className="prose prose-sm max-w-none">
-            <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-              {analysis}
-            </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(85vh-160px)]">
+          <div className="prose prose-lg max-w-none text-gray-800">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{analysis}</ReactMarkdown>
           </div>
         </div>
 
         <div className="p-4 bg-gray-50 border-t flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all"
+            className="px-6 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg hover:from-[#0099ED] hover:to-[#0047AB] transition-colors"
           >
             Close
           </button>
@@ -77,7 +77,12 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ universityId: selectedUniversity }),
+        body: JSON.stringify({ 
+          universityId: selectedUniversity,
+          name: selectedUni?.name,
+          trustScore: selectedUni?.trustScore,
+          metrics: selectedUni?.metrics,
+        }),
       });
 
       const data = await response.json();
@@ -109,8 +114,8 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
   };
 
   return (
-    <div className="card p-6">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">
+    <div className="bg-white border-2 border-[#0047AB]/20 rounded-lg p-6 shadow-sm">
+      <h2 className="text-xl font-bold mb-4 text-[#000080]">
         AI-Powered Analysis & Recommendations
       </h2>
 
@@ -139,7 +144,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
               setSelectedUniversity(e.target.value);
               setError("");
             }}
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#C84B4B] focus:border-transparent"
+            className="w-full p-2 border-2 border-[#0047AB]/30 rounded-lg focus:ring-2 focus:ring-[#0047AB] focus:border-transparent"
             disabled={isAnalyzing}
           >
             <option value="">Choose a university...</option>
@@ -153,14 +158,9 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
 
         {/* Display metrics when university is selected */}
         {selectedUni && (
-          <div className="bg-white border-2 border-[#C84B4B] rounded-lg p-6 text-center">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
-              Overall Trust Score
-            </h3>
-            <p className="text-5xl font-bold text-[#C84B4B] mb-1">
-              {selectedUni.trustScore}
-            </p>
-            <span className="text-gray-500 text-sm">/100</span>
+          <div className="bg-gradient-to-r from-[#f0f4ff] to-white border-2 border-[#0047AB]/30 rounded-lg p-6 text-center">
+            <h3 className="text-sm font-medium text-gray-600 mb-2">Overall Trust Score</h3>
+            <p className="text-5xl font-bold text-[#0047AB] mb-1">{selectedUni.trustScore}</p>
           </div>
         )}
 
@@ -173,7 +173,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
         <button
           onClick={handleAnalyze}
           disabled={isAnalyzing || !selectedUniversity}
-          className="w-full py-3 px-4 bg-[#C84B4B] text-white rounded-lg font-medium hover:bg-[#A83A3A] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+          className="w-full py-3 px-4 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg font-medium hover:from-[#0099ED] hover:to-[#0047AB] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
         >
           {isAnalyzing ? (
             <span className="flex items-center justify-center gap-2">
