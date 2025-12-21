@@ -10,6 +10,19 @@ export type RAIDimensions = {
   continuousLearning: number | null;
 };
 
+export type ScoreSource = "submission" | "ai";
+
+export type ScoreSourceChoices = {
+  collaboration?: ScoreSource;
+  privacy?: ScoreSource;
+  accountability?: ScoreSource;
+  security?: ScoreSource;
+  ethicsInAI?: ScoreSource;
+  fairness?: ScoreSource;
+  transparency?: ScoreSource;
+  continuousLearning?: ScoreSource;
+};
+
 export type CategoryScore = {
   categoryName: string;
   score: number | null;
@@ -146,5 +159,7 @@ export interface UniversityAnswerDetail {
   submissionDocuments?: any;
   isDataApproved?: boolean;
   aiRankingScores?: AIRankingScores | null;
+  sourceChoices?: ScoreSourceChoices | null;
+  metrics?: RAIDimensions | null;
 }
 

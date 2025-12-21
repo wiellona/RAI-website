@@ -12,7 +12,7 @@ export async function GET(
     // Get university data for submission documents and approval status
     const { data: university, error: universityError } = await supabase
       .from('Universities')
-      .select('letter_path, asset_evidence_path, publication_evidence_path, is_data_approved')
+      .select('letter_path, asset_evidence_path, publication_evidence_path, is_data_approved, metrics')
       .eq('id', universityId)
       .single();
 
@@ -283,6 +283,25 @@ export async function GET(
       };
     });
 
+    const rawMetrics = (university as any)?.metrics as any | null;
+    const sourceChoices =
+      rawMetrics && typeof rawMetrics === "object" && "sources" in rawMetrics
+        ? (rawMetrics.sources as Record<string, "submission" | "ai">)
+        : null;
+
+    const metrics = rawMetrics && typeof rawMetrics === "object"
+      ? {
+          collaboration: rawMetrics.collaboration ?? null,
+          privacy: rawMetrics.privacy ?? null,
+          accountability: rawMetrics.accountability ?? null,
+          security: rawMetrics.security ?? null,
+          ethicsInAI: rawMetrics.ethicsInAI ?? null,
+          fairness: rawMetrics.fairness ?? null,
+          transparency: rawMetrics.transparency ?? null,
+          continuousLearning: rawMetrics.continuousLearning ?? null,
+        }
+      : null;
+
     const result = {
       universityId: submission.university_id,
       universityName: universityName,
@@ -296,7 +315,9 @@ export async function GET(
         publicationEvidencePath: university.publication_evidence_path
       } : null,
       isDataApproved: university?.is_data_approved || false,
-      aiRankingScores
+      aiRankingScores,
+      sourceChoices,
+      metrics,
     };
 
     return NextResponse.json(result, { status: 200 });
@@ -326,55 +347,108 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { approvals } = body as { approvals?: Record<string, boolean> };
+    const { approvals, sourceChoices, finalMetrics } = body as {
+      approvals?: Record<string, boolean>;
+      sourceChoices?: Record<string, "submission" | "ai">;
+      finalMetrics?: Record<string, number | null>;
+    };
 
-    if (!approvals || typeof approvals !== 'object') {
+    let didUpdateApprovals = false;
+    let didUpdateMetrics = false;
+
+    if (approvals && typeof approvals === "object") {
+      const updates = Object.entries(approvals).map(([answerId, isApproved]) =>
+        supabase
+          .from('Answers')
+          .update({ is_approved: !!isApproved })
+          .eq('id', answerId)
+      );
+
+      const results = await Promise.all(updates);
+      const failed = results.filter(result => result.error);
+
+      if (failed.length > 0) {
+        console.error('Failed to update some approvals:', failed.map(item => item.error));
+        return NextResponse.json(
+          { error: 'Failed to update approvals' },
+          { status: 500 }
+        );
+      }
+
+      didUpdateApprovals = true;
+
+      // Cari submission_id dari salah satu jawaban yang baru diperbarui
+      const { data: submissionRow, error: submissionLookupError } = await supabase
+        .from("Answers")
+        .select("submission_id")
+        .in("id", Object.keys(approvals))
+        .limit(1)
+        .maybeSingle();
+
+      if (submissionLookupError) {
+        console.error("Failed to fetch submission_id for finalize-submission:", submissionLookupError);
+      } else if (submissionRow?.submission_id) {
+        const { error: finalizeError } = await supabase.functions.invoke("finalize-submission", {
+          body: { submission_id: submissionRow.submission_id },
+        });
+
+        if (finalizeError) {
+          console.error("Failed to invoke finalize-submission:", finalizeError);
+        }
+      }
+    }
+
+    if (sourceChoices && typeof sourceChoices === "object" && finalMetrics && typeof finalMetrics === "object") {
+      const { data: uniRow, error: uniError } = await supabase
+        .from('Universities')
+        .select('metrics')
+        .eq('id', universityId)
+        .maybeSingle();
+
+      if (uniError) {
+        console.error('Failed to fetch existing metrics for university:', uniError);
+        return NextResponse.json(
+          { error: 'Failed to update metrics' },
+          { status: 500 }
+        );
+      }
+
+      const currentMetrics = (uniRow as any)?.metrics || {};
+      const newMetrics = {
+        ...currentMetrics,
+        ...finalMetrics,
+        sources: sourceChoices,
+      };
+
+      const { error: updateError } = await supabase
+        .from('Universities')
+        .update({ metrics: newMetrics })
+        .eq('id', universityId);
+
+      if (updateError) {
+        console.error('Failed to update metrics for university:', updateError);
+        return NextResponse.json(
+          { error: 'Failed to update metrics' },
+          { status: 500 }
+        );
+      }
+
+      didUpdateMetrics = true;
+    }
+
+    if (!didUpdateApprovals && !didUpdateMetrics) {
       return NextResponse.json(
-        { error: 'Invalid approvals payload' },
+        { error: 'No valid payload provided' },
         { status: 400 }
       );
     }
 
-    const updates = Object.entries(approvals).map(([answerId, isApproved]) =>
-      supabase
-        .from('Answers')
-        .update({ is_approved: !!isApproved })
-        .eq('id', answerId)
-    );
-
-    const results = await Promise.all(updates);
-    const failed = results.filter(result => result.error);
-
-    if (failed.length > 0) {
-      console.error('Failed to update some approvals:', failed.map(item => item.error));
-      return NextResponse.json(
-        { error: 'Failed to update approvals' },
-        { status: 500 }
-      );
-    }
-
-    // Cari submission_id dari salah satu jawaban yang baru diperbarui
-    const { data: submissionRow, error: submissionLookupError } = await supabase
-      .from("Answers")
-      .select("submission_id")
-      .in("id", Object.keys(approvals))
-      .limit(1)
-      .maybeSingle();
-
-    if (submissionLookupError) {
-      console.error("Failed to fetch submission_id for finalize-submission:", submissionLookupError);
-    } else if (submissionRow?.submission_id) {
-      const { error: finalizeError } = await supabase.functions.invoke("finalize-submission", {
-        body: { submission_id: submissionRow.submission_id },
-      });
-
-      if (finalizeError) {
-        console.error("Failed to invoke finalize-submission:", finalizeError);
-      }
-    }
+    const messageParts = [] as string[];
+    if (didUpdateApprovals) messageParts.push('approvals');
+    if (didUpdateMetrics) messageParts.push('metrics');
 
     return NextResponse.json(
-      { message: 'Approvals updated successfully' },
+      { message: `Updated ${messageParts.join(' and ')} successfully` },
       { status: 200 }
     );
   } catch (error) {

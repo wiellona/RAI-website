@@ -7,6 +7,7 @@ import SubmissionDocuments from "@/components/admin/SubmissionDocuments";
 import CrawlingDocuments from "@/components/admin/CrawlingDocuments";
 import QuestionnaireAnswers from "@/components/admin/QuestionnaireAnswers";
 import AIRankingScores from "@/components/admin/AIRankingScores";
+import ScoreSourceSelector from "@/components/admin/ScoreSourceSelector";
 import { UniversityAnswerDetail } from "@/lib/types";
 
 export default function UniversityAnswersPage() {
@@ -116,6 +117,17 @@ export default function UniversityAnswersPage() {
           <div className="mb-6">
             <AIRankingScores scores={data.aiRankingScores} />
           </div>
+        )}
+
+        {/* Source selection between questionnaire and AI scores */}
+        {data.aiRankingScores && (
+          <ScoreSourceSelector
+            answers={data.answers}
+            aiRankingScores={data.aiRankingScores}
+            universityId={data.universityId}
+            initialSourceChoices={data.sourceChoices}
+            persistedMetrics={data.metrics}
+          />
         )}
 
         {/* Crawling Documents Component */}
