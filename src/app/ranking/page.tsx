@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "@/app/components/layout/Header";
-import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 interface UniversityRank {
@@ -344,8 +342,6 @@ export default function RankingPage() {
 
   return (
     <div className="bg-white min-h-screen flex flex-col">
-      <Header />
-
       <main className="flex-1 flex flex-col">
         <section className="pt-[65px] bg-gradient-to-br from-[#000080] via-[#0047AB] to-[#000080] text-white relative overflow-hidden">
           {/* Background decorative elements */}
@@ -583,8 +579,6 @@ export default function RankingPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -81,5 +81,20 @@ export function useAuthProfile() {
     };
   }, [supabase]);
 
-  return { user, profile, loading };
+  const logout = async () => {
+    await supabase.auth.signOut();
+
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      localStorage.removeItem(`generalInfo_${userEmail}`);
+      localStorage.removeItem(`questionnaireAnswers_${userEmail}`);
+    }
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("universityName");
+
+    window.location.href = "/";
+  };
+
+  return { user, profile, loading, logout };
 }

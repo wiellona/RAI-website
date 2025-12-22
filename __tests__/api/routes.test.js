@@ -313,7 +313,7 @@ describe('api/routes.test.js', () => {
         body: JSON.stringify({ username: 'wrong', password: 'wrong' }),
       });
 
-      expect(result.status).toBe(500);
+      expect(response.status).toBe(401);
     });
   });
   });

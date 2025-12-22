@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "@/app/components/layout/Header";
-import Footer from "@/app/components/layout/Footer";
 
 interface UniversityCrawlData {
   id: string;
@@ -96,8 +94,6 @@ export default function AutomatedRankingPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <Header />
-
       {/* Hero Section */}
       <section className="pt-[65px] bg-gradient-to-br from-[#000080] via-[#0047AB] to-[#000080] text-white relative overflow-hidden">
         {/* Background decorative elements */}
@@ -521,8 +517,6 @@ export default function AutomatedRankingPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

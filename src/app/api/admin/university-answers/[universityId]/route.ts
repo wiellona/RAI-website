@@ -12,7 +12,7 @@ export async function GET(
     // Get university data for submission documents and approval status
     const { data: university, error: universityError } = await supabase
       .from('Universities')
-      .select('letter_path, asset_evidence_path, publication_evidence_path, is_data_approved')
+      .select('letter_path, asset_evidence_path, publication_evidence_path, is_data_approved, metrics')
       .eq('id', universityId)
       .single();
 
@@ -71,6 +71,7 @@ export async function GET(
         selected_option_id,
         evidence_notes,
         score,
+        is_approved,
         Questions (
           id,
           text,
@@ -106,6 +107,8 @@ export async function GET(
         total_publications,
         total_huggingface_models,
         total_huggingface_datasets,
+        total_github_models,
+        total_github_datasets,
         total_policies,
         total_divisions,
         status,
@@ -119,22 +122,185 @@ export async function GET(
       console.error('Crawling error:', crawlingError);
     }
 
-    // Transform answers to include category name as dimension
-    const transformedAnswers = (answers || []).map(answer => ({
-      id: answer.id,
-      submission_id: answer.submission_id,
-      question_id: answer.question_id,
-      selected_option_id: answer.selected_option_id,
-      evidence_notes: answer.evidence_notes,
-      score: answer.score,
-      Questions: {
-        question_text: answer.Questions?.text || '',
-        dimension: answer.Questions?.Categories?.name || 'Unknown'
-      },
-      Options: {
-        option_text: answer.Options?.text || ''
+    // Calculate AI ranking scores if crawling data exists
+    let aiRankingScores = null;
+    if (crawlingData && crawlingData.length > 0) {
+      const currentData = crawlingData[0];
+      
+      // Get all universities' crawling data for ranking calculation
+      const { data: allCrawlingData } = await supabase
+        .from('university_crawling')
+        .select(`
+          total_publications,
+          total_huggingface_models,
+          total_huggingface_datasets,
+          total_github_models,
+          total_github_datasets,
+          total_policies,
+          total_divisions
+        `);
+
+      if (allCrawlingData && allCrawlingData.length > 0) {
+        // Calculate total assets for all universities
+        const dataWithAssets = allCrawlingData.map(item => {
+          const total_models = (item.total_huggingface_models || 0) + (item.total_github_models || 0);
+          const total_datasets = (item.total_huggingface_datasets || 0) + (item.total_github_datasets || 0);
+          return {
+            total_publications: item.total_publications || 0,
+            total_models,
+            total_datasets,
+            total_assets: total_models + total_datasets,
+            total_policies: item.total_policies || 0,
+            total_divisions: item.total_divisions || 0
+          };
+        });
+
+        // Sort values for percentile calculation
+        const publicationsValues = dataWithAssets.map(d => d.total_publications).sort((a, b) => a - b);
+        const assetsValues = dataWithAssets.map(d => d.total_assets).sort((a, b) => a - b);
+        const policiesValues = dataWithAssets.map(d => d.total_policies).sort((a, b) => a - b);
+        const divisionsValues = dataWithAssets.map(d => d.total_divisions).sort((a, b) => a - b);
+
+        // Calculate current university's metrics
+        const total_models = (currentData.total_huggingface_models || 0) + (currentData.total_github_models || 0);
+        const total_datasets = (currentData.total_huggingface_datasets || 0) + (currentData.total_github_datasets || 0);
+        const total_assets = total_models + total_datasets;
+        const total_publications = currentData.total_publications || 0;
+        const total_policies = currentData.total_policies || 0;
+        const total_divisions = currentData.total_divisions || 0;
+
+        // Calculate scores using percentile ranking (same as automated-ranking route)
+        const calculateScore = (value: number, sortedValues: number[], maxScore: number): number => {
+          const n = sortedValues.length;
+          if (n === 0) return 0;
+          if (n === 1) return maxScore;
+          const position = sortedValues.indexOf(value);
+          const percentile = (position / (n - 1)) * 100;
+          return (percentile / 100) * maxScore;
+        };
+
+        // Calculate 8 detailed category scores
+        // Publications split into 2 categories
+        const category1_score = calculateScore(total_publications, publicationsValues, 2000); // Ethics in AI
+        const category2_score = calculateScore(total_publications, publicationsValues, 1200); // Fairness
+        
+        // Assets split into 2 categories
+        const category3_score = calculateScore(total_assets, assetsValues, 1300); // Transparency
+        const category4_score = calculateScore(total_assets, assetsValues, 1800); // Accountability
+        
+        // Policies split into 2 categories
+        const category5_score = calculateScore(total_policies, policiesValues, 600); // Privacy
+        const category6_score = calculateScore(total_policies, policiesValues, 1200); // Security
+        
+        // Divisions split into 2 categories
+        const category7_score = calculateScore(total_divisions, divisionsValues, 800); // Continuous Learning
+        const category8_score = calculateScore(total_divisions, divisionsValues, 1100); // Collaboration
+
+        // Calculate grouped scores for backward compatibility
+        const publications_grade = category1_score + category2_score;
+        const assets_grade = category3_score + category4_score;
+        const policies_grade = category5_score + category6_score;
+        const divisions_grade = category7_score + category8_score;
+        
+        const total_score = publications_grade + assets_grade + policies_grade + divisions_grade;
+
+        // Calculate rank
+        const allScores = dataWithAssets.map(item => {
+          const cat1 = calculateScore(item.total_publications, publicationsValues, 2000);
+          const cat2 = calculateScore(item.total_publications, publicationsValues, 1200);
+          const cat3 = calculateScore(item.total_assets, assetsValues, 1300);
+          const cat4 = calculateScore(item.total_assets, assetsValues, 1800);
+          const cat5 = calculateScore(item.total_policies, policiesValues, 600);
+          const cat6 = calculateScore(item.total_policies, policiesValues, 1200);
+          const cat7 = calculateScore(item.total_divisions, divisionsValues, 800);
+          const cat8 = calculateScore(item.total_divisions, divisionsValues, 1100);
+          return cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + cat8;
+        }).sort((a, b) => b - a);
+
+        const rank = allScores.findIndex(score => score === total_score) + 1;
+
+        aiRankingScores = {
+          category1_score: Math.round(category1_score * 100) / 100,
+          category2_score: Math.round(category2_score * 100) / 100,
+          category3_score: Math.round(category3_score * 100) / 100,
+          category4_score: Math.round(category4_score * 100) / 100,
+          category5_score: Math.round(category5_score * 100) / 100,
+          category6_score: Math.round(category6_score * 100) / 100,
+          category7_score: Math.round(category7_score * 100) / 100,
+          category8_score: Math.round(category8_score * 100) / 100,
+          publications_grade: Math.round(publications_grade * 100) / 100,
+          assets_grade: Math.round(assets_grade * 100) / 100,
+          policies_grade: Math.round(policies_grade * 100) / 100,
+          divisions_grade: Math.round(divisions_grade * 100) / 100,
+          total_score: Math.round(total_score * 100) / 100,
+          rank,
+          total_publications,
+          total_models,
+          total_datasets,
+          total_policies,
+          total_divisions,
+          total_assets
+        };
       }
-    }));
+    }
+
+    // Transform answers to include category name as dimension
+    const transformedAnswers = (answers || []).map(answer => {
+      const questionRelation = Array.isArray(answer.Questions)
+        ? answer.Questions[0]
+        : answer.Questions;
+      const optionRelation = Array.isArray(answer.Options)
+        ? answer.Options[0]
+        : answer.Options;
+
+      const dimensionName = (() => {
+        const categories = questionRelation?.Categories;
+        if (Array.isArray(categories)) {
+          return categories[0]?.name || 'Unknown';
+        }
+        if (categories && typeof categories === 'object' && 'name' in categories) {
+          const name = (categories as { name?: string | null }).name;
+          return name || 'Unknown';
+        }
+        return 'Unknown';
+      })();
+
+      return {
+        id: answer.id,
+        submission_id: answer.submission_id,
+        question_id: answer.question_id,
+        selected_option_id: answer.selected_option_id,
+        evidence_notes: answer.evidence_notes,
+        score: answer.score,
+        is_approved: answer.is_approved,
+        Questions: {
+          question_text: questionRelation?.text || '',
+          dimension: dimensionName
+        },
+        Options: {
+          option_text: optionRelation?.text || ''
+        }
+      };
+    });
+
+    const rawMetrics = (university as any)?.metrics as any | null;
+    const sourceChoices =
+      rawMetrics && typeof rawMetrics === "object" && "sources" in rawMetrics
+        ? (rawMetrics.sources as Record<string, "submission" | "ai">)
+        : null;
+
+    const metrics = rawMetrics && typeof rawMetrics === "object"
+      ? {
+          collaboration: rawMetrics.collaboration ?? null,
+          privacy: rawMetrics.privacy ?? null,
+          accountability: rawMetrics.accountability ?? null,
+          security: rawMetrics.security ?? null,
+          ethicsInAI: rawMetrics.ethicsInAI ?? null,
+          fairness: rawMetrics.fairness ?? null,
+          transparency: rawMetrics.transparency ?? null,
+          continuousLearning: rawMetrics.continuousLearning ?? null,
+        }
+      : null;
 
     const result = {
       universityId: submission.university_id,
@@ -148,14 +314,148 @@ export async function GET(
         assetEvidencePath: university.asset_evidence_path,
         publicationEvidencePath: university.publication_evidence_path
       } : null,
-      isDataApproved: university?.is_data_approved || false
+      isDataApproved: university?.is_data_approved || false,
+      aiRankingScores,
+      sourceChoices,
+      metrics,
     };
 
     return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch answers';
     console.error('Error fetching university answers:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch answers' },
+      { error: message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ universityId: string }> }
+) {
+  try {
+    const supabase = getSupabaseServerClient();
+    const { universityId } = await params;
+
+    if (!universityId) {
+      return NextResponse.json(
+        { error: 'University ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { approvals, sourceChoices, finalMetrics } = body as {
+      approvals?: Record<string, boolean>;
+      sourceChoices?: Record<string, "submission" | "ai">;
+      finalMetrics?: Record<string, number | null>;
+    };
+
+    let didUpdateApprovals = false;
+    let didUpdateMetrics = false;
+
+    if (approvals && typeof approvals === "object") {
+      const updates = Object.entries(approvals).map(([answerId, isApproved]) =>
+        supabase
+          .from('Answers')
+          .update({ is_approved: !!isApproved })
+          .eq('id', answerId)
+      );
+
+      const results = await Promise.all(updates);
+      const failed = results.filter(result => result.error);
+
+      if (failed.length > 0) {
+        console.error('Failed to update some approvals:', failed.map(item => item.error));
+        return NextResponse.json(
+          { error: 'Failed to update approvals' },
+          { status: 500 }
+        );
+      }
+
+      didUpdateApprovals = true;
+
+      // Cari submission_id dari salah satu jawaban yang baru diperbarui
+      const { data: submissionRow, error: submissionLookupError } = await supabase
+        .from("Answers")
+        .select("submission_id")
+        .in("id", Object.keys(approvals))
+        .limit(1)
+        .maybeSingle();
+
+      if (submissionLookupError) {
+        console.error("Failed to fetch submission_id for finalize-submission:", submissionLookupError);
+      } else if (submissionRow?.submission_id) {
+        const { error: finalizeError } = await supabase.functions.invoke("finalize-submission", {
+          body: { submission_id: submissionRow.submission_id },
+        });
+
+        if (finalizeError) {
+          console.error("Failed to invoke finalize-submission:", finalizeError);
+        }
+      }
+    }
+
+    if (sourceChoices && typeof sourceChoices === "object" && finalMetrics && typeof finalMetrics === "object") {
+      const { data: uniRow, error: uniError } = await supabase
+        .from('Universities')
+        .select('metrics')
+        .eq('id', universityId)
+        .maybeSingle();
+
+      if (uniError) {
+        console.error('Failed to fetch existing metrics for university:', uniError);
+        return NextResponse.json(
+          { error: 'Failed to update metrics' },
+          { status: 500 }
+        );
+      }
+
+      const currentMetrics = (uniRow as any)?.metrics || {};
+      const newMetrics = {
+        ...currentMetrics,
+        ...finalMetrics,
+        sources: sourceChoices,
+      };
+
+      const { error: updateError } = await supabase
+        .from('Universities')
+        .update({ metrics: newMetrics })
+        .eq('id', universityId);
+
+      if (updateError) {
+        console.error('Failed to update metrics for university:', updateError);
+        return NextResponse.json(
+          { error: 'Failed to update metrics' },
+          { status: 500 }
+        );
+      }
+
+      didUpdateMetrics = true;
+    }
+
+    if (!didUpdateApprovals && !didUpdateMetrics) {
+      return NextResponse.json(
+        { error: 'No valid payload provided' },
+        { status: 400 }
+      );
+    }
+
+    const messageParts = [] as string[];
+    if (didUpdateApprovals) messageParts.push('approvals');
+    if (didUpdateMetrics) messageParts.push('metrics');
+
+    return NextResponse.json(
+      { message: `Updated ${messageParts.join(' and ')} successfully` },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update approvals';
+    console.error('Error updating approvals:', error);
+    return NextResponse.json(
+      { error: message },
       { status: 500 }
     );
   }

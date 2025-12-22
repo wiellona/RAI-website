@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Container from "@/components/Container";
-import ApprovalActions from "@/components/admin/ApprovalActions";
 import SubmissionDocuments from "@/components/admin/SubmissionDocuments";
 import CrawlingDocuments from "@/components/admin/CrawlingDocuments";
 import QuestionnaireAnswers from "@/components/admin/QuestionnaireAnswers";
+import AIRankingScores from "@/components/admin/AIRankingScores";
+import ScoreSourceSelector from "@/components/admin/ScoreSourceSelector";
 import { UniversityAnswerDetail } from "@/lib/types";
 
 export default function UniversityAnswersPage() {
@@ -21,8 +22,10 @@ export default function UniversityAnswersPage() {
     async function fetchAnswers() {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/admin/university-answers/${universityId}`);
-        if (!response.ok) throw new Error('Failed to fetch answers');
+        const response = await fetch(
+          `/api/admin/university-answers/${universityId}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch answers");
         const result = await response.json();
         setData(result);
       } catch (err: any) {
@@ -39,10 +42,12 @@ export default function UniversityAnswersPage() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#5C2E2E]">Loading...</h1>
+            <h1 className="text-2xl font-semibold text-[#000080]">
+              Loading...
+            </h1>
           </div>
         </Container>
       </div>
@@ -51,14 +56,14 @@ export default function UniversityAnswersPage() {
 
   if (error || !data) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-red-600 mb-4">Error</h1>
-            <p className="text-gray-600">{error || 'No data found'}</p>
+            <p className="text-gray-600">{error || "No data found"}</p>
             <button
               onClick={() => router.back()}
-              className="mt-4 px-4 py-2 bg-[#5C2E2E] text-white rounded hover:bg-[#7C3E3E]"
+              className="mt-4 px-4 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded hover:from-[#0099ED] hover:to-[#0047AB]"
             >
               Go Back
             </button>
@@ -70,14 +75,18 @@ export default function UniversityAnswersPage() {
 
   if (!data.answers || data.answers.length === 0) {
     return (
-      <div className="bg-[#FAF9F6] min-h-screen py-16">
+      <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#5C2E2E] mb-4">{data.universityName}</h1>
-            <p className="text-gray-600">No questionnaire answers found for this university.</p>
+            <h1 className="text-2xl font-semibold text-[#000080] mb-4">
+              {data.universityName}
+            </h1>
+            <p className="text-gray-600">
+              No questionnaire answers found for this university.
+            </p>
             <button
               onClick={() => router.back()}
-              className="mt-4 px-4 py-2 bg-[#5C2E2E] text-white rounded hover:bg-[#7C3E3E]"
+              className="mt-4 px-4 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded hover:from-[#0099ED] hover:to-[#0047AB]"
             >
               Go Back
             </button>
@@ -88,35 +97,53 @@ export default function UniversityAnswersPage() {
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen py-12">
+    <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-12">
       <Container>
         <div className="mb-6">
           <button
             onClick={() => router.back()}
-            className="text-[#5C2E2E] hover:text-[#7C3E3E] mb-4 flex items-center"
+            className="text-[#000080] hover:text-[#0047AB] mb-4 flex items-center"
           >
             ← Back to Rankings
           </button>
-          <h1 className="text-4xl font-bold text-[#5C2E2E]">{data.universityName}</h1>
+          <h1 className="text-4xl font-bold text-[#000080]">
+            {data.universityName}
+          </h1>
           <p className="text-gray-600 mt-2">
-            Questionnaire Answers - Submitted: {new Date(data.submittedAt).toLocaleDateString()}
+            Questionnaire Answers - Submitted:{" "}
+            {new Date(data.submittedAt).toLocaleDateString()}
           </p>
         </div>
-
-        {/* Approval Actions Component */}
-        <ApprovalActions
-          universityId={data.universityId}
-          universityName={data.universityName}
-          isDataApproved={data.isDataApproved || false}
-        />
 
         {/* Submission Documents Component */}
         <SubmissionDocuments
           universityName={data.universityName}
           letterPath={data.submissionDocuments?.letterPath || null}
-          assetEvidencePath={data.submissionDocuments?.assetEvidencePath || null}
-          publicationEvidencePath={data.submissionDocuments?.publicationEvidencePath || null}
+          assetEvidencePath={
+            data.submissionDocuments?.assetEvidencePath || null
+          }
+          publicationEvidencePath={
+            data.submissionDocuments?.publicationEvidencePath || null
+          }
         />
+
+        {/* AI Ranking Scores Component */}
+        {data.aiRankingScores && (
+          <div className="mb-6">
+            <AIRankingScores scores={data.aiRankingScores} />
+          </div>
+        )}
+
+        {/* Source selection between questionnaire and AI scores */}
+        {data.aiRankingScores && (
+          <ScoreSourceSelector
+            answers={data.answers}
+            aiRankingScores={data.aiRankingScores}
+            universityId={data.universityId}
+            initialSourceChoices={data.sourceChoices}
+            persistedMetrics={data.metrics}
+          />
+        )}
 
         {/* Crawling Documents Component */}
         <CrawlingDocuments
@@ -125,7 +152,10 @@ export default function UniversityAnswersPage() {
         />
 
         {/* Questionnaire Answers Component */}
-        <QuestionnaireAnswers answers={data.answers} />
+        <QuestionnaireAnswers
+          answers={data.answers}
+          universityId={data.universityId}
+        />
       </Container>
     </div>
   );

@@ -1,17 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Header from "@/app/components/layout/Header";
-import Footer from "@/app/components/layout/Footer";
 import { useParticipateNavigation } from "@/hooks/useNavigation";
 
 export default function LandingPage() {
   const { handleParticipateClick } = useParticipateNavigation();
   return (
     <div className="bg-white min-h-screen">
-      {/* Header */}
-      <Header />
-
       {/* Hero Section */}
       <main className="pt-16">
         <div className="relative overflow-hidden">
@@ -270,7 +265,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

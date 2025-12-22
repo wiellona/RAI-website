@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { getSupabaseServerClient } from "@/supabase/supabaseServer";
 
 export const runtime = "nodejs";
@@ -28,11 +28,16 @@ async function getAuthedUser() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore
+            .getAll()
+            .map(({ name, value }) => ({ name, value }));
         },
-        set() {},
-        remove() {},
+        setAll(cookies) {
+          cookies.forEach(({ name, value, options }) => {
+            cookieStore.set({ name, value, ...options });
+          });
+        },
       },
     }
   );
@@ -111,7 +116,8 @@ export async function POST(req: Request) {
     const addressLocation = normalizeString(form.get("addressLocation"));
     const deanName = normalizeString(form.get("deanName"));
     const picName = normalizeString(form.get("picName"));
-    const emailAddress = normalizeString(form.get("emailAddress")) ?? user.email;
+    const emailAddress =
+      normalizeString(form.get("emailAddress")) ?? user.email;
     const publicationCount = normalizeCount(form.get("numberOfPublications"));
     const assetCount = normalizeCount(form.get("numberOfAssets"));
 

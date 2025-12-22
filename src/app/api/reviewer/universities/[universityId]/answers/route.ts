@@ -19,8 +19,9 @@ interface AnswerData {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { universityId: string } }
+  { params }: { params: Promise<{ universityId: string }> }
 ) {
+  const { universityId } = await params;
   try {
     const supabase = getSupabaseServerClient();
     const universityId = params.universityId;
