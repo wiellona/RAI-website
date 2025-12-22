@@ -3,11 +3,11 @@ import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { universityId: string } }
+  { params }: { params: Promise<{ universityId: string }> }
 ) {
   try {
     const supabase = getSupabaseServerClient();
-    const universityId = params.universityId;
+    const { universityId } = await params;
 
     // Get crawling data for this university
     const { data: crawlingData, error } = await supabase

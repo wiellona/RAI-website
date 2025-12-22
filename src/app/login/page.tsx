@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
 
   useEffect(() => {
     // ✅ FIXED: Redirect to the proper login page immediately
-    router.replace('/authentication/login');
+    router.replace("/authentication/login");
   }, [router]);
 
   return (
@@ -18,5 +18,13 @@ export default function LoginPage() {
         <p className="text-[#6B2C2C]">Redirecting to login...</p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

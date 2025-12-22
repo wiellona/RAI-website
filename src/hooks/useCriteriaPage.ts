@@ -312,7 +312,7 @@ export function useCriteriaPage() {
 
         const restored: Answer = {};
         if (data && data.length > 0) {
-          data.forEach((row) => {
+          data.forEach((row: any) => {
             if (!row.question_id) return;
             const optionId = row.selected_option_id ?? null;
             const optionValue =

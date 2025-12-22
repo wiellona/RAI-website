@@ -111,7 +111,8 @@ export async function POST(req: Request) {
     const addressLocation = normalizeString(form.get("addressLocation"));
     const deanName = normalizeString(form.get("deanName"));
     const picName = normalizeString(form.get("picName"));
-    const emailAddress = normalizeString(form.get("emailAddress")) ?? user.email;
+    const emailAddress =
+      normalizeString(form.get("emailAddress")) ?? user.email;
     const publicationCount = normalizeCount(form.get("numberOfPublications"));
     const assetCount = normalizeCount(form.get("numberOfAssets"));
 

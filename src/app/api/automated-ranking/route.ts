@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { getSupabaseServerClient } from "@/supabase/supabaseServer";
+// import { createClient } from "@supabase/supabase-js";
+// import { createServerClient } from "@supabase/ssr";
+// import { getSupabaseServerClient } from "@/supabase/supabaseServer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Format the data and calculate total assets
-    const formattedData: UniversityData[] = data.map((item) => {
+    const formattedData: UniversityData[] = data.map((item: any) => {
       const total_models =
         (item.total_huggingface_models || 0) + (item.total_github_models || 0);
       const total_datasets =
