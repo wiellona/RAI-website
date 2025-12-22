@@ -86,12 +86,6 @@ export default function Navbar() {
             >
               The Ranking
             </Link>
-            {/* <Link
-              href="/ranking/automated"
-              className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
-            >
-              Automated Ranking
-            </Link> */}
             <Link
               href="#"
               onClick={onParticipateClick}
@@ -158,13 +152,6 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               The Ranking
-            </Link>
-            <Link
-              href="/ranking/automated"
-              className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Automated Ranking
             </Link>
             <Link
               href="#"
