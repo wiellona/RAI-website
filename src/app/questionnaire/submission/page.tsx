@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Navbar from "@/app/components/layout/Header";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import type { SubmissionStatus } from "@/lib/types";
 
@@ -134,11 +133,9 @@ export default function SubmissionPage() {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
     };
   }, []);
 
@@ -289,8 +286,6 @@ export default function SubmissionPage() {
 
   return (
     <div className="min-h-screen bg-[#f0f4ff]">
-      <Navbar />
-
       <main className="max-w-4xl mx-auto px-4 py-16">
         <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center">
           {errorMessage && (

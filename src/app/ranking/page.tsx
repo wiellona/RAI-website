@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 interface UniversityRank {
@@ -85,8 +86,9 @@ const getTotalAssetsValue = (uni?: UniversityCrawlData | null) => {
 };
 
 export default function RankingPage() {
-  const [rankings, setRankings] = useState<UniversityRank[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ✅ OPTIMIZED: Pagination state (20 items per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUni, setSelectedUni] = useState<UniversityRank | null>(null);
@@ -94,68 +96,43 @@ export default function RankingPage() {
     useState<UniversityCrawlData | null>(null);
   const [scoresBreakdown, setScoresBreakdown] = useState<ScoreBreakdown[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [automatedData, setAutomatedData] = useState<UniversityCrawlData[]>([]);
 
-  useEffect(() => {
-    async function fetchRankings() {
-      try {
-        setLoading(true);
-        const { data, error } = await getSupabaseBrowserClient()
-          .from("UniversityRankings")
-          .select(
-            //   `
-            //   id,
-            //   rank,
-            //   final_total_score,
-            //   university_id,
-            //   Universities (
-            //     name,
-            //     publication_evidence_path,
-            //     asset_evidence_path,
-            //     CrawlingData ( num_publications, num_assets )
-            //   )
-            // `
-            `
-            id,
-            rank,
-            final_total_score,
-            university_id,
-            Universities (
-              name
-            )
+  // ✅ OPTIMIZED: React Query for automatic caching (5 minutes)
+  const { data: allRankings = [], isLoading: loading } = useQuery({
+    queryKey: ["rankings", "all-time"],
+    queryFn: async () => {
+      const { data, error } = await getSupabaseBrowserClient()
+        .from("UniversityRankings")
+        .select(
           `
+          id,
+          rank,
+          final_total_score,
+          university_id,
+          Universities (
+            name
           )
-          .eq("period", "all-time")
-          .order("rank", { ascending: true });
+        `
+        )
+        .eq("period", "all-time")
+        .order("rank", { ascending: true });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const formatted: UniversityRank[] = data.map((item: any) => ({
-          id: item.id,
-          ranking: item.rank,
-          score: item.final_total_score,
-          university_id: item.university_id,
-          university_name: item.Universities?.name || "Unknown",
-          // aiPublications:
-          //   item.Universities?.CrawlingData?.[0]?.num_publications || 0,
-          // aiAssets: item.Universities?.CrawlingData?.[0]?.num_assets || 0,
-        }));
+      return data.map((item: any) => ({
+        id: item.id,
+        ranking: item.rank,
+        score: item.final_total_score,
+        university_id: item.university_id,
+        university_name: item.Universities?.name || "Unknown",
+      })) as UniversityRank[];
+    },
+  });
 
-        setRankings(formatted);
-      } catch (err) {
-        console.error("Failed to load ranking", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRankings();
-  }, []);
-
-  const ensureAutomatedData = async () => {
-    if (automatedData.length > 0) return automatedData;
-
-    try {
+  // ✅ OPTIMIZED: Cache automated data separately
+  const { data: automatedData = [] } = useQuery({
+    queryKey: ["rankings", "automated"],
+    queryFn: async () => {
       const response = await fetch("/api/automated-ranking", {
         cache: "no-store",
       });
@@ -165,15 +142,16 @@ export default function RankingPage() {
       const payload = (await response.json()) as {
         data?: UniversityCrawlData[];
       };
-      const data = payload.data ?? [];
-      setAutomatedData(data);
-      return data;
-    } catch (error) {
-      console.error("Failed to load automated ranking snapshot", error);
-      setAutomatedData([]);
-      return [];
-    }
-  };
+      return payload.data ?? [];
+    },
+  });
+
+  // ✅ OPTIMIZED: Paginate rankings
+  const totalPages = Math.ceil(allRankings.length / ITEMS_PER_PAGE);
+  const rankings = allRankings.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handleRowClick = async (uni: UniversityRank) => {
     setSelectedUni(uni);
@@ -186,10 +164,9 @@ export default function RankingPage() {
         `[Ranking] Loading details for university: ${uni.university_id}`
       );
 
-      const automated = await ensureAutomatedData();
-
+      // ✅ OPTIMIZED: Use cached automatedData from React Query
       const normalizedTarget = normalizeName(uni.university_name);
-      const match = automated.find((item) => {
+      const match = automatedData.find((item) => {
         const nameMatch =
           normalizeName(item.university_name) === normalizedTarget;
         const normalizedMatch = item.university_name_normalized
@@ -426,6 +403,75 @@ export default function RankingPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* ✅ OPTIMIZED: Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-8 pb-8">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                      currentPage === 1
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white hover:shadow-lg transform hover:scale-105"
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  <div className="flex gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(
+                        (page) =>
+                          page === 1 ||
+                          page === totalPages ||
+                          Math.abs(page - currentPage) <= 2
+                      )
+                      .map((page, idx, arr) => {
+                        const prevPage = arr[idx - 1];
+                        const showEllipsis = prevPage && page - prevPage > 1;
+                        return (
+                          <div key={page} className="flex items-center gap-2">
+                            {showEllipsis && (
+                              <span className="text-[#000080]/50 px-2">
+                                ...
+                              </span>
+                            )}
+                            <button
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-10 h-10 rounded-lg font-semibold transition-all duration-300 ${
+                                currentPage === page
+                                  ? "bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white shadow-lg"
+                                  : "bg-white text-[#000080] border-2 border-[#0047AB]/20 hover:border-[#0047AB] hover:bg-[#f0f4ff]"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                      currentPage === totalPages
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white hover:shadow-lg transform hover:scale-105"
+                    }`}
+                  >
+                    Next
+                  </button>
+
+                  <div className="ml-4 text-[#000080] font-semibold">
+                    Page {currentPage} of {totalPages} ({allRankings.length}{" "}
+                    total)
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>

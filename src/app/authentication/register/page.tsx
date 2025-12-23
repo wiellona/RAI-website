@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
-import Header from "@/app/components/layout/Header";
-import Footer from "@/app/components/layout/Footer";
 import Select, {
   components as selectComponents,
   type SingleValue,
@@ -342,8 +340,6 @@ export default function RegistrationPage() {
 
   return (
     <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen">
-      <Header />
-
       {/* Registration Section */}
       <section className="pt-[65px] min-h-screen flex items-center justify-center relative overflow-hidden">
         {/* Background decorative elements */}
@@ -616,8 +612,6 @@ export default function RegistrationPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }

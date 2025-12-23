@@ -8,6 +8,7 @@ export interface Profile {
   name: string | null;
   role: "user" | "reviewer" | "admin";
   is_approved: boolean;
+  is_rejected?: boolean;
   university_id?: string | null;
 }
 
@@ -33,7 +34,7 @@ export function useAuthProfile() {
         if (authUser) {
           const { data: profileData } = await supabase
             .from("Profiles")
-            .select("id,name,role,is_approved,university_id")
+            .select("id,name,role,is_approved,is_rejected,university_id")
             .eq("id", authUser.id)
             .single();
 
@@ -62,7 +63,7 @@ export function useAuthProfile() {
         if (session?.user) {
           const { data } = await supabase
             .from("Profiles")
-            .select("id,name,role,is_approved")
+            .select("id,name,role,is_approved,is_rejected,university_id")
             .eq("id", session.user.id)
             .single();
 

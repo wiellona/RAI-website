@@ -8,6 +8,7 @@ export interface Profile {
   name: string;
   role: "user" | "reviewer" | "admin";
   is_approved: boolean;
+  is_rejected?: boolean;
   created_at: string;
 }
 

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Navbar from "@/app/components/layout/Header";
 
 interface SectionStatus {
   id: number;
@@ -165,8 +164,6 @@ export default function ReviewPage() {
 
   return (
     <div className="bg-white min-h-screen flex flex-col">
-      <Navbar />
-
       <main className="flex-1 py-12 flex items-center justify-center">
         <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 md:p-12">

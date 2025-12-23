@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navbar from "@/app/components/layout/Header";
 import {
   DragDropFileUpload,
   type DragDropAccept,
@@ -94,8 +93,6 @@ export default function CriteriaPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <Navbar />
-
       <main className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 mb-8">

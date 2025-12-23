@@ -28,7 +28,8 @@ const EVIDENCE_BUCKET = "evidence_uploads";
 
 export function useCriteriaPage() {
   const router = useRouter();
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  // ✅ OPTIMIZED: No need to memoize - getSupabaseBrowserClient() is already optimized internally
+  const supabase = getSupabaseBrowserClient();
   const [criteriaData, setCriteriaData] = useState<UICriteria[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentCriteria, setCurrentCriteria] = useState(1);
@@ -193,10 +194,18 @@ export function useCriteriaPage() {
     };
   }, []);
 
+  // ✅ OPTIMIZED: Debounced localStorage write to prevent excessive writes
   useEffect(() => {
     if (!currentUserEmail) return;
+
     const answersKey = `questionnaireAnswers_${currentUserEmail}`;
-    localStorage.setItem(answersKey, JSON.stringify(answers));
+
+    // Debounce localStorage write by 500ms
+    const timer = setTimeout(() => {
+      localStorage.setItem(answersKey, JSON.stringify(answers));
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [answers, currentUserEmail]);
 
   useEffect(() => {
