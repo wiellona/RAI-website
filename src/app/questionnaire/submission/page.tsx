@@ -393,41 +393,6 @@ export default function SubmissionPage() {
           </p>
         </div>
       </main>
-
-      <footer className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white/20 rounded"></div>
-                <span className="text-xl font-bold">RAI</span>
-              </div>
-              <p className="text-sm text-white/80">
-                Responsible AI Global University Ranking
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">Contact: info@rai-ranking.org</p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  Twitter/X
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  LinkedIn
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-sm text-white/60 text-center md:text-left">
-              © 2025 RAI. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -160,47 +160,6 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white py-8 border-t-4 border-[#0099ED]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
-            {/* Logo and Description */}
-            <div className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-[#0047AB] to-[#0099ED] rounded-lg shadow-lg"></div>
-                <span className="text-xl font-bold">RAI</span>
-              </div>
-              <p className="text-sm text-white/90 font-medium">
-                Responsible AI Global University Ranking
-              </p>
-            </div>
-
-            {/* Contact and Social Links */}
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">Contact: info@rai-ranking.org</p>
-              <div className="flex space-x-4 text-sm">
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  Twitter/X
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  LinkedIn
-                </a>
-                <a href="#" className="hover:text-white/80 transition-colors">
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Copyright */}
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-sm text-white/60 text-center md:text-left">
-              © 2025 RAI. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

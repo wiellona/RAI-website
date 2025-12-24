@@ -306,23 +306,6 @@ export default function ReviewPage() {
           </div>
         </div>
       </main>
-
-      <footer className="bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] text-white py-12">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 px-6">
-          <div>
-            <p className="font-semibold text-lg">Need assistance?</p>
-            <p className="text-sm text-white/80">
-              Contact the National Research and Innovation Agency (BRIN) RAI
-              Team.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 text-sm text-white/80">
-            <span>☎ (021) 1230-4567</span>
-            <span>✉ rai@brin.go.id</span>
-            <span>📍 Jakarta, Indonesia</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
