@@ -12,12 +12,7 @@ interface AnalysisModalProps {
   analysis: string;
 }
 
-function AnalysisModal({
-  isOpen,
-  onClose,
-  universityName,
-  analysis,
-}: AnalysisModalProps) {
+function AnalysisModal({ isOpen, onClose, universityName, analysis }: AnalysisModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -60,7 +55,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
   const [error, setError] = useState("");
 
   // Get selected university data
-  const selectedUni = rankings.find((u) => u.id === selectedUniversity);
+  const selectedUni = rankings.find(u => u.id === selectedUniversity);
 
   const handleAnalyze = async () => {
     if (!selectedUniversity) {
@@ -95,19 +90,7 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
       setUniversityName(data.universityName);
       setShowModal(true);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred";
-      // Check if it's the "service unavailable" error from disabled AI feature
-      if (
-        errorMessage.includes("unavailable") ||
-        errorMessage.includes("503")
-      ) {
-        setError(
-          "AI analysis feature is currently unavailable. This feature requires Gemini AI integration."
-        );
-      } else {
-        setError(errorMessage);
-      }
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsAnalyzing(false);
     }
@@ -118,19 +101,8 @@ export default function AIAnalysis({ rankings }: AIAnalysisProps) {
       <h2 className="text-xl font-bold mb-4 text-[#000080]">
         AI-Powered Analysis & Recommendations
       </h2>
-
-      {/* Feature Status Banner */}
-      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <p className="text-sm text-yellow-800">
-          <strong>⚠️ Feature Currently Unavailable:</strong> AI analysis
-          requires Gemini AI API integration. This feature is temporarily
-          disabled.
-        </p>
-      </div>
-
       <p className="text-sm text-gray-600 mb-4">
-        Select a university to view metrics and get AI-powered insights using
-        Gemini AI
+        Select a university to view metrics and get AI-powered insights using Gemini AI
       </p>
 
       <div className="space-y-4">

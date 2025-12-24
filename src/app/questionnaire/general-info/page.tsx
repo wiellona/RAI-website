@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/app/components/layout/Header";
-import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import type { SubmissionStatus } from "@/lib/types";
 
@@ -222,8 +220,6 @@ export default function GeneralInfoPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <Navbar />
-
       <main className="py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
@@ -439,8 +435,6 @@ export default function GeneralInfoPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

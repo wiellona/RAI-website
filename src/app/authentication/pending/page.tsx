@@ -1,43 +1,114 @@
 "use client";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthProfile } from "@/hooks/useAuthProfile";
+export interface Profile {
+  id: string;
+  name: string;
+  role: "user" | "reviewer" | "admin";
+  is_approved: boolean;
+  is_rejected?: boolean;
+  created_at: string;
+}
+
+export function useAuthProfile() {
+  const supabase = getSupabaseBrowserClient();
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const load = async () => {
+      // ✅ FIXED: Use getUser() instead of getSession()
+      const {
+        data: { user: authUser },
+        error,
+      } = await supabase.auth.getUser();
+      if (ignore) return;
+
+      setUser(authUser ?? null);
+
+      if (authUser) {
+        const { data: profileData } = await supabase
+          .from("Profiles")
+          .select("id,name,role,is_approved")
+          .eq("id", authUser.id)
+          .single();
+
+        if (!ignore) setProfile((profileData as Profile) ?? null);
+      } else {
+        setProfile(null);
+      }
+      if (!ignore) setLoading(false);
+    };
+
+    load();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setProfile(null);
+        if (session?.user) {
+          supabase
+            .from("Profiles")
+            .select("id,name,role,is_approved")
+            .eq("id", session.user.id)
+            .single()
+            .then(({ data }) => setProfile((data as Profile) ?? null));
+        }
+      }
+    );
+
+    return () => {
+      ignore = true;
+      listener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  return { user, profile, loading };
+}
 
 export default function PendingApprovalPage() {
   const { user, profile, loading } = useAuthProfile();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      router.push("/authentication/login");
-      return;
-    }
-
-    if (profile?.is_approved) {
-      router.push("/");
-      return;
-    }
-  }, [user, profile, loading, router]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FAF9F6] to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff]">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#6B2C2C] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#6B2C2C] font-medium">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0047AB] mx-auto"></div>
+          <p className="mt-4 text-[#000080] font-semibold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff]">
+        <div className="text-center max-w-md p-8 bg-white rounded-2xl shadow-lg">
+          <h1 className="text-2xl font-bold text-[#000080] mb-4">
+            Not Authenticated
+          </h1>
+          <p className="text-[#000080]/70 mb-6">Please log in to continue.</p>
+          <a
+            href="/authentication/login"
+            className="inline-block bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg transition-all duration-300"
+          >
+            Go to Login
+          </a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FAF9F6] to-white px-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-2xl p-8 border-2 border-[#6B2C2C]/20">
-        <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-[#C19A6B] to-[#8B7355] rounded-full mx-auto mb-6 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-[#e6f0ff] to-[#f0f4ff] p-4">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-r from-[#0047AB] to-[#0099ED] rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               className="w-10 h-10 text-white"
               fill="none"
@@ -52,36 +123,60 @@ export default function PendingApprovalPage() {
               />
             </svg>
           </div>
-
-          <h1 className="text-3xl font-bold text-[#6B2C2C] mb-4">
+          <h1 className="text-3xl font-bold text-[#000080] mb-2">
             Pending Approval
           </h1>
-
-          <p className="text-gray-600 mb-6">
-            Your account is currently awaiting approval from an administrator.
+          <p className="text-[#000080]/70">
+            Your account is awaiting administrator approval
           </p>
+        </div>
 
-          <div className="bg-[#C19A6B]/10 border-2 border-[#C19A6B]/30 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-700">
-              <strong>Account Email:</strong> {user?.email}
-            </p>
-            {profile?.name && (
-              <p className="text-sm text-gray-700 mt-2">
-                <strong>Name:</strong> {profile.name}
-              </p>
-            )}
+        <div className="bg-gradient-to-r from-[#0047AB]/5 to-[#0099ED]/5 rounded-xl p-6 mb-6">
+          <h2 className="text-lg font-semibold text-[#000080] mb-3">
+            Account Details
+          </h2>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-[#000080]/70">Name:</span>
+              <span className="font-semibold text-[#000080]">
+                {profile?.name || "Not set"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#000080]/70">Email:</span>
+              <span className="font-semibold text-[#000080]">{user.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#000080]/70">Status:</span>
+              <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                Pending
+              </span>
+            </div>
           </div>
+        </div>
 
-          <p className="text-sm text-gray-500 mb-6">
-            You will receive an email notification once your account has been
-            approved.
+        <div className="border-l-4 border-[#0047AB] bg-[#f0f4ff] p-4 rounded-r-lg mb-6">
+          <p className="text-[#000080]/80 text-sm leading-relaxed">
+            <strong className="text-[#000080]">What happens next?</strong>
+            <br />
+            An administrator will review your registration. Once approved,
+            you'll be able to access all features of the platform. You'll
+            receive an email notification when your account is approved.
           </p>
+        </div>
 
-          <button
-            onClick={() => router.push("/authentication/login")}
-            className="w-full bg-gradient-to-r from-[#6B2C2C] to-[#8B4513] hover:from-[#8B4513] hover:to-[#6B2C2C] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+        <div className="flex gap-4">
+          <a
+            href="/"
+            className="flex-1 text-center bg-white border-2 border-[#0047AB] text-[#0047AB] font-semibold px-6 py-3 rounded-lg hover:bg-[#f0f4ff] transition-all duration-300"
           >
-            Back to Login
+            Go to Home
+          </a>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex-1 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg transition-all duration-300"
+          >
+            Refresh Status
           </button>
         </div>
       </div>

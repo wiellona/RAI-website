@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { AIRankingScores, Answer, RAIDimensions, ScoreSourceChoices } from "@/lib/types";
+import type {
+  AIRankingScores,
+  Answer,
+  RAIDimensions,
+  ScoreSourceChoices,
+} from "@/lib/types";
 
 interface ScoreSourceSelectorProps {
   answers: Answer[];
@@ -63,19 +68,28 @@ export default function ScoreSourceSelector({
       // hanya jawaban yang sudah disetujui yang dihitung.
       if (answer.is_approved === false) return;
 
-      const dimension = answer.Questions?.dimension || answer.question?.dimension;
+      const dimension =
+        answer.Questions?.dimension || answer.question?.dimension;
       if (!dimension) return;
       const normalized = dimension.toLowerCase().replace(/\s+/g, "");
       const scoreValue = parseScore(answer.score);
 
       if (normalized.includes("ethics")) totals.ethicsInAI! += scoreValue;
       else if (normalized === "fairness") totals.fairness! += scoreValue;
-      else if (normalized === "transparency") totals.transparency! += scoreValue;
-      else if (normalized === "accountability") totals.accountability! += scoreValue;
-      else if (normalized === "privacy" || normalized.includes("dataprivacy")) totals.privacy! += scoreValue;
+      else if (normalized === "transparency")
+        totals.transparency! += scoreValue;
+      else if (normalized === "accountability")
+        totals.accountability! += scoreValue;
+      else if (normalized === "privacy" || normalized.includes("dataprivacy"))
+        totals.privacy! += scoreValue;
       else if (normalized === "security") totals.security! += scoreValue;
-      else if (normalized.includes("learning") || normalized.includes("continous")) totals.continuousLearning! += scoreValue;
-      else if (normalized === "collaboration") totals.collaboration! += scoreValue;
+      else if (
+        normalized.includes("learning") ||
+        normalized.includes("continous")
+      )
+        totals.continuousLearning! += scoreValue;
+      else if (normalized === "collaboration")
+        totals.collaboration! += scoreValue;
     });
 
     return totals;
@@ -109,7 +123,10 @@ export default function ScoreSourceSelector({
   const [sources, setSources] = useState<ScoreSourceChoices>(() => {
     const base: ScoreSourceChoices = {};
 
-    const isClose = (a: number | null | undefined, b: number | null | undefined) => {
+    const isClose = (
+      a: number | null | undefined,
+      b: number | null | undefined
+    ) => {
       if (a == null || b == null) return false;
       return Math.abs(a - b) < 0.5; // small tolerance for rounding
     };
@@ -144,7 +161,10 @@ export default function ScoreSourceSelector({
 
   // Sinkronkan state lokal jika pilihan sumber atau metrics dari backend berubah
   useEffect(() => {
-    const isClose = (a: number | null | undefined, b: number | null | undefined) => {
+    const isClose = (
+      a: number | null | undefined,
+      b: number | null | undefined
+    ) => {
       if (a == null || b == null) return false;
       return Math.abs(a - b) < 0.5;
     };
@@ -177,7 +197,13 @@ export default function ScoreSourceSelector({
 
       return next;
     });
-  }, [initialSourceChoices, persistedMetrics, questionnaireTotals, aiTotals, aiRankingScores]);
+  }, [
+    initialSourceChoices,
+    persistedMetrics,
+    questionnaireTotals,
+    aiTotals,
+    aiRankingScores,
+  ]);
 
   const finalMetrics = useMemo<RAIDimensions>(() => {
     const result: RAIDimensions = {
@@ -203,31 +229,42 @@ export default function ScoreSourceSelector({
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleChangeSource = (dim: keyof RAIDimensions, value: "submission" | "ai") => {
+  const handleChangeSource = (
+    dim: keyof RAIDimensions,
+    value: "submission" | "ai"
+  ) => {
     setSources((prev) => ({ ...prev, [dim]: value }));
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/admin/university-answers/${universityId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sourceChoices: sources,
-          finalMetrics,
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/university-answers/${universityId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceChoices: sources,
+            finalMetrics,
+          }),
+        }
+      );
 
       if (!response.ok) {
         let details = "";
         try {
           const body = await response.json();
-          details = typeof body?.error === "string" ? body.error : JSON.stringify(body);
+          details =
+            typeof body?.error === "string" ? body.error : JSON.stringify(body);
         } catch {
           // ignore
         }
-        console.error("Failed to save score sources:", response.status, details);
+        console.error(
+          "Failed to save score sources:",
+          response.status,
+          details
+        );
         throw new Error("Failed to save score sources");
       }
 
@@ -250,18 +287,23 @@ export default function ScoreSourceSelector({
         Source Selection: Questionnaire vs AI
       </h2>
       <p className="text-gray-600 mb-4 text-sm">
-        For each RAI dimension, choose whether the official score should come from the approved questionnaire
-        submission or from AI-based crawling scores.
+        For each RAI dimension, choose whether the official score should come
+        from the approved questionnaire submission or from AI-based crawling
+        scores.
       </p>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-          <thead className="bg-linear-to-r from-[#000080] to-[#0047AB] text-white">
+          <thead className="bg-gradient-to-r from-[#000080] to-[#0047AB] text-white">
             <tr>
               <th className="py-3 px-4 text-left font-semibold">Dimension</th>
-              <th className="py-3 px-4 text-center font-semibold">Questionnaire Score</th>
+              <th className="py-3 px-4 text-center font-semibold">
+                Questionnaire Score
+              </th>
               <th className="py-3 px-4 text-center font-semibold">AI Score</th>
               <th className="py-3 px-4 text-center font-semibold">Use</th>
-              <th className="py-3 px-4 text-center font-semibold">Final Score</th>
+              <th className="py-3 px-4 text-center font-semibold">
+                Final Score
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -272,12 +314,24 @@ export default function ScoreSourceSelector({
               const source = sources[dim] ?? "submission";
 
               return (
-                <tr key={dim} className="border-b last:border-b-0">
-                  <td className="py-3 px-4 text-[#000080] font-medium">{RAI_LABELS[dim]}</td>
-                  <td className="py-3 px-4 text-center">{qVal.toFixed(2)}</td>
-                  <td className="py-3 px-4 text-center">{aiVal.toFixed(2)}</td>
+                <tr
+                  key={dim}
+                  className="border-b last:border-b-0 hover:bg-[#f0f4ff] transition-colors"
+                >
+                  <td className="py-3 px-4 text-[#000080] font-medium">
+                    {RAI_LABELS[dim]}
+                  </td>
+                  <td className="py-3 px-4 text-center text-[#000080] font-semibold">
+                    {qVal.toFixed(2)}
+                  </td>
+                  <td className="py-3 px-4 text-center text-[#000080] font-semibold">
+                    {aiVal.toFixed(2)}
+                  </td>
                   <td className="py-3 px-4 text-center">
-                    <div className="inline-flex rounded-md shadow-sm" role="group">
+                    <div
+                      className="inline-flex rounded-md shadow-sm"
+                      role="group"
+                    >
                       <button
                         type="button"
                         onClick={() => handleChangeSource(dim, "submission")}
@@ -297,7 +351,11 @@ export default function ScoreSourceSelector({
                           source === "ai"
                             ? "bg-[#0099ED] text-white border-[#0099ED]"
                             : "bg-white text-gray-700 hover:bg-gray-50"
-                        } ${!aiRankingScores ? "opacity-50 cursor-not-allowed" : ""}`}
+                        } ${
+                          !aiRankingScores
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                       >
                         AI
                       </button>
@@ -316,7 +374,7 @@ export default function ScoreSourceSelector({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="px-6 py-2 bg-linear-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg hover:from-[#0099ED] hover:to-[#0047AB] disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md"
+          className="px-6 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded-lg hover:from-[#0099ED] hover:to-[#0047AB] disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md"
         >
           {isSaving ? "Saving..." : "Save Source Choices"}
         </button>

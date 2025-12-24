@@ -22,8 +22,10 @@ export default function UniversityAnswersPage() {
     async function fetchAnswers() {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/admin/university-answers/${universityId}`);
-        if (!response.ok) throw new Error('Failed to fetch answers');
+        const response = await fetch(
+          `/api/admin/university-answers/${universityId}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch answers");
         const result = await response.json();
         setData(result);
       } catch (err: any) {
@@ -43,7 +45,9 @@ export default function UniversityAnswersPage() {
       <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#000080]">Loading...</h1>
+            <h1 className="text-2xl font-semibold text-[#000080]">
+              Loading...
+            </h1>
           </div>
         </Container>
       </div>
@@ -56,7 +60,7 @@ export default function UniversityAnswersPage() {
         <Container>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-red-600 mb-4">Error</h1>
-            <p className="text-gray-600">{error || 'No data found'}</p>
+            <p className="text-gray-600">{error || "No data found"}</p>
             <button
               onClick={() => router.back()}
               className="mt-4 px-4 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded hover:from-[#0099ED] hover:to-[#0047AB]"
@@ -74,8 +78,12 @@ export default function UniversityAnswersPage() {
       <div className="bg-gradient-to-br from-white via-[#f0f4ff] to-white min-h-screen py-16">
         <Container>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#000080] mb-4">{data.universityName}</h1>
-            <p className="text-gray-600">No questionnaire answers found for this university.</p>
+            <h1 className="text-2xl font-semibold text-[#000080] mb-4">
+              {data.universityName}
+            </h1>
+            <p className="text-gray-600">
+              No questionnaire answers found for this university.
+            </p>
             <button
               onClick={() => router.back()}
               className="mt-4 px-4 py-2 bg-gradient-to-r from-[#0047AB] to-[#0099ED] text-white rounded hover:from-[#0099ED] hover:to-[#0047AB]"
@@ -98,9 +106,12 @@ export default function UniversityAnswersPage() {
           >
             ← Back to Rankings
           </button>
-          <h1 className="text-4xl font-bold text-[#000080]">{data.universityName}</h1>
+          <h1 className="text-4xl font-bold text-[#000080]">
+            {data.universityName}
+          </h1>
           <p className="text-gray-600 mt-2">
-            Questionnaire Answers - Submitted: {new Date(data.submittedAt).toLocaleDateString()}
+            Questionnaire Answers - Submitted:{" "}
+            {new Date(data.submittedAt).toLocaleDateString()}
           </p>
         </div>
 
@@ -108,8 +119,12 @@ export default function UniversityAnswersPage() {
         <SubmissionDocuments
           universityName={data.universityName}
           letterPath={data.submissionDocuments?.letterPath || null}
-          assetEvidencePath={data.submissionDocuments?.assetEvidencePath || null}
-          publicationEvidencePath={data.submissionDocuments?.publicationEvidencePath || null}
+          assetEvidencePath={
+            data.submissionDocuments?.assetEvidencePath || null
+          }
+          publicationEvidencePath={
+            data.submissionDocuments?.publicationEvidencePath || null
+          }
         />
 
         {/* AI Ranking Scores Component */}
@@ -137,7 +152,10 @@ export default function UniversityAnswersPage() {
         />
 
         {/* Questionnaire Answers Component */}
-        <QuestionnaireAnswers answers={data.answers} universityId={data.universityId} />
+        <QuestionnaireAnswers
+          answers={data.answers}
+          universityId={data.universityId}
+        />
       </Container>
     </div>
   );

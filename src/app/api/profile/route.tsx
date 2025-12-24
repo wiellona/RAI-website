@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 export interface Profile {
@@ -8,6 +8,7 @@ export interface Profile {
   name: string;
   role: "user" | "reviewer" | "admin";
   is_approved: boolean;
+  is_rejected?: boolean;
   created_at: string;
 }
 
@@ -47,7 +48,7 @@ export function useAuthProfile() {
     load();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
+      (_event, session) => {
         setUser(session?.user ?? null);
         setProfile(null);
         if (session?.user) {
@@ -56,9 +57,7 @@ export function useAuthProfile() {
             .select("id,name,role,is_approved")
             .eq("id", session.user.id)
             .single()
-            .then(({ data }: { data: any }) =>
-              setProfile((data as Profile) ?? null)
-            );
+            .then(({ data }) => setProfile((data as Profile) ?? null));
         }
       }
     );

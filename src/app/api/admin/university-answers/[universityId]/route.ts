@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 export async function GET(
   request: NextRequest,
@@ -11,22 +11,19 @@ export async function GET(
 
     // Get university data for submission documents and approval status
     const { data: university, error: universityError } = await supabase
-      .from("Universities")
-      .select(
-        "letter_path, asset_evidence_path, publication_evidence_path, is_data_approved, metrics"
-      )
-      .eq("id", universityId)
+      .from('Universities')
+      .select('letter_path, asset_evidence_path, publication_evidence_path, is_data_approved, metrics')
+      .eq('id', universityId)
       .single();
 
     if (universityError) {
-      console.error("University error:", universityError);
+      console.error('University error:', universityError);
     }
 
     // Get submission for this university
     const { data: submissions, error: submissionError } = await supabase
-      .from("Submissions")
-      .select(
-        `
+      .from('Submissions')
+      .select(`
         id,
         university_id,
         submitted_at,
@@ -34,15 +31,14 @@ export async function GET(
         Universities (
           name
         )
-      `
-      )
-      .eq("university_id", universityId)
-      .in("status", ["approved", "completed"])
-      .order("submitted_at", { ascending: false })
+      `)
+      .eq('university_id', universityId)
+      .in('status', ['approved', 'completed'])
+      .order('submitted_at', { ascending: false })
       .limit(1);
 
     if (submissionError) {
-      console.error("Submission error:", submissionError);
+      console.error('Submission error:', submissionError);
       throw submissionError;
     }
 
@@ -50,26 +46,25 @@ export async function GET(
       return NextResponse.json(
         {
           universityId,
-          universityName: "Unknown",
+          universityName: 'Unknown',
           submissionId: null,
           submittedAt: null,
           answers: [],
           crawlingData: null,
           submissionDocuments: null,
-          isDataApproved: false,
+          isDataApproved: false
         },
         { status: 200 }
       );
     }
 
     const submission = submissions[0];
-    const universityName = submission.Universities?.[0]?.name || "Unknown";
+    const universityName = submission.Universities?.name || 'Unknown';
 
     // Get answers for this submission with proper joins
     const { data: answers, error: answersError } = await supabase
-      .from("Answers")
-      .select(
-        `
+      .from('Answers')
+      .select(`
         id,
         submission_id,
         question_id,
@@ -89,21 +84,19 @@ export async function GET(
           id,
           text
         )
-      `
-      )
-      .eq("submission_id", submission.id)
-      .order("question_id");
+      `)
+      .eq('submission_id', submission.id)
+      .order('question_id');
 
     if (answersError) {
-      console.error("Answers error:", answersError);
+      console.error('Answers error:', answersError);
       throw answersError;
     }
 
     // Get crawling data for this university by name
     const { data: crawlingData, error: crawlingError } = await supabase
-      .from("university_crawling")
-      .select(
-        `
+      .from('university_crawling')
+      .select(`
         id,
         university_name,
         storage_folder_path,
@@ -120,25 +113,24 @@ export async function GET(
         total_divisions,
         status,
         analysis_timestamp
-      `
-      )
-      .ilike("university_name", universityName)
-      .order("analysis_timestamp", { ascending: false })
+      `)
+      .ilike('university_name', universityName)
+      .order('analysis_timestamp', { ascending: false })
       .limit(1);
 
     if (crawlingError) {
-      console.error("Crawling error:", crawlingError);
+      console.error('Crawling error:', crawlingError);
     }
 
     // Calculate AI ranking scores if crawling data exists
     let aiRankingScores = null;
     if (crawlingData && crawlingData.length > 0) {
       const currentData = crawlingData[0];
-
+      
       // Get all universities' crawling data for ranking calculation
-      const { data: allCrawlingData } = await supabase.from(
-        "university_crawling"
-      ).select(`
+      const { data: allCrawlingData } = await supabase
+        .from('university_crawling')
+        .select(`
           total_publications,
           total_huggingface_models,
           total_huggingface_datasets,
@@ -150,55 +142,35 @@ export async function GET(
 
       if (allCrawlingData && allCrawlingData.length > 0) {
         // Calculate total assets for all universities
-        const dataWithAssets = allCrawlingData.map((item) => {
-          const total_models =
-            (item.total_huggingface_models || 0) +
-            (item.total_github_models || 0);
-          const total_datasets =
-            (item.total_huggingface_datasets || 0) +
-            (item.total_github_datasets || 0);
+        const dataWithAssets = allCrawlingData.map(item => {
+          const total_models = (item.total_huggingface_models || 0) + (item.total_github_models || 0);
+          const total_datasets = (item.total_huggingface_datasets || 0) + (item.total_github_datasets || 0);
           return {
             total_publications: item.total_publications || 0,
             total_models,
             total_datasets,
             total_assets: total_models + total_datasets,
             total_policies: item.total_policies || 0,
-            total_divisions: item.total_divisions || 0,
+            total_divisions: item.total_divisions || 0
           };
         });
 
         // Sort values for percentile calculation
-        const publicationsValues = dataWithAssets
-          .map((d) => d.total_publications)
-          .sort((a, b) => a - b);
-        const assetsValues = dataWithAssets
-          .map((d) => d.total_assets)
-          .sort((a, b) => a - b);
-        const policiesValues = dataWithAssets
-          .map((d) => d.total_policies)
-          .sort((a, b) => a - b);
-        const divisionsValues = dataWithAssets
-          .map((d) => d.total_divisions)
-          .sort((a, b) => a - b);
+        const publicationsValues = dataWithAssets.map(d => d.total_publications).sort((a, b) => a - b);
+        const assetsValues = dataWithAssets.map(d => d.total_assets).sort((a, b) => a - b);
+        const policiesValues = dataWithAssets.map(d => d.total_policies).sort((a, b) => a - b);
+        const divisionsValues = dataWithAssets.map(d => d.total_divisions).sort((a, b) => a - b);
 
         // Calculate current university's metrics
-        const total_models =
-          (currentData.total_huggingface_models || 0) +
-          (currentData.total_github_models || 0);
-        const total_datasets =
-          (currentData.total_huggingface_datasets || 0) +
-          (currentData.total_github_datasets || 0);
+        const total_models = (currentData.total_huggingface_models || 0) + (currentData.total_github_models || 0);
+        const total_datasets = (currentData.total_huggingface_datasets || 0) + (currentData.total_github_datasets || 0);
         const total_assets = total_models + total_datasets;
         const total_publications = currentData.total_publications || 0;
         const total_policies = currentData.total_policies || 0;
         const total_divisions = currentData.total_divisions || 0;
 
         // Calculate scores using percentile ranking (same as automated-ranking route)
-        const calculateScore = (
-          value: number,
-          sortedValues: number[],
-          maxScore: number
-        ): number => {
+        const calculateScore = (value: number, sortedValues: number[], maxScore: number): number => {
           const n = sortedValues.length;
           if (n === 0) return 0;
           if (n === 1) return maxScore;
@@ -209,102 +181,43 @@ export async function GET(
 
         // Calculate 8 detailed category scores
         // Publications split into 2 categories
-        const category1_score = calculateScore(
-          total_publications,
-          publicationsValues,
-          2000
-        ); // Ethics in AI
-        const category2_score = calculateScore(
-          total_publications,
-          publicationsValues,
-          1200
-        ); // Fairness
-
+        const category1_score = calculateScore(total_publications, publicationsValues, 2000); // Ethics in AI
+        const category2_score = calculateScore(total_publications, publicationsValues, 1200); // Fairness
+        
         // Assets split into 2 categories
-        const category3_score = calculateScore(
-          total_assets,
-          assetsValues,
-          1300
-        ); // Transparency
-        const category4_score = calculateScore(
-          total_assets,
-          assetsValues,
-          1800
-        ); // Accountability
-
+        const category3_score = calculateScore(total_assets, assetsValues, 1300); // Transparency
+        const category4_score = calculateScore(total_assets, assetsValues, 1800); // Accountability
+        
         // Policies split into 2 categories
-        const category5_score = calculateScore(
-          total_policies,
-          policiesValues,
-          600
-        ); // Privacy
-        const category6_score = calculateScore(
-          total_policies,
-          policiesValues,
-          1200
-        ); // Security
-
+        const category5_score = calculateScore(total_policies, policiesValues, 600); // Privacy
+        const category6_score = calculateScore(total_policies, policiesValues, 1200); // Security
+        
         // Divisions split into 2 categories
-        const category7_score = calculateScore(
-          total_divisions,
-          divisionsValues,
-          800
-        ); // Continuous Learning
-        const category8_score = calculateScore(
-          total_divisions,
-          divisionsValues,
-          1100
-        ); // Collaboration
+        const category7_score = calculateScore(total_divisions, divisionsValues, 800); // Continuous Learning
+        const category8_score = calculateScore(total_divisions, divisionsValues, 1100); // Collaboration
 
         // Calculate grouped scores for backward compatibility
         const publications_grade = category1_score + category2_score;
         const assets_grade = category3_score + category4_score;
         const policies_grade = category5_score + category6_score;
         const divisions_grade = category7_score + category8_score;
-
-        const total_score =
-          publications_grade + assets_grade + policies_grade + divisions_grade;
+        
+        const total_score = publications_grade + assets_grade + policies_grade + divisions_grade;
 
         // Calculate rank
-        const allScores = dataWithAssets
-          .map((item) => {
-            const cat1 = calculateScore(
-              item.total_publications,
-              publicationsValues,
-              2000
-            );
-            const cat2 = calculateScore(
-              item.total_publications,
-              publicationsValues,
-              1200
-            );
-            const cat3 = calculateScore(item.total_assets, assetsValues, 1300);
-            const cat4 = calculateScore(item.total_assets, assetsValues, 1800);
-            const cat5 = calculateScore(
-              item.total_policies,
-              policiesValues,
-              600
-            );
-            const cat6 = calculateScore(
-              item.total_policies,
-              policiesValues,
-              1200
-            );
-            const cat7 = calculateScore(
-              item.total_divisions,
-              divisionsValues,
-              800
-            );
-            const cat8 = calculateScore(
-              item.total_divisions,
-              divisionsValues,
-              1100
-            );
-            return cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + cat8;
-          })
-          .sort((a, b) => b - a);
+        const allScores = dataWithAssets.map(item => {
+          const cat1 = calculateScore(item.total_publications, publicationsValues, 2000);
+          const cat2 = calculateScore(item.total_publications, publicationsValues, 1200);
+          const cat3 = calculateScore(item.total_assets, assetsValues, 1300);
+          const cat4 = calculateScore(item.total_assets, assetsValues, 1800);
+          const cat5 = calculateScore(item.total_policies, policiesValues, 600);
+          const cat6 = calculateScore(item.total_policies, policiesValues, 1200);
+          const cat7 = calculateScore(item.total_divisions, divisionsValues, 800);
+          const cat8 = calculateScore(item.total_divisions, divisionsValues, 1100);
+          return cat1 + cat2 + cat3 + cat4 + cat5 + cat6 + cat7 + cat8;
+        }).sort((a, b) => b - a);
 
-        const rank = allScores.findIndex((score) => score === total_score) + 1;
+        const rank = allScores.findIndex(score => score === total_score) + 1;
 
         aiRankingScores = {
           category1_score: Math.round(category1_score * 100) / 100,
@@ -326,13 +239,13 @@ export async function GET(
           total_datasets,
           total_policies,
           total_divisions,
-          total_assets,
+          total_assets
         };
       }
     }
 
     // Transform answers to include category name as dimension
-    const transformedAnswers = (answers || []).map((answer) => {
+    const transformedAnswers = (answers || []).map(answer => {
       const questionRelation = Array.isArray(answer.Questions)
         ? answer.Questions[0]
         : answer.Questions;
@@ -343,17 +256,13 @@ export async function GET(
       const dimensionName = (() => {
         const categories = questionRelation?.Categories;
         if (Array.isArray(categories)) {
-          return categories[0]?.name || "Unknown";
+          return categories[0]?.name || 'Unknown';
         }
-        if (
-          categories &&
-          typeof categories === "object" &&
-          "name" in categories
-        ) {
+        if (categories && typeof categories === 'object' && 'name' in categories) {
           const name = (categories as { name?: string | null }).name;
-          return name || "Unknown";
+          return name || 'Unknown';
         }
-        return "Unknown";
+        return 'Unknown';
       })();
 
       return {
@@ -365,12 +274,12 @@ export async function GET(
         score: answer.score,
         is_approved: answer.is_approved,
         Questions: {
-          question_text: questionRelation?.text || "",
-          dimension: dimensionName,
+          question_text: questionRelation?.text || '',
+          dimension: dimensionName
         },
         Options: {
-          option_text: optionRelation?.text || "",
-        },
+          option_text: optionRelation?.text || ''
+        }
       };
     });
 
@@ -380,19 +289,18 @@ export async function GET(
         ? (rawMetrics.sources as Record<string, "submission" | "ai">)
         : null;
 
-    const metrics =
-      rawMetrics && typeof rawMetrics === "object"
-        ? {
-            collaboration: rawMetrics.collaboration ?? null,
-            privacy: rawMetrics.privacy ?? null,
-            accountability: rawMetrics.accountability ?? null,
-            security: rawMetrics.security ?? null,
-            ethicsInAI: rawMetrics.ethicsInAI ?? null,
-            fairness: rawMetrics.fairness ?? null,
-            transparency: rawMetrics.transparency ?? null,
-            continuousLearning: rawMetrics.continuousLearning ?? null,
-          }
-        : null;
+    const metrics = rawMetrics && typeof rawMetrics === "object"
+      ? {
+          collaboration: rawMetrics.collaboration ?? null,
+          privacy: rawMetrics.privacy ?? null,
+          accountability: rawMetrics.accountability ?? null,
+          security: rawMetrics.security ?? null,
+          ethicsInAI: rawMetrics.ethicsInAI ?? null,
+          fairness: rawMetrics.fairness ?? null,
+          transparency: rawMetrics.transparency ?? null,
+          continuousLearning: rawMetrics.continuousLearning ?? null,
+        }
+      : null;
 
     const result = {
       universityId: submission.university_id,
@@ -400,15 +308,12 @@ export async function GET(
       submissionId: submission.id,
       submittedAt: submission.submitted_at,
       answers: transformedAnswers,
-      crawlingData:
-        crawlingData && crawlingData.length > 0 ? crawlingData[0] : null,
-      submissionDocuments: university
-        ? {
-            letterPath: university.letter_path,
-            assetEvidencePath: university.asset_evidence_path,
-            publicationEvidencePath: university.publication_evidence_path,
-          }
-        : null,
+      crawlingData: crawlingData && crawlingData.length > 0 ? crawlingData[0] : null,
+      submissionDocuments: university ? {
+        letterPath: university.letter_path,
+        assetEvidencePath: university.asset_evidence_path,
+        publicationEvidencePath: university.publication_evidence_path
+      } : null,
       isDataApproved: university?.is_data_approved || false,
       aiRankingScores,
       sourceChoices,
@@ -417,10 +322,12 @@ export async function GET(
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch answers";
-    console.error("Error fetching university answers:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to fetch answers';
+    console.error('Error fetching university answers:', error);
+    return NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
   }
 }
 
@@ -434,7 +341,7 @@ export async function PATCH(
 
     if (!universityId) {
       return NextResponse.json(
-        { error: "University ID is required" },
+        { error: 'University ID is required' },
         { status: 400 }
       );
     }
@@ -452,21 +359,18 @@ export async function PATCH(
     if (approvals && typeof approvals === "object") {
       const updates = Object.entries(approvals).map(([answerId, isApproved]) =>
         supabase
-          .from("Answers")
+          .from('Answers')
           .update({ is_approved: !!isApproved })
-          .eq("id", answerId)
+          .eq('id', answerId)
       );
 
       const results = await Promise.all(updates);
-      const failed = results.filter((result) => result.error);
+      const failed = results.filter(result => result.error);
 
       if (failed.length > 0) {
-        console.error(
-          "Failed to update some approvals:",
-          failed.map((item) => item.error)
-        );
+        console.error('Failed to update some approvals:', failed.map(item => item.error));
         return NextResponse.json(
-          { error: "Failed to update approvals" },
+          { error: 'Failed to update approvals' },
           { status: 500 }
         );
       }
@@ -474,26 +378,19 @@ export async function PATCH(
       didUpdateApprovals = true;
 
       // Cari submission_id dari salah satu jawaban yang baru diperbarui
-      const { data: submissionRow, error: submissionLookupError } =
-        await supabase
-          .from("Answers")
-          .select("submission_id")
-          .in("id", Object.keys(approvals))
-          .limit(1)
-          .maybeSingle();
+      const { data: submissionRow, error: submissionLookupError } = await supabase
+        .from("Answers")
+        .select("submission_id")
+        .in("id", Object.keys(approvals))
+        .limit(1)
+        .maybeSingle();
 
       if (submissionLookupError) {
-        console.error(
-          "Failed to fetch submission_id for finalize-submission:",
-          submissionLookupError
-        );
+        console.error("Failed to fetch submission_id for finalize-submission:", submissionLookupError);
       } else if (submissionRow?.submission_id) {
-        const { error: finalizeError } = await supabase.functions.invoke(
-          "finalize-submission",
-          {
-            body: { submission_id: submissionRow.submission_id },
-          }
-        );
+        const { error: finalizeError } = await supabase.functions.invoke("finalize-submission", {
+          body: { submission_id: submissionRow.submission_id },
+        });
 
         if (finalizeError) {
           console.error("Failed to invoke finalize-submission:", finalizeError);
@@ -501,25 +398,17 @@ export async function PATCH(
       }
     }
 
-    if (
-      sourceChoices &&
-      typeof sourceChoices === "object" &&
-      finalMetrics &&
-      typeof finalMetrics === "object"
-    ) {
+    if (sourceChoices && typeof sourceChoices === "object" && finalMetrics && typeof finalMetrics === "object") {
       const { data: uniRow, error: uniError } = await supabase
-        .from("Universities")
-        .select("metrics")
-        .eq("id", universityId)
+        .from('Universities')
+        .select('metrics')
+        .eq('id', universityId)
         .maybeSingle();
 
       if (uniError) {
-        console.error(
-          "Failed to fetch existing metrics for university:",
-          uniError
-        );
+        console.error('Failed to fetch existing metrics for university:', uniError);
         return NextResponse.json(
-          { error: "Failed to update metrics" },
+          { error: 'Failed to update metrics' },
           { status: 500 }
         );
       }
@@ -532,14 +421,14 @@ export async function PATCH(
       };
 
       const { error: updateError } = await supabase
-        .from("Universities")
+        .from('Universities')
         .update({ metrics: newMetrics })
-        .eq("id", universityId);
+        .eq('id', universityId);
 
       if (updateError) {
-        console.error("Failed to update metrics for university:", updateError);
+        console.error('Failed to update metrics for university:', updateError);
         return NextResponse.json(
-          { error: "Failed to update metrics" },
+          { error: 'Failed to update metrics' },
           { status: 500 }
         );
       }
@@ -549,23 +438,25 @@ export async function PATCH(
 
     if (!didUpdateApprovals && !didUpdateMetrics) {
       return NextResponse.json(
-        { error: "No valid payload provided" },
+        { error: 'No valid payload provided' },
         { status: 400 }
       );
     }
 
     const messageParts = [] as string[];
-    if (didUpdateApprovals) messageParts.push("approvals");
-    if (didUpdateMetrics) messageParts.push("metrics");
+    if (didUpdateApprovals) messageParts.push('approvals');
+    if (didUpdateMetrics) messageParts.push('metrics');
 
     return NextResponse.json(
-      { message: `Updated ${messageParts.join(" and ")} successfully` },
+      { message: `Updated ${messageParts.join(' and ')} successfully` },
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to update approvals";
-    console.error("Error updating approvals:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to update approvals';
+    console.error('Error updating approvals:', error);
+    return NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
   }
 }

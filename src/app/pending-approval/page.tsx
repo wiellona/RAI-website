@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/app/components/layout/Header";
-import Footer from "@/app/components/layout/Footer";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import { useAuthProfile } from "@/app/providers/AuthProfile";
 
@@ -61,13 +59,21 @@ export default function UniversityInfoPage() {
             .single();
 
           if (uniData && !ignore) {
+            // Determine status based on profile flags
+            let status = "Pending";
+            if (profile?.is_rejected) {
+              status = "Rejected";
+            } else if (profile?.is_approved) {
+              status = "Approved";
+            }
+
             setUniversityData({
               universityName: uniData.name || "",
               addressLocation: uniData.address || "",
               deanName: uniData.dean_name || "",
               picName: uniData.pic_name || "",
               emailAddress: uniData.pic_email || "",
-              status: uniData.is_approved ? "Approved" : "Pending",
+              status: status,
               lastUpdated: uniData.updated_at || "",
               aiPublicationsFile: null,
               aiOpenSourceFile: null,
@@ -87,7 +93,13 @@ export default function UniversityInfoPage() {
     return () => {
       ignore = true;
     };
-  }, [router, supabase, profile]);
+  }, [
+    router,
+    supabase,
+    profile?.university_id,
+    profile?.is_rejected,
+    profile?.is_approved,
+  ]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -132,6 +144,20 @@ export default function UniversityInfoPage() {
             />
           </svg>
         );
+      case "rejected":
+        return (
+          <svg
+            className="w-5 h-5 text-red-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+        );
       default:
         return (
           <svg
@@ -152,14 +178,12 @@ export default function UniversityInfoPage() {
   if (loading || profileLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
         <div className="flex-1 flex items-center justify-center text-gray-600">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#A84032] mb-4"></div>
             <p>Loading university information...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -167,7 +191,6 @@ export default function UniversityInfoPage() {
   if (!profile) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
         <div className="flex-1 flex items-center justify-center text-gray-600">
           <div className="text-center">
             <p className="text-lg text-gray-800">
@@ -175,16 +198,12 @@ export default function UniversityInfoPage() {
             </p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Header */}
-      <Navbar />
-
       {/* Main Content */}
       <main className="py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -284,7 +303,7 @@ export default function UniversityInfoPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-8 border-t border-gray-200 flex flex-col sm:flex-row gap-4">
+            <div className="pt-8 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => router.push("/")}
@@ -301,8 +320,6 @@ export default function UniversityInfoPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

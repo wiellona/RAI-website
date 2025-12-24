@@ -1,10 +1,14 @@
 import type { University } from "./types";
 
+/**
+ * Database type mapping untuk tabel universities
+ * Menggunakan camelCase sesuai dengan schema Supabase
+ */
 export type DbUniversity = {
   id: string;
   slug: string;
   name: string;
-  country_code: string;
+  country: string;
   region: string;
   rank: number;
   trustScore: number;
@@ -12,9 +16,6 @@ export type DbUniversity = {
   metrics: any; // JSONB
   created_at?: string;
   updated_at?: string;
-  dean_name?: string;
-  pic_name?: string;
-  pic_email?: string;
 };
 
 /**
@@ -25,7 +26,7 @@ export function mapDbToUniversity(db: DbUniversity): University {
     id: db.id,
     slug: db.slug,
     name: db.name,
-    country: db.country_code,
+    country: db.country,
     region: db.region,
     rank: db.rank,
     trustScore: db.trustScore,
@@ -44,8 +45,8 @@ export function mapUniversityToDb(uni: University): Partial<DbUniversity> {
     slug: uni.slug,
     name: uni.name,
     country_code: uni.country,
-    dean_name: "",
-    pic_name: "",
-    pic_email: "",
+    dean_name: '',
+    pic_name: '',
+    pic_email: '',
   };
 }

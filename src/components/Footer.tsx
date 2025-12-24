@@ -3,7 +3,7 @@ import Container from "./Container";
 
 export default function Footer() {
   return (
-    <footer className="mt-16 bg-gradient-to-br from-[#000080] via-[#0000b3] to-[#000080] py-12 text-white">
+    <footer className="mt-16 bg-gradient-to-r from-[#000080] via-[#0047AB] to-[#000080] py-12 text-white shadow-2xl border-t-4 border-[#0099ED]">
       <Container>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>

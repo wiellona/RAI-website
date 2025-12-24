@@ -98,7 +98,8 @@ export async function proxy(req: NextRequest) {
       return res;
     }
 
-    const requiresApproval = profile?.role !== "admin" && !profile?.is_approved;
+    const requiresApproval =
+      profile?.role !== "admin" && !profile?.is_approved;
 
     if (requiresApproval) {
       return NextResponse.redirect(new URL("/pending-approval", req.url));

@@ -9,67 +9,98 @@ export async function POST(
     const supabase = getSupabaseServerClient();
     const { id } = await params;
     const url = new URL(request.url);
-    const action = url.pathname.split('/').pop();
+    const action = url.pathname.split("/").pop();
 
     if (action === "accept") {
-      // 1. Ambil university berdasarkan ID untuk mendapatkan pic_name
-      const { data: university, error: fetchError } = await supabase
-        .from("Universities")
-        .select("pic_name")
-        .eq("id", id)
-        .single();
+      console.log(
+        `[api/admin/submissions/accept] Accepting university with ID: ${id}`
+      );
 
-      if (fetchError) throw fetchError;
-
-      if (!university?.pic_name) {
-        return NextResponse.json({ error: "University pic_name not found" }, { status: 404 });
-      }
-
-      // 2. Update is_approved = true di Profiles berdasarkan pic_name
-      const { error: profileError } = await supabase
-        .from('Profiles')
-        .update({ is_approved: true })
-        .eq('name', university.pic_name);
+      // Update is_approved = true di Profiles berdasarkan university_id
+      const { data: updatedProfiles, error: profileError } = await supabase
+        .from("Profiles")
+        .update({ is_approved: true, is_rejected: false })
+        .eq("university_id", id)
+        .select();
 
       if (profileError) {
-        console.error('Error updating profile:', profileError);
+        console.error(
+          "[api/admin/submissions/accept] Error updating profile:",
+          profileError
+        );
         throw profileError;
       }
 
-      return NextResponse.json({ success: true, message: "University approved successfully" });
+      console.log(
+        "[api/admin/submissions/accept] Profiles updated:",
+        updatedProfiles
+      );
+
+      if (!updatedProfiles || updatedProfiles.length === 0) {
+        console.warn(
+          "[api/admin/submissions/accept] No profiles found with university_id:",
+          id
+        );
+        return NextResponse.json(
+          {
+            error: "No profile found for this university",
+          },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "University approved successfully",
+        profilesUpdated: updatedProfiles.length,
+      });
     } else if (action === "reject") {
-      // 1. Ambil university berdasarkan ID untuk mendapatkan pic_name
-      const { data: university, error: fetchError } = await supabase
-        .from("Universities")
-        .select("pic_name")
-        .eq("id", id)
-        .single();
+      console.log(
+        `[api/admin/submissions/reject] Rejecting university with ID: ${id}`
+      );
 
-      if (fetchError) throw fetchError;
-
-      if (!university?.pic_name) {
-        return NextResponse.json({ error: "University pic_name not found" }, { status: 404 });
-      }
-
-      // 2. Set is_rejected = true untuk menandai bahwa submission ini ditolak
-      // Ini akan menghilangkan submission dari daftar pending
-      const { error: profileError } = await supabase
-        .from('Profiles')
+      // 1. Update is_rejected = true di Profiles berdasarkan university_id
+      // Lebih reliable daripada matching pic_name
+      const { data: updatedProfiles, error: profileError } = await supabase
+        .from("Profiles")
         .update({ is_rejected: true })
-        .eq('name', university.pic_name);
+        .eq("university_id", id)
+        .select();
 
       if (profileError) {
-        console.error('Error updating profile:', profileError);
+        console.error(
+          "[api/admin/submissions/reject] Error updating profile:",
+          profileError
+        );
         throw profileError;
       }
 
-      return NextResponse.json({ success: true, message: "University rejected" });
+      console.log(
+        "[api/admin/submissions/reject] Profiles updated:",
+        updatedProfiles
+      );
+
+      if (!updatedProfiles || updatedProfiles.length === 0) {
+        console.warn(
+          "[api/admin/submissions/reject] No profiles found with university_id:",
+          id
+        );
+        return NextResponse.json(
+          {
+            error: "No profile found for this university",
+          },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "University rejected",
+        profilesUpdated: updatedProfiles.length,
+      });
     }
 
-    return NextResponse.json(
-      { error: "Invalid action" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
     console.error(`[api/admin/submissions/action]`, error);
 

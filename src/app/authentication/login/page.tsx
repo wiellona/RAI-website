@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import Navbar from "@/app/components/layout/Header";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
@@ -21,10 +20,12 @@ export default function LoginPage() {
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { error: authError, data } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      });
+      const { error: authError, data } = await supabase.auth.signInWithPassword(
+        {
+          email: normalizedEmail,
+          password,
+        }
+      );
 
       if (authError) throw authError;
 
@@ -66,9 +67,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header/Navbar */}
-      <Navbar />
-
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-to-br from-white via-[#f0f4ff] to-white relative overflow-hidden">
         {/* Background decorative elements */}

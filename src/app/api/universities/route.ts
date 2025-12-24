@@ -5,7 +5,7 @@ import type { RAIDimensions } from "@/lib/types";
 
 function computeTrustScore(metrics: RAIDimensions | null | undefined): number {
   if (!metrics) return 0;
-  const values: (number | null)[] = [
+  const values = [
     metrics.ethicsInAI,
     metrics.fairness,
     metrics.transparency,
@@ -16,7 +16,7 @@ function computeTrustScore(metrics: RAIDimensions | null | undefined): number {
     metrics.collaboration,
   ];
 
-  return values.reduce((sum: number, value) => {
+  return values.reduce((sum, value) => {
     return sum + (typeof value === "number" ? value : 0);
   }, 0);
 }
@@ -25,7 +25,9 @@ export async function GET() {
   try {
     const supabase = getSupabaseServerClient();
 
-    const { data, error } = await supabase.from("Universities").select("*");
+    const { data, error } = await supabase
+      .from("Universities")
+      .select("*");
 
     if (error) {
       throw error;

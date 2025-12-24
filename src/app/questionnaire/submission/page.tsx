@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Navbar from "@/app/components/layout/Header";
 import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
 import type { SubmissionStatus } from "@/lib/types";
 
@@ -33,7 +32,6 @@ export default function SubmissionPage() {
 
   useEffect(() => {
     let cancelled = false;
-    let intervalId: NodeJS.Timeout | null = null;
     const supabase = getSupabaseBrowserClient();
 
     const fetchStatus = async () => {
@@ -94,19 +92,6 @@ export default function SubmissionPage() {
           universityName: universityData.name,
         });
 
-        // ✅ Stop polling if status is final (approved, draft, or rejected)
-        if (
-          latestStatus &&
-          (APPROVED_STATUSES.has(latestStatus) ||
-            latestStatus === "draft" ||
-            latestStatus === "rejected")
-        ) {
-          if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-          }
-        }
-
         if (latestStatus && APPROVED_STATUSES.has(latestStatus)) {
           const { data: rankingData, error: rankingError } = await supabase
             .from("UniversityRankings")
@@ -147,19 +132,10 @@ export default function SubmissionPage() {
       }
     };
 
-    // Initial fetch
     fetchStatus();
-
-    // ✅ OPTIMIZED: Polling every 30 seconds (was 3 seconds) - only for under review status
-    intervalId = setInterval(() => {
-      fetchStatus();
-    }, 30000); // Changed from 3000ms to 30000ms for better performance
 
     return () => {
       cancelled = true;
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
     };
   }, []);
 
@@ -310,8 +286,6 @@ export default function SubmissionPage() {
 
   return (
     <div className="min-h-screen bg-[#f0f4ff]">
-      <Navbar />
-
       <main className="max-w-4xl mx-auto px-4 py-16">
         <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center">
           {errorMessage && (

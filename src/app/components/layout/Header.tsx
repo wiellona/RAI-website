@@ -1,64 +1,17 @@
 "use client";
 
-import { MouseEvent, useEffect, useState } from "react";
+import { MouseEvent, useState } from "react";
 import Link from "next/link";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "@/supabase/supabaseClient";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { useParticipateNavigation } from "@/hooks/useNavigation";
 
 export default function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, profile, loading, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const supabase = getSupabaseBrowserClient();
   const { handleParticipateClick } = useParticipateNavigation();
 
   const onParticipateClick = async (event: MouseEvent<HTMLAnchorElement>) => {
     await handleParticipateClick(event);
-  };
-
-  useEffect(() => {
-    const update = () =>
-      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
-
-    update();
-
-    window.addEventListener("storage", update);
-    window.addEventListener("auth-change", update);
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        if (session) {
-          localStorage.setItem("isLoggedIn", "true");
-        } else {
-          localStorage.removeItem("isLoggedIn");
-        }
-        update();
-      }
-    );
-
-    return () => {
-      window.removeEventListener("storage", update);
-      window.removeEventListener("auth-change", update);
-      listener.subscription.unsubscribe();
-    };
-  }, [supabase]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-
-    const userEmail = localStorage.getItem("userEmail");
-    if (userEmail) {
-      localStorage.removeItem(`generalInfo_${userEmail}`);
-      localStorage.removeItem(`questionnaireAnswers_${userEmail}`);
-    }
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("universityName");
-
-    window.dispatchEvent(new Event("auth-change"));
-    setIsLoggedIn(false);
-
-    window.location.href = "/";
   };
 
   return (
@@ -88,28 +41,60 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
-              href="#"
-              onClick={onParticipateClick}
+              href="/ranking/automated"
               className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
             >
-              Participate
+              Automated Rankings
             </Link>
 
+            {(!profile || profile.role !== "admin") && (
+              <Link
+                href="#"
+                onClick={onParticipateClick}
+                className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-medium text-sm"
+              >
+                Participate
+              </Link>
+            )}
+
+            {profile && profile.role === "admin" && (
+              <Link
+                href="/admin"
+                className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-semibold text-sm"
+              >
+                Admin Dashboard
+              </Link>
+            )}
+
+            {profile && profile.role === "reviewer" && (
+              <Link
+                href="/reviewer"
+                className="text-white/90 hover:text-[#0099ED] transition-all duration-300 font-semibold text-sm"
+              >
+                Reviewer Dashboard
+              </Link>
+            )}
+
             {/* Desktop Login/Logout Button */}
-            {!isLoggedIn ? (
+            {loading ? null : user ? (
+              <>
+                <span className="text-sm text-white/80 font-medium">
+                  Welcome, {profile?.name || user.email}
+                </span>
+                <button
+                  onClick={logout}
+                  className="bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-sm"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
               <Link
                 href="/authentication/login"
                 className="bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-sm"
               >
                 Login
               </Link>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-sm"
-              >
-                Logout
-              </button>
             )}
           </div>
 
@@ -155,19 +140,64 @@ export default function Navbar() {
               The Ranking
             </Link>
             <Link
-              href="#"
-              onClick={(event) => {
-                onParticipateClick(event);
-                setIsMobileMenuOpen(false);
-              }}
+              href="/ranking/automated"
               className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
             >
-              Participate
+              Automated Rankings
             </Link>
+
+            {(!profile || profile.role !== "admin") && (
+              <Link
+                href="#"
+                onClick={(event) => {
+                  onParticipateClick(event);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-medium"
+              >
+                Participate
+              </Link>
+            )}
+
+            {profile && profile.role === "admin" && (
+              <Link
+                href="/admin"
+                className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-semibold"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Admin Dashboard
+              </Link>
+            )}
+
+            {profile && profile.role === "reviewer" && (
+              <Link
+                href="/reviewer"
+                className="block px-4 py-2.5 text-white hover:text-[#0099ED] hover:bg-white/10 rounded-md transition-all duration-300 font-semibold"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Reviewer Dashboard
+              </Link>
+            )}
 
             {/* Mobile Login/Logout Button */}
             <div className="px-4 pt-2">
-              {!isLoggedIn ? (
+              {loading ? null : user ? (
+                <>
+                  <div className="text-sm text-white/80 mb-2 font-medium">
+                    Welcome, {profile?.name || user.email}
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-6 py-2 rounded-lg transition-all duration-300 shadow-lg font-semibold"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
                 <Link
                   href="/authentication/login"
                   className="block w-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white text-center px-6 py-2 rounded-lg transition-all duration-300 shadow-lg font-semibold"
@@ -175,16 +205,6 @@ export default function Navbar() {
                 >
                   Login
                 </Link>
-              ) : (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full bg-gradient-to-r from-[#0047AB] to-[#0099ED] hover:from-[#0099ED] hover:to-[#0047AB] text-white px-6 py-2 rounded-lg transition-all duration-300 shadow-lg font-semibold"
-                >
-                  Logout
-                </button>
               )}
             </div>
           </div>
