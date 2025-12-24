@@ -574,7 +574,7 @@ export default function RegistrationPage() {
                   </label>
                   <p className="mb-2 text-sm">
                     <a
-                      href="https://mibkispkzpazmcyhftmv.supabase.co/storage/v1/object/public/Official%20Request%20Letter/Official%20Request%20Letter.pdf"
+                      href="https://cyxtuvxymvyhjjfcsmts.supabase.co/storage/v1/object/public/Templates/Official%20Request%20Letter.pdf"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#0047AB] hover:text-[#0099ED] underline transition-colors duration-300 font-semibold"
