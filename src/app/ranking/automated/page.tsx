@@ -32,6 +32,8 @@ interface UniversityCrawlData {
   divisions_grade: number;
   total_score: number;
   rank: number;
+  qs_world_ranking_2026?: number;
+  greenmetric_ranking_2025?: number;
 
   // Storage and CSV URLs
   storage_folder_path?: string;
@@ -156,13 +158,19 @@ export default function AutomatedRankingPage() {
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Total Score
                     </th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
+                      QS World Ranking 2026
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
+                      UI Greenmetric Ranking 2025
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={9}
                         className="p-8 text-center text-[#000080]/60 font-medium"
                       >
                         Loading data...
@@ -171,7 +179,7 @@ export default function AutomatedRankingPage() {
                   ) : crawlData.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={9}
                         className="p-8 text-center text-[#000080]/60 font-medium"
                       >
                         No automated ranking data available yet.
@@ -219,6 +227,12 @@ export default function AutomatedRankingPage() {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
                           })}
+                        </td>
+                        <td className="px-6 py-4 text-center font-semibold text-[#000080]">
+                          {uni.qs_world_ranking_2026 || "-"}
+                        </td>
+                        <td className="px-6 py-4 text-center font-semibold text-[#000080]">
+                          {uni.greenmetric_ranking_2025 || "-"}
                         </td>
                       </tr>
                     ))
@@ -288,7 +302,10 @@ export default function AutomatedRankingPage() {
                       <p className="text-2xl font-bold text-gray-900">
                         {selectedUniversity.publications_grade.toLocaleString(
                           "en-US",
-                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                          {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          },
                         )}
                       </p>
                       <p className="text-sm text-gray-500">/ 3,200</p>
@@ -302,7 +319,10 @@ export default function AutomatedRankingPage() {
                       <p className="text-2xl font-bold text-gray-900">
                         {selectedUniversity.assets_grade.toLocaleString(
                           "en-US",
-                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                          {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          },
                         )}
                       </p>
                       <p className="text-sm text-gray-500">/ 2,100</p>
@@ -316,7 +336,10 @@ export default function AutomatedRankingPage() {
                       <p className="text-2xl font-bold text-gray-900">
                         {selectedUniversity.policies_grade.toLocaleString(
                           "en-US",
-                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                          {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          },
                         )}
                       </p>
                       <p className="text-sm text-gray-500">/ 1,800</p>
@@ -330,7 +353,10 @@ export default function AutomatedRankingPage() {
                       <p className="text-2xl font-bold text-gray-900">
                         {selectedUniversity.divisions_grade.toLocaleString(
                           "en-US",
-                          { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+                          {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          },
                         )}
                       </p>
                       <p className="text-sm text-gray-500">/ 1,900</p>

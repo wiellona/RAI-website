@@ -33,6 +33,8 @@ interface UniversityData {
   organigram_csv_url?: string;
   created_at: string;
   updated_at: string;
+  qs_world_ranking_2026?: number;
+  greenmetric_ranking_2025?: number;
 }
 
 interface RankedUniversity extends UniversityData {
@@ -52,7 +54,7 @@ interface RankedUniversity extends UniversityData {
 function calculateScore(
   value: number,
   sortedValues: number[],
-  maxScore: number
+  maxScore: number,
 ): number {
   const n = sortedValues.length;
   if (n === 0) return 0;
@@ -81,7 +83,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching automated ranking data:", error);
       return NextResponse.json(
         { error: "Failed to fetch automated ranking data" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -130,6 +132,10 @@ export async function GET(request: NextRequest) {
 
         created_at: item.created_at,
         updated_at: item.updated_at,
+
+        // Additional ranking data
+        qs_world_ranking_2026: item.qs_world_ranking_2026,
+        greenmetric_ranking_2025: item.greenmetric_ranking_2025,
       };
     });
 
@@ -156,18 +162,18 @@ export async function GET(request: NextRequest) {
       const publications_grade = calculateScore(
         uni.total_publications,
         publicationsValues,
-        3200
+        3200,
       );
       const assets_grade = calculateScore(uni.total_assets, assetsValues, 2100);
       const policies_grade = calculateScore(
         uni.total_policies,
         policiesValues,
-        1800
+        1800,
       );
       const divisions_grade = calculateScore(
         uni.total_divisions,
         divisionsValues,
-        1900
+        1900,
       );
 
       const total_score =
@@ -195,7 +201,7 @@ export async function GET(request: NextRequest) {
     console.error("Unexpected error in automated-ranking API:", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
