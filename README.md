@@ -1,4 +1,4 @@
-# Responsible AI Global University Ranking (RAI)
+# Responsible AI Global University Ranking (RAI) V1.0
 
 RAI is a global benchmark for responsible AI in academia, ranking universities based on transparency, auditability, data privacy, and AI policy maturity. The app is built with Next.js + Tailwind on the frontend and is designed to integrate with a Django + MongoDB backend.
 
