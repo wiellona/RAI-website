@@ -35,6 +35,7 @@ interface UniversityData {
   updated_at: string;
   qs_world_ranking_2026?: number;
   greenmetric_ranking_2025?: number;
+  region?: string;
 }
 
 interface RankedUniversity extends UniversityData {
@@ -136,6 +137,7 @@ export async function GET(request: NextRequest) {
         // Additional ranking data
         qs_world_ranking_2026: item.qs_world_ranking_2026,
         greenmetric_ranking_2025: item.greenmetric_ranking_2025,
+        region: item.region,
       };
     });
 

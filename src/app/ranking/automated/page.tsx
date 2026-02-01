@@ -34,6 +34,7 @@ interface UniversityCrawlData {
   rank: number;
   qs_world_ranking_2026?: number;
   greenmetric_ranking_2025?: number;
+  region?: string;
 
   // Storage and CSV URLs
   storage_folder_path?: string;
@@ -135,6 +136,9 @@ export default function AutomatedRankingPage() {
                     <th className="px-6 py-4 text-left text-sm font-bold text-[#000080]">
                       University
                     </th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#000080]">
+                      Country/Territory
+                    </th>
                     <th className="px-6 py-4 text-center text-sm font-bold text-[#000080]">
                       Ethics & Fairness
                       <br />
@@ -170,7 +174,7 @@ export default function AutomatedRankingPage() {
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={10}
                         className="p-8 text-center text-[#000080]/60 font-medium"
                       >
                         Loading data...
@@ -179,7 +183,7 @@ export default function AutomatedRankingPage() {
                   ) : crawlData.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={10}
                         className="p-8 text-center text-[#000080]/60 font-medium"
                       >
                         No automated ranking data available yet.
@@ -197,6 +201,9 @@ export default function AutomatedRankingPage() {
                         </td>
                         <td className="px-6 py-4 text-[#000080] font-semibold">
                           {uni.university_name}
+                        </td>
+                        <td className="px-6 py-4 text-[#000080] font-medium">
+                          {uni.region || "-"}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-[#000080]">
                           {uni.publications_grade.toLocaleString("en-US", {
